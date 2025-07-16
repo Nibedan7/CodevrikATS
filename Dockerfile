@@ -2,15 +2,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy the entire solution
-COPY ../CdplATS.Entity ../CdplATS.Entity
+# Copy everything from the root where .sln and all projects exist
 COPY . .
 
-# Publish API
-RUN dotnet publish CdplATS.API.csproj -c Release -o /app/publish
+# Publish the API project specifically
+RUN dotnet publish CdplATS.API/CdplATS.API.csproj -c Release -o /app/publish
 
-# Stage 2: Runtime for API
+# Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/publish .
+
 ENTRYPOINT ["dotnet", "CdplATS.API.dll"]
