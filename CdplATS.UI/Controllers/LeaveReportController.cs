@@ -29,6 +29,7 @@ namespace CdplATS.UI.Controllers
             var LoggedEmpCode = HttpContext.Session.GetInt32("authCode");
             var response = await _webApiHelper.GetAsync<List<LeaveReportEntity>>(_apiHelper.GetLeaveReporListApi + $"?EmpCode={LoggedEmpCode}&StartDate={StartDate}&EndDate={EndDate}");
             return Json(response.Data);
+
         }
 
     }
