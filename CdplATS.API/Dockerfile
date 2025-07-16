@@ -9,9 +9,7 @@ WORKDIR /src
 
 # Copy everything into the container
 COPY . .
-
-# Build and publish to /app/publish
-RUN dotnet publish CdplATS.API.csproj -c Release -o /app/publish
+RUN dotnet publish CdplATS.sln -c Release -o /app/publish
 
 # 3. Final runtime image
 FROM base AS final
