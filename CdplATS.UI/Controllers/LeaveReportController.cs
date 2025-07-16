@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CdplATS.UI.Controllers
 {
-    public class LeaveReportController : AuthController
+    public class LeaveReportController : Controller
     {
         private readonly WebApiHelper _webApiHelper;
         private readonly ApiHelper _apiHelper = new ApiHelper();
