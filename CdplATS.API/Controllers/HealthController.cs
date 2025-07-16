@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CdplATS.API.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("/")]
     public class HealthController : ControllerBase
     {
         [HttpGet]
