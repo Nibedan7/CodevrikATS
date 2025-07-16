@@ -1,0 +1,317 @@
+﻿
+@using CdplATS.Entity.Models
+@model List<ProjectTrackerCellViewModel>
+@{
+    var rows = Model.GroupBy(x => new { x.RowId, x.RowName }).OrderBy(x => x.Key.RowId);
+    var columns = Model.Select(x => new { x.ColumnId, x.ColumnName }).Distinct().OrderBy(x => x.ColumnId).ToList();
+}
+
+
+<style>
+    .editable-header {
+        font-weight: bold;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    thead th input,
+    tbody td:first-child input {
+        font-weight: bold;
+    }
+
+    /* Optional: Freeze first column (row headers) and header row for better UX */
+    .table thead th {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        z-index: 2;
+    }
+
+    .table td:first-child,
+    .table th:first-child {
+        position: sticky;
+        left: 0;
+        background: #f1f1f1;
+        z-index: 1;
+    }
+
+    th {
+        position: relative;
+    }
+
+    th .btn {
+        z-index: 10;
+    }
+
+    
+
+    th .resizer {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 5px;
+        height: 100%;
+        cursor: col-resize;
+        user-select: none;
+    }
+
+    th.resizing {
+        border-right: 2px solid #007bff;
+    }
+
+   
+
+
+    /* Make space inside the input for icon */
+    input.pe-4 {
+        padding-right: 2rem !important;
+    }
+
+    /* Prevent delete buttons from shrinking or overlapping */
+    th, td {
+        min-width: 120px;
+        white-space: nowrap;
+    }
+
+    textarea.form-control.editable-cell {
+        resize: vertical;
+        min-height: 2.5rem;
+        max-height: 8rem;
+        height:100%;
+    }
+
+    
+    /* Ensures there's enough room inside the input for the delete icon */
+    input.editable-header.pe-4 {
+        padding-right: 2.5rem !important;
+    }
+
+    .black:hover{
+        color:red !important;
+    }
+
+</style>
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Project Tracker</a></li>
+        <li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-eye"></i>  Project Details</li>
+    </ol>
+</nav>
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-3 filterBar justify-content-end">
+        <button type="button" class="btn btnStdColor me-2" data-bs-toggle="modal" id="AddColumn" data-bs-target="#AddColumn" onclick="AddEditColumnRow(0,1)">
+            <i class="fa-solid fa-plus"></i> Add Column
+        </button>
+        <button type="button" class="btn btnStdColor" data-bs-toggle="modal" id="AddRow" data-bs-target="#AddRow" onclick="AddEditColumnRow(0,2)">
+            <i class="fa-solid fa-plus"></i> Add Row
+        </button>
+    </div>
+
+
+    <div class="table-container">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="text"
+                               class="form-control editable-header"
+                               value="Client"
+                               disabled />
+                    </th>
+                    @foreach (var col in columns)
+                    {
+                        <th>
+                            <div class="position-relative d-flex align-items-center">
+                                <input type="text"
+                                       class="form-control editable-header editable-column-header pe-4"
+                                       value="@col.ColumnName"
+                                       data-column-id="@col.ColumnId" />
+
+                                <button type="button"
+                                        class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-1 black"
+                                        onclick="deleteColumn(@col.ColumnId)"
+                                        style="z-index: 2;">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </div>
+                        </th>
+
+                    }
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in rows)
+                {
+                    <tr>
+                        <td style="position: relative;">
+                            <input type="text"
+                                   class="form-control editable-header editable-row-name pe-4"
+                                   value="@row.Key.RowName"
+                                   data-row-id="@row.Key.RowId" />
+
+                            <button type="button"
+                                    class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-1 black"
+                                    onclick="deleteRow(@row.Key.RowId)"
+                                    style="z-index: 1;">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                            
+
+                        </td>
+
+
+                        @foreach (var col in columns)
+                        {
+                            var cell = row.FirstOrDefault(x => x.ColumnId == col.ColumnId);
+                            <td>
+                                <textarea class="form-control editable-cell"
+                                          data-value-id="@cell?.ValueId"
+                                          data-row-id="@row.Key.RowId"
+                                          data-column-id="@col.ColumnId"
+                                          rows="2">@cell?.Value</textarea>
+                            </td>
+                        }
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+<div id="div_AddEditColumnRow"></div>
+
+
+<script>
+
+    $('.editable-row-name').on('change', function () {
+        const input = $(this);
+        const data = {
+            Id: input.data('row-id'),
+            Name: input.val(),
+            Type: 2
+        };
+        $.post('/ProjectTracker/AddEditColumnRow', data);
+    });
+
+    $('.editable-column-header').on('change', function () {
+        const input = $(this);
+        const data = {
+            Id: input.data('column-id'),
+            Name: input.val(),
+            Type: 1
+        };
+        $.post('/ProjectTracker/AddEditColumnRow',data);
+    });
+
+    $('.editable-cell').on('change', function () {
+        const input = $(this);
+        const data = {
+            ColumnId: input.data('column-id'),
+            RowId: input.data('row-id'),
+            Value: input.val(),
+            ValueId: input.data('value-id')
+        };
+
+        $.post('/ProjectTracker/AddEditPtvalue', data);
+    });
+    
+    function AddEditColumnRow(Id,Type) {
+        $.ajax({
+            url: '@Url.Action("AddEditColumnRow", "ProjectTracker")',
+            type: "GET",
+            data: { Id: Id,Type:Type},
+            success: function (data) {
+                $('#div_AddEditColumnRow').html(data);
+                var modal = new bootstrap.Modal(document.getElementById('model_AddEditColumnRow'));
+                modal.show();
+            },
+            error: function (data) {
+                toastr.error("error in loading Client details")
+            }
+        });
+    }
+    
+
+    /////////////////////////////////////////////////////////////////////
+
+    document.querySelectorAll('th').forEach(th => {
+        const resizer = document.createElement('div');
+        resizer.classList.add('resizer');
+        th.appendChild(resizer);
+
+        let startX, startWidth;
+
+        resizer.addEventListener('mousedown', function (e) {
+            startX = e.pageX;
+            startWidth = th.offsetWidth;
+            th.classList.add('resizing');
+
+            function onMouseMove(e) {
+                const newWidth = startWidth + (e.pageX - startX);
+                th.style.width = newWidth + 'px';
+            }
+
+            function onMouseUp() {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                th.classList.remove('resizing');
+            }
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    });
+
+
+    ///////////////////////////////////////////////////////////
+
+   
+
+     function deleteColumn(columnId) {
+        if (confirm("Are you sure you want to delete this column?")) {
+            $.ajax({
+                url: '/YourController/DeleteColumn', // adjust route
+                method: 'POST',
+                data: { columnId },
+                success: function () {
+                    location.reload(); // or dynamically remove the column
+                },
+                error: function () {
+                    alert("Failed to delete column.");
+                }
+            });
+        }
+    }
+
+    function deleteRow(rowId) {
+        if (confirm("Are you sure you want to delete this row?")) {
+            $.ajax({
+                url: '/YourController/DeleteRow', // adjust route
+                method: 'POST',
+                data: { rowId },
+                success: function () {
+                    location.reload(); // or dynamically remove the row
+                },
+                error: function () {
+                    alert("Failed to delete row.");
+                }
+            });
+        }
+    }
+</script>
+
+
+
+
+
+
+

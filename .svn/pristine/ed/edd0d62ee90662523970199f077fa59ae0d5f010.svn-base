@@ -1,0 +1,346 @@
+﻿@using Newtonsoft.Json
+@using CdplATS.Entity.Models
+@using CdplATS.UI.Helpers
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    Layout = null;
+    var roleRightsJson = Context.Session.GetString("RoleRights");
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+
+    List<RoleRightEntity> roleRights = new List<RoleRightEntity>();
+
+    if (!string.IsNullOrEmpty(roleRightsJson))
+    {
+        roleRights = JsonConvert.DeserializeObject<List<RoleRightEntity>>(roleRightsJson);
+    }
+
+    bool canViewLeave = CommonMethods.HasRight(roleRights, "Leave", "CanView");
+    bool canViewEmployee = CommonMethods.HasRight(roleRights, "Employee", "CanView");
+    bool canViewHoliday = CommonMethods.HasRight(roleRights, "Holiday", "CanView");
+    bool canViewPunch = CommonMethods.HasRight(roleRights, "Punch", "CanView");
+    bool canViewManualLog = CommonMethods.HasRight(roleRights, "ManualLog", "CanView");
+    bool canViewDepartment = CommonMethods.HasRight(roleRights, "Department", "CanView");
+    bool canViewReports = CommonMethods.HasRight(roleRights, "Reports", "CanView");
+    bool canViewRoleRightsManagement = CommonMethods.HasRight(roleRights, "RoleRightsManagement", "CanView");
+    bool canViewRole = CommonMethods.HasRight(roleRights, "Role", "CanView");
+    bool canManagement = CommonMethods.HasRight(roleRights, "Management", "CanView");
+    bool canAppraisal = CommonMethods.HasRight(roleRights, "Appraisal", "CanView");
+    var LoggedEmpCode = HttpContextAccessor.HttpContext.Session.GetInt32("authCode");
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Employee Management</title>
+
+    <!-- Bootstrap & Icons -->
+    <script src="~/js/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link href="~/css/select2.min.css" rel="stylesheet" />
+
+    <link href="~/css/cdplats.css" rel="stylesheet" />
+    <link href="~/css/toastr.css" rel="stylesheet" />
+    <link href="~/css/CDPLATS.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <script src="~/js/select2.min.js"></script>
+
+
+</head>
+<body>
+
+
+    <nav class="navbar navbar-expand-lg bg-light shadow-sm fixed-top" id="headerNav">
+        <div class="container-fluid navContainer">
+            <!-- Logo -->
+            <a class="navbar-brand">
+                <img src="~/image/cdpl_logo_new.png" alt="Company Logo" height="40">
+            </a>
+
+            <!-- Navbar Toggler for Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            @if (!string.IsNullOrEmpty(Context.Session.GetString("BirthDayEmployee")))
+            {
+                <!-- Happy Birthday Message with Balloons -->
+                <div class="d-flex align-items-center birthday-container">
+                    <span class="birthday-message">🎂 Happy Birthday @Context.Session.GetString("BirthDayEmployee") </span>
+                    <div class="balloons">
+                        <div class="balloon balloon1"></div>
+                        <div class="balloon balloon2"></div>
+                    </div>
+                </div>
+                <canvas id="confettiCanvas"></canvas>
+            }
+
+
+            <!-- Confetti Animation (Now Limited to Header) -->
+            <!-- Navigation Links -->
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    @if (canViewLeave)
+                    {
+                        bool isReportsSectionActive = currentController == "Leave";
+                        <li class="nav-item"><a class="nav-link @(isReportsSectionActive ? "active-nav" : "standardColor")" href="@Url.Action("Index","Leave")">Leave</a></li>
+                    }
+                    @if (canViewEmployee)
+                    {
+                        bool isReportsSectionActive = currentController == "Employee";
+                        <li class="nav-item"><a class="nav-link @(isReportsSectionActive ? "active-nav" : "standardColor")" href="@Url.Action("Index","Employee")">Employee </a></li>
+                    }
+                    @if (canViewPunch)
+                    {
+                        bool isReportsSectionActive = currentController == "Punch";
+                        <li class="nav-item"><a class="nav-link @(isReportsSectionActive ? "active-nav" : "standardColor")" href="@Url.Action("Index","Punch")">Punch</a></li>
+                    }
+                    @if (canViewManualLog)
+                    {
+                        bool isReportsSectionActive = currentController == "ManualLog";
+                        <li class="nav-item"><a class="nav-link @(isReportsSectionActive ? "active-nav" : "standardColor")" href="@Url.Action("Index","ManualLog")">Manual Log</a></li>
+                    }
+
+                    @if (canViewReports)
+                    {
+                        <!-- Reports Dropdown -->
+                        bool isReportsSectionActive = currentController == "LeaveReport"; // Add other reports controllers if needed
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @(isReportsSectionActive ? "active-nav" : "standardColor")" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown">
+                                Reports
+                                <i class="bi bi-caret-down-fill" id="reportsDropdownIcon"></i> <!-- Bootstrap Icon -->
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+                                <li><a class="dropdown-item standardColor" href="@Url.Action("Index","LeaveReport")">Leave Report</a></li>
+                            </ul>
+                        </li>
+
+                    }
+                    @if (canManagement)
+                    {
+                        bool isReportsSectionActive = (currentController == "Holiday" || currentController == "Department" || currentController == "RoleRightsManagement" || currentController == "Role");
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @(isReportsSectionActive ? "active-nav" : "standardColor")" href="#" id="managementDropdown" role="button" data-bs-toggle="dropdown">
+                                Management
+                                <i class="bi bi-caret-down-fill" id="managementDropdownIcon"></i> <!-- Bootstrap Icon -->
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="managementDropdown">
+                                @if (canViewHoliday)
+                                {
+                                    <li><a class="dropdown-item standardColor" href="@Url.Action("Index","Holiday")">Holiday </a></li>
+                                }
+                                @if (canViewDepartment)
+                                {
+                                    <li>
+                                        <a class="dropdown-item standardColor" href="@Url.Action("Index", "Department")">Department</a>
+                                    </li>
+                                }
+                                @if (canViewRole)
+                                {
+                                    <li><a class="dropdown-item standardColor" href="@Url.Action("Index","Role")">Role</a></li>
+                                }
+                                @if (canViewRoleRightsManagement)
+                                {
+                                    <li><a class="dropdown-item standardColor" href="@Url.Action("Index","RoleRightsManagement")">Role/Rights</a></li>
+                                }
+                                @if (LoggedEmpCode == 2)
+                                {
+                                    <li><a class="dropdown-item standardColor" href="@Url.Action("Index","EmployeeFile")">Employee-FORM16</a></li>
+                                }
+                            </ul>
+                        </li>
+                    }
+                    @if (canAppraisal)
+                    {
+                        bool isReportsSectionActive = currentController == "Appraisal";
+                        <li class="nav-item"><a class="nav-link  @(isReportsSectionActive ? "active-nav" : "standardColor")" href="@Url.Action("Index","Appraisal")">Appraisal</a></li>
+                    }
+
+                    @if (LoggedEmpCode == 2)
+                    {
+                        bool isReportsSectionActive = currentController == "ProjectTracker";
+                        <li class="nav-item"><a class="nav-link  @(isReportsSectionActive ? "active-nav" : "standardColor")" href="@Url.Action("Index","ProjectTracker")">Project Tracker</a></li>
+                    } 
+
+                </ul>
+            </div>
+
+            <!-- Profile Section -->
+            <div class="d-flex align-items-center">
+                <button id="dropdown-profile" type="button" class="btn p-0 border-0 bg-transparent" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-user-circle fa-lg me-2 standardColor" style="font-size:20px;"></i>
+                    <span class="loggerName standardColor" style="margin-left: -8px !important;">@Context.Session.GetString("authName")</span>
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-profile">
+                    <li>
+                        <a class="dropdown-item standardColor" href="javascript:void(0);" onclick="loadChangePasswordModal()">
+                            <i class="fa-solid fa-key"></i> Change Password
+                        </a>
+
+                    </li>
+                    <li>
+                        <a class="dropdown-item standardColor" href="@Url.Action("Logout","Account")"><i class="fa-solid fa-right-from-bracket"></i> 
+                            LogOut
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loader -->
+    <div id="loader" style="display:none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+
+    <div id="changePasswordModalContainer"></div>
+
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        @RenderBody()
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <span class="standardColor">&copy;@DateTime.Now.Year CDPL Employee Management System. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="~/js/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/6.0.0/bootbox.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="~/js/select2.min.js"></script>
+    <script src="~/js/toaster.js"></script>
+    <script src="~/js/toastr.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // dropdown icon manage
+                const reportsDropdown = document.getElementById('reportsDropdown');
+                const reportsIcon = document.getElementById('reportsDropdownIcon');
+
+                reportsDropdown.addEventListener('show.bs.dropdown', function () {
+                    reportsIcon.classList.remove('bi-caret-down-fill');
+                    reportsIcon.classList.add('bi-caret-up-fill');
+                });
+
+                reportsDropdown.addEventListener('hide.bs.dropdown', function () {
+                    reportsIcon.classList.remove('bi-caret-up-fill');
+                    reportsIcon.classList.add('bi-caret-down-fill');
+                });
+
+                const managementDropdown = document.getElementById('managementDropdown');
+                const managementIcon = document.getElementById('managementDropdownIcon');
+
+                managementDropdown.addEventListener('show.bs.dropdown', function () {
+                    managementIcon.classList.remove('bi-caret-down-fill');
+                    managementIcon.classList.add('bi-caret-up-fill');
+                });
+
+                managementDropdown.addEventListener('hide.bs.dropdown', function () {
+                    managementIcon.classList.remove('bi-caret-up-fill');
+                    managementIcon.classList.add('bi-caret-down-fill');
+                });
+
+
+            var canvas = document.getElementById("confettiCanvas");
+            if(canvas){
+                var ctx = canvas.getContext("2d");
+
+                function resizeCanvas() {
+                var header = document.getElementById("headerNav");
+                canvas.width = header.offsetWidth;
+                canvas.height = header.offsetHeight;
+                }
+
+                resizeCanvas();
+                window.addEventListener("resize", resizeCanvas);
+
+                var confetti = [];
+                for (var i = 0; i < 15; i++) {  // Reduced from 50 to 15
+                    confetti.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        r: Math.random() * 4 + 2,  // Smaller confetti
+                        d: Math.random() * 1 + 0.5,  // Slower fall
+                        color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                        tilt: Math.random() * 10 - 5
+                    });
+                }
+
+                function drawConfetti() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    for (var i = 0; i < confetti.length; i++) {
+                        var c = confetti[i];
+                        ctx.beginPath();
+                        ctx.fillStyle = c.color;
+                        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    moveConfetti();
+                }
+
+                function moveConfetti() {
+                    for (var i = 0; i < confetti.length; i++) {
+                        var c = confetti[i];
+                        c.y += c.d;  // Slower fall speed
+                        if (c.y > canvas.height) {
+                            c.y = 0;
+                            c.x = Math.random() * canvas.width;
+                        }
+                    }
+                }
+
+                setInterval(drawConfetti, 30);
+            }
+        });
+
+        function loadChangePasswordModal() {
+             $.ajax({
+                 url: '@Url.Action("ChangePassword", "Account")',
+                 type: 'GET',
+                 success: function (data) {
+                     $('#changePasswordModalContainer').html(data); 
+                     $('#model_ResetPassword').modal('show');       
+                 },
+                 error: function () {
+                     toastr.error('Failed to load the Change Password form.');
+                 }
+             });
+        }
+
+        $(document).ajaxStart(function () {
+            $("#loader").show();
+        }).ajaxStop(function () {
+            $("#loader").hide();
+        });
+
+		// Session timeout handling
+        const sessionTimeoutMinutes = @((ViewBag.SessionTimeoutMinutes ?? 1));
+        const sessionExpiresAt = new Date().getTime() + sessionTimeoutMinutes * 60 * 1000;
+		setInterval(() => {
+			const currentTime = new Date().getTime();
+			if (currentTime >= sessionExpiresAt) {
+				window.location.href = '@Url.Action("Logout", "Account")';
+			}
+		}, 1000 * 60); // Check every minute
+
+
+    </script>
+
+</body>
+</html>

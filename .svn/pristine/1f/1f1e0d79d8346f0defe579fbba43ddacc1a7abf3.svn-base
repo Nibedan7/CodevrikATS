@@ -1,0 +1,98 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CdplATS.Entity.Models
+{
+    public class EmployeeEntity
+    {
+
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "FirstName is required")]
+        public string FirstName { get; set; }
+
+
+        [Required(ErrorMessage = "LastName is required")]
+        public string LastName { get; set; }
+
+        public string? EmployeeName { get; set; }
+
+        [Required(ErrorMessage = "EmployeeCode is required")]
+        public int? EmployeeCode { get; set; }
+
+        public int Status { get; set; }
+
+        public List<Reviewer>? Reviewers { get; set; }
+        
+        public int? Reviewer1 { get; set; }
+
+        public int? Reviewer2 { get; set; }
+        public string? Reviewer1Name { get; set; }
+        public string? Reviewer2Name { get; set; }
+        public List<EmployeeRole>? RoleList { get; set; }
+        public List<DepartmentList>? Departments { get; set; }
+
+
+        [Required]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
+        public string Email { get; set; }
+
+        public string? AccessCardNumber { get; set; }
+
+        public int? DepartMentCode { get; set; }
+        public string? DepartmentName { get; set; }
+        public string? DepartmentIds { get; set; }
+        public int? RoleId { get; set; }
+        public string? RoleName { get; set; }
+
+        public int? ActiveStatus { get; set; }
+
+        [Required(ErrorMessage = "Contact number is required.")]
+        [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Contact number must be a valid 10-digit number starting with 6-9.")]
+        public string ContactNumber1 { get; set; }
+
+
+
+        [Required]
+        public string Gender { get; set; } // This holds "M" or "F" from DB
+
+
+  
+        public string GenderText => Gender switch
+        {
+            "M" => "Male",
+            "F" => "Female",
+            _ => "Other"
+        };
+
+
+        [Required]
+        public DateTime? BirthDate { get; set; }
+
+        [Required]
+        public DateTime? HireDate { get; set; }
+
+        public int? authCode { get; set; }
+
+    }
+
+    public class EmployeeAssessmentEntity
+    {
+        public int EmployeeAssessmentId { get; set; }
+        public int EmployeeCode { get; set; }
+
+        public string AssessmentName { get; set; }
+
+        public float? SelfAssessment { get; set; }
+        public int? Reviewer1Id { get; set; }
+        public float? Reviewer1Assessment { get; set; }
+        public int? Reviewer2Id { get; set; }
+        public float? Reviewer2Assessment { get; set; }
+        public bool? IsSelfAss1_Submitted { get; set; }
+        public bool? IsReviewer1_Submitted { get; set; }
+        public bool? IsReviewer2_Submitted { get; set; }
+        public DateTime AssessmentStartDate { get; set; }
+        public DateTime AssessmentEndDate { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public List<EmployeeEntity>? EmployeeList { get; set; }
+    }
+}

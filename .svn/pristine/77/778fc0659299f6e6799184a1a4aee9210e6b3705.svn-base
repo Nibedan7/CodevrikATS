@@ -1,0 +1,38 @@
+﻿using CdplATS.API.Services;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
+    public class RoleRightApiController : ControllerBase
+    {
+        private readonly RoleRightService _roleRightService;
+
+        public RoleRightApiController(RoleRightService roleRightService)
+        {
+            this._roleRightService = roleRightService;
+        }
+
+        /// <summary>
+        /// Get Role Rights
+        /// </summary>
+        [HttpGet("GetRoleRight/{RoleId}")]
+        public async Task<IActionResult> GetRoleRight(int RoleId)
+        {
+            var response = await _roleRightService.GetRoleRightAsync(RoleId);
+            return Ok(response);
+        }
+
+        [HttpPost("UpdateRoleRight")]
+        public async Task<IActionResult> UpdateRoleRight([FromBody] RoleRightEntity roleRightEntity)
+        {
+            var response = await _roleRightService.UpdateRoleRightAsync(roleRightEntity);
+            return Ok(response);
+        }
+    }
+}

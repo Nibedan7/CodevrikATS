@@ -1,0 +1,829 @@
+﻿
+@using CdplATS.Entity.Models
+@model List<ProjectTrackerCellViewModel>
+@{
+    var rows = Model.GroupBy(x => new { x.RowId, x.RowName, x.RowSortOrder }).OrderBy(x => x.Key.RowSortOrder);
+    var columns = Model.GroupBy(x => new { x.ColumnId, x.ColumnName, x.ColumnSortOrder }).OrderBy(x => x.Key.ColumnSortOrder)
+                        .Select(x => new { x.Key.ColumnId, x.Key.ColumnName }).ToList();
+}
+
+
+<style>
+    .table td,
+    .table th {
+        padding: 0;
+        margin: 0;
+        vertical-align: middle;
+    }
+
+    th .d-flex,
+    td .d-flex {
+        margin: 0;
+        padding: 0;
+    }
+
+    .column-header,
+    .row-header {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    input.pe-4 {
+        padding-right: 0 !important;
+    }
+
+
+    .cell-wrapper {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+textarea.editable-cell {
+    display: block;
+    width: calc(100% - 0px);
+    margin: 3px;
+    padding: 10px;
+    padding-top:10px;
+    box-sizing: border-box;
+    
+    font-size: 1rem;
+    font-family: inherit;
+    line-height: 1.5;
+    
+    min-height: 100px;
+    max-height: 200px;
+    
+    overflow-y: auto;
+    overflow-x: hidden;
+    resize: vertical;
+
+    border-radius: 2px;
+    border: 1px solid #ccc;
+
+    background-clip: padding-box;
+}
+
+
+
+    .table-container {
+        overflow-x: auto; 
+        overflow-y: visible; 
+    }
+
+
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    thead th input,
+    tbody td:first-child input {
+        font-weight: bold;
+    }
+
+    .table thead th {
+        top: 0;
+        background: #f8f9fa;
+    }
+
+    .table td:first-child,
+    .table th:first-child {
+        left: 0;
+        background: #f1f1f1;
+    }
+
+    th {
+        position: relative;
+    }
+
+    th .btn {
+        z-index: 10;
+    }
+
+    th .resizer {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 5px;
+        height: 100%;
+        cursor: col-resize;
+        user-select: none;
+    }
+
+    th.resizing {
+        border-right: 2px solid #007bff;
+    }
+
+    input.pe-4 {
+        padding-right: 2rem !important;
+    }
+
+    th, td {
+        min-width: 120px;
+        white-space: nowrap;
+    }
+
+
+    
+    input.editable-header.pe-4 {
+        padding-right: 2.5rem !important;
+    }
+
+    .black:hover{
+        color:red !important;
+    }
+
+
+    /* Style for contenteditable row header cells */
+    .row-header {
+        max-height: 100px;
+        min-height: 100px;
+        font-size: 1rem;
+        padding: 6px 8px; 
+        white-space: nowrap;
+        align-content: center;
+    }
+
+    .column-header {
+        font-size: 1rem;  
+    }
+
+    .row-header,
+    .column-header {
+        padding: 6px 8px;
+    }
+
+    .row-header,
+    .editable-cell {
+        transition: background-color 0.3s ease;
+        margin: 0;
+    }
+
+    .row-header:hover {
+        cursor: pointer;
+        
+    }
+</style>  
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Project Tracker</a></li>
+        <li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-eye"></i>  Project Details</li>
+    </ol>
+</nav>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3 filterBar">
+        <div class="d-flex align-items-center gap-2">
+            <div style="padding-top:8px;">
+                <label class="standardColor" for="ProjectStatus" style="width:max-content; ">Project Status: </label>
+            </div>
+            <select class="form-select form-select-sm" id="ProjectStatus" onchange="bindProjectTrackerGrid()">
+                <option value="1" selected="@(ViewBag.Status == 1)">Active Project</option>
+                <option value="2" selected="@(ViewBag.Status == 2)">Inactive Project</option>
+                <option value="0" selected="@(ViewBag.Status == 0)">All Project</option>
+            </select>
+
+
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btnStdColor" data-bs-toggle="modal" id="AddColumn" data-bs-target="#AddColumn" onclick="AddEditColumnRow(0,1)">
+                <i class="fa-solid fa-plus"></i> Add Column
+            </button>
+            <button type="button" class="btn btnStdColor" data-bs-toggle="modal" id="AddRow" data-bs-target="#AddRow" onclick="AddEditColumnRow(0,2)">
+                <i class="fa-solid fa-plus"></i> Add Client
+            </button>
+        </div>
+    </div>
+
+
+    <div class="table-container">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="text"
+                               class="form-control editable-header"
+                               value="Client" style="border-radius:0px; background-color: #0f5b8a; color:white; border: none"
+                               disabled />
+                    </th>
+                    @{
+                        var groupedColumns = Model.GroupBy(c => c.ColumnId).OrderBy(c => c.First().ColumnSortOrder).ToList();
+                    }
+                    @for (int i = 0; i < groupedColumns.Count; i++)
+                    {
+                        var columnGroup = groupedColumns[i];
+                        var colId = columnGroup.Key;
+                        var colName = columnGroup.First().ColumnName;
+                        <th style="width: 250px;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div contenteditable="true"
+                                     class="column-header"
+                                     data-column-id="@colId">
+                                    @colName
+                                </div>
+                                <div>
+                                    @if (i > 0)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-link text-dark move-column"
+                                                data-id="@colId"
+                                                data-direction="LEFT"
+                                                title="Move Left">
+                                            <i class="fa-solid fa-left-long" style="color: #ffffff;"></i>
+                                        </button>
+                                    }
+
+                                    @if (i < groupedColumns.Count - 1)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-link text-dark move-column"
+                                                data-id="@colId"
+                                                data-direction="RIGHT"
+                                                title="Move Right">
+                                            <i class="fa-solid fa-right-long" style="color: #ffffff;"></i>
+                                        </button>
+                                    }
+
+                                    <button type="button"
+                                            style="color:white;"
+                                            class="btn btn-sm  delete-column black"
+                                            data-column-id="@colId"
+                                            title="Delete Column">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody> 
+                @{
+                    var groupedRows = Model.GroupBy(c => c.RowId).OrderBy(c => c.First().RowSortOrder).ToList();
+                }
+                @for (int i = 0; i < groupedRows.Count; i++)
+                {
+                    var rowGroup = groupedRows[i];
+                    var rowId = rowGroup.Key;
+                    var rowName = rowGroup.First().RowName;
+                    var status = rowGroup.First().Status;
+                    <tr>
+                        <td style="background-color:@rowGroup.First().RowColorCode">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div contenteditable="true"
+                                     class="row-header"
+                                     data-row-id="@rowId"
+                                     >
+                                    @rowName
+                                </div>
+
+                                <div class="d-flex flex-column align-items-center gap-1">
+                                    @if (i > 0)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-link text-dark move-row"
+                                                data-id="@rowId"
+                                                data-direction="UP"
+                                                title="Move Up">
+                                            <i class="fa-solid fa-up-long" style="color: #000000;"></i>
+                                        </button>
+                                    }
+
+                                    @if (status == 1)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm delete-row black"
+                                                data-row-id="@rowId"
+                                                title="Delete Row">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm revert-row"
+                                                data-row-id="@rowId"
+                                                title="Revert Row">
+                                            <i class="fa-solid fa-undo square-icon"></i>
+                                        </button>
+                                    }
+
+                                    @if (i < groupedRows.Count - 1)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-link text-dark move-row"
+                                                data-id="@rowId"
+                                                data-direction="DOWN"
+                                                title="Move Down">
+                                            <i class="fa-solid fa-down-long" style="color: #000000;"></i>
+                                        </button>
+                                    }
+
+
+                                </div>
+
+
+                            </div>
+                        </td>
+                         @foreach (var col in columns)
+                        {
+                            var cell = rowGroup.FirstOrDefault(x => x.ColumnId == col.ColumnId);
+                            <td>
+                                <div class="cell-wrapper">
+                                    <textarea class="form-control editable-cell"
+                                              data-value-id="@cell?.ValueId"
+                                              data-row-id="@rowId"
+                                              data-column-id="@col.ColumnId"
+                                              rows="2"
+                                              style="background-color:@cell?.ValueColorCode">@cell?.Value</textarea>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+
+    </div>
+
+</div>
+
+<!-- Custom Context Menu -->
+<div id="rowColorMenu" style="display:none; position:absolute; z-index:1000; background:#fff; border:1px solid #ccc; padding:6px; border-radius:4px;">
+    <div class="d-flex gap-2">
+        <div class="color-option" data-color="red" style="width:20px; height:20px; background:#FADBD8; border-radius:50%; cursor:pointer;"></div>
+        <div class="color-option" data-color="green" style="width:20px; height:20px; background:#D5F5E3; border-radius:50%; cursor:pointer;"></div>
+        <div class="color-option" data-color="orange" style="width:20px; height:20px; background:#FDEBD0; border-radius:50%; cursor:pointer;"></div>
+        <div class="color-option" data-color="blue" style="width:20px; height:20px; background:#CCE5FF; border-radius:50%; cursor:pointer;"></div>
+        <div class="color-option" data-color="reset" style="width:20px; height:20px; background:#; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold;"><i class="fa-solid fa-ban" style="color:#596a85; font-size: 18px"></i>
+        </div>
+    </div>
+</div>
+
+<div id="div_AddEditColumnRow"></div>
+
+
+<script>
+
+    function bindProjectTrackerGrid() {
+        var Status = $('#ProjectStatus').val();
+        window.location.href = '@Url.Action("Index", "ProjectTracker")' + '?Status=' + Status;
+    }
+
+
+
+    $(document).ready(function () {
+        $(document).on('blur', '.row-header', function () {
+            const div = $(this);
+            const data = {
+                Id: div.data('row-id'),
+                Name: div.text().trim(),
+                Type: 2 
+            };
+            $.post('/ProjectTracker/AddEditColumnRow', data);
+        });
+
+        $(document).on('blur', '.column-header', function () {
+            const div = $(this);
+            const data = {
+                Id: div.data('column-id'),
+                Name: div.text().trim(),
+                Type: 1 
+            };
+            $.post('/ProjectTracker/AddEditColumnRow', data);
+        });
+
+        $(document).on('change', '.editable-cell', function () {
+            const input = $(this);
+            const data = {
+                ColumnId: input.data('column-id'),
+                RowId: input.data('row-id'),
+                Value: input.val(),
+                ValueId: input.data('value-id')
+            };
+            $.post('/ProjectTracker/AddEditPtvalue', data);
+        });
+    });
+
+    
+    function AddEditColumnRow(Id,Type) {
+        $.ajax({
+            url: '@Url.Action("AddEditColumnRow", "ProjectTracker")',
+            type: "GET",
+            data: { Id: Id,Type:Type},
+            success: function (data) {
+                $('#div_AddEditColumnRow').html(data);
+                var modal = new bootstrap.Modal(document.getElementById('model_AddEditColumnRow'));
+                modal.show();
+            },
+            error: function (data) {
+                toastr.error("error in loading Client details")
+            }
+        });
+    }
+    
+
+    /////////////////////////////////////////////////////////////////////
+
+    document.querySelectorAll('th').forEach(th => {
+        const resizer = document.createElement('div');
+        resizer.classList.add('resizer');
+        th.appendChild(resizer);
+
+        let startX, startWidth;
+
+        resizer.addEventListener('mousedown', function (e) {
+            startX = e.pageX;
+            startWidth = th.offsetWidth;
+            th.classList.add('resizing');
+
+            function onMouseMove(e) {
+                const newWidth = startWidth + (e.pageX - startX);
+                th.style.width = newWidth + 'px';
+            }
+
+            function onMouseUp() {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                th.classList.remove('resizing');
+            }
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    });
+
+
+    ///////////////////////////////////////////////////////////
+
+
+        $(document)
+        .on('click', '.move-row', function () {
+            const id = $(this).data('id');
+            const direction = $(this).data('direction');
+            moveRow(id, direction);
+        })
+
+        .on('click', '.move-column', function () {
+            const id = $(this).data('id');
+            const direction = $(this).data('direction');
+            moveColumn(id, direction);
+        })
+        .on('click', '.delete-row', function () {
+            const rowId = $(this).data('row-id');
+            deleteRow(rowId);
+        })
+        .on('click', '.revert-row', function () {
+            const rowId = $(this).data('row-id');
+            revertRow(rowId);
+        })
+        .on('click', '.delete-column', function () {
+            const colId = $(this).data('column-id');
+            deleteColumn(colId);
+        });
+
+
+    function deleteColumn(Id,Type = 1,Status = 1){
+            bootbox.confirm({
+                title: "Delete Column",
+                message: "Are you sure to delete Column?",
+                buttons:{
+                    confirm: {
+                        label: 'Yes',
+                        className: 'btn btnStdColor px-4 btnStdWid2'
+                    },
+                    cancel: {
+                        label: 'No',
+                        className: 'btn btn-secondary px-4 py-1 btn-sm'
+                    }
+                },
+
+                callback: function (result) {
+
+                    if (result) {
+                        $.ajax({
+                          url: '@Url.Action("DeletePtColumnRow", "ProjectTracker")' + '?Id=' + Id + '&Type=' + Type + '&Status=' + Status,
+                            type: "DELETE",
+                            dataType: "json",
+                             success: function (data) {
+                                    toastr.success(data);
+                                    location.reload();
+
+                        },
+                        error: function (xhr, status, error) {
+                            toastr.error("An error occurred while deleting  Column.");
+                        }
+                        });
+                    }
+
+                }
+            });
+    }
+
+
+    function deleteRow(Id,Type = 2,Status = 2){
+        debugger;
+            bootbox.confirm({
+                title: "Delete Row",
+                message: "Are you sure to delete Row?",
+                buttons:{
+                    confirm: {
+                        label: 'Yes',
+                        className: 'btn btnStdColor px-4 btnStdWid2'
+                    },
+                    cancel: {
+                        label: 'No',
+                        className: 'btn btn-secondary px-4 py-1 btn-sm'
+                    }
+                },
+
+                callback: function (result) {
+
+                    if (result) {
+                        $.ajax({
+                          url: '@Url.Action("DeletePtColumnRow", "ProjectTracker")' + '?Id=' + Id + '&Type=' + Type + '&Status=' + Status,
+                         // url: `/ProjectTracker/DeletePtColumnRow/${Id}/${Type}/${Status}`,
+                            type: "DELETE",
+                            dataType: "json",
+                             success: function (data) {
+                                    toastr.success(data);
+                                    location.reload();
+                                
+                        },
+                        error: function (xhr, status, error) {
+                            toastr.error("An error occurred while deleting  Row.");
+                        }
+                        });
+                    }
+
+                }
+            });
+    }
+
+    function revertRow(Id,Type = 2,Status = 1){
+        debugger;
+            bootbox.confirm({
+                title: "Revert Row",
+                message: "Are you sure to Revert Row?",
+                buttons:{
+                    confirm: {
+                        label: 'Yes',
+                        className: 'btn btnStdColor px-4 btnStdWid2'
+                    },
+                    cancel: {
+                        label: 'No',
+                        className: 'btn btn-secondary px-4 py-1 btn-sm'
+                    }
+                },
+
+                callback: function (result) {
+
+                    if (result) {
+                        $.ajax({
+                          url: '@Url.Action("DeletePtColumnRow", "ProjectTracker")' + '?Id=' + Id + '&Type=' + Type + '&Status=' + Status,
+                            type: "DELETE",
+                            dataType: "json",
+                             success: function (data) {
+                                    toastr.success(data);
+                                    location.reload();
+
+                        },
+                        error: function (xhr, status, error) {
+                            toastr.error("An error occurred while reverting  Row.");
+                        }
+                        });
+                    }
+
+                }
+            });
+    }
+
+
+    /////////////////////////////////////////////////////////////////////////////////////
+
+    function moveRow(id, direction) {
+        $.ajax({
+            url: '/ProjectTracker/ReorderProjectTracker',
+            type: 'POST',
+            data: {
+                type: 2, 
+                id: id,
+                direction: direction
+            },
+            success: function (response) {
+                if (response.success) {
+                    location.reload(); 
+                } else {
+                    alert("Error: " + response.message);
+                }
+            },
+            error: function (xhr) {
+                alert("Server error: " + xhr.responseText);
+            }
+        });
+    }
+
+    
+    function moveColumn(id, direction) {
+        $.ajax({
+            url: '/ProjectTracker/ReorderProjectTracker',
+            type: 'POST',
+            data: {
+                type: 1, 
+                id: id,
+                direction: direction
+            },
+            success: function (response) {
+                if (response.success) {
+                    location.reload(); 
+                } else {
+                    alert("Error: " + response.message);
+                }
+            },
+            error: function (xhr) {
+                alert("Server error: " + xhr.responseText);
+            }
+        });
+    }
+
+
+    // right click manu
+    let selectedRowId = null;
+    let selectedCell = null;
+    let colorTargetType = null; // 'row' or 'cell'
+
+    // Show custom context menu on row header
+    $(document).on('contextmenu', '.row-header', function (e) {
+        e.preventDefault();
+        selectedRowId = $(this).data('row-id');
+        selectedCell = null;
+        colorTargetType = 'row';
+
+        $('#rowColorMenu')
+            .css({ top: e.pageY + 'px', left: e.pageX + 'px' })
+            .show();
+    });
+
+    // Show custom context menu on cell
+    $(document).on('contextmenu', '.editable-cell', function (e) {
+        e.preventDefault();
+        selectedCell = $(this);
+        selectedRowId = null;
+        colorTargetType = 'cell';
+
+        $('#rowColorMenu')
+            .css({ top: e.pageY + 'px', left: e.pageX + 'px' })
+            .show();
+    });
+
+    // Hide menu if clicked elsewhere
+    $(document).on('click', function () {
+        $('#rowColorMenu').hide();
+    });
+
+    function getColorCode(color) {
+        switch (color) {
+            case 'red': return 1;
+            case 'green': return 2;
+            case 'orange': return 3;
+            case 'blue': return 4;
+            case 'reset': return null;
+            default: return 0;
+        }
+    }
+
+    // When a color option is clicked
+    $(document).on('click', '.color-option', function (e) {
+        e.stopPropagation(); // Prevent menu from hiding early
+        const color = $(this).data('color');
+        const colorCode = getColorCode(color);
+
+        if (colorTargetType === 'row' && selectedRowId) {
+            const row = $(`[data-row-id="${selectedRowId}"]`).closest('tr');
+
+            if (color === 'reset') {
+                row.find('.row-header, .editable-cell').css('background-color', '');
+            } else {
+                row.find('.row-header, .editable-cell').css('background-color', color);
+            }
+
+            sendColorUpdate(2, colorCode, selectedRowId);
+        }
+        else if (colorTargetType === 'cell' && selectedCell) {
+            const valueId = selectedCell.data('value-id');
+
+            if (color === 'reset') {
+                selectedCell.css('background-color', '');
+            } else {
+                selectedCell.css('background-color', color);
+            }
+
+            sendColorUpdate(1, colorCode, valueId);
+        }
+
+        $('#rowColorMenu').hide();
+    });
+
+    function sendColorUpdate(type, colorCode, targetId) {
+        debugger;
+        $.ajax({
+            url: '/ProjectTracker/UpdatePtColor',
+            method: 'POST',
+            data: {
+                Type: type,
+                ColorCode: colorCode,
+                TargetId: targetId
+            },
+            success: function () {
+                location.reload();
+            },
+            error: function (err) {
+                console.error('Color update failed:', err);
+            }
+        });
+    }
+
+
+    // function autoResizeTextarea(textarea) {
+    //     textarea.style.height = 'auto';
+    //     textarea.style.height = (textarea.scrollHeight) + 'px';
+    // }
+    // $('.editable-cell').each(function () {
+    //     autoResizeTextarea(this);
+    // }).on('input', function () {
+    //     autoResizeTextarea(this);
+
+    //     const $row = $(this).closest('tr');
+
+    //     let maxHeight = 0;
+
+    //         $row.find('textarea.editable-cell').each(function () {
+    //     this.style.height = maxHeight + 'px';
+    //     $(this).closest('td').css('height', maxHeight + 'px');
+    // });
+
+    // $row.css('height', maxHeight + 'px');
+
+    // });
+
+    //     $('.editable-cell').each(function () {
+    //     autoResizeTextarea(this);
+    // }).on('input', function () {
+    //     autoResizeTextarea(this);
+    // });
+
+    //     $row.find('textarea.editable-cell').each(function () {
+    //     this.style.height = maxHeight + 'px';
+    //     $(this).closest('td').css('height', maxHeight + 'px');
+    // });
+
+
+        function autoResizeTextarea(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    function syncRowTextareaHeights($row) {
+        let maxHeight = 0;
+
+        $row.find('textarea.editable-cell').each(function () {
+            this.style.height = 'auto'; // reset
+            if (this.scrollHeight > maxHeight) {
+                maxHeight = this.scrollHeight;
+            }
+        });
+
+        $row.find('textarea.editable-cell').each(function () {
+            this.style.height = maxHeight + 'px';
+        });
+    }
+
+    // Auto adjust height on load
+    $('.editable-cell').each(function () {
+        autoResizeTextarea(this);
+        syncRowTextareaHeights($(this).closest('tr'));
+    });
+
+    // Sync on input (typing)
+    $(document).on('input', '.editable-cell', function () {
+        autoResizeTextarea(this);
+        syncRowTextareaHeights($(this).closest('tr'));
+    });
+
+    // Sync on manual drag resize (mouseup)
+    $(document).on('mouseup', '.editable-cell', function () {
+        syncRowTextareaHeights($(this).closest('tr'));
+    });
+
+
+
+</script>

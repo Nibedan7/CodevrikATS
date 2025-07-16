@@ -1,0 +1,270 @@
+﻿@model CdplATS.Entity.Models.DepartmentEntity
+@using CdplATS.Entity.Models
+@using static CdplATS.Entity.Models.Enum
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" /> 
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<style>
+
+    .select2-container--bootstrap-5 {
+        z-index: 9999 !important;
+    }
+        /* / Main Select2 container / */
+        .select2-container--bootstrap-5 .select2-selection--multiple {
+            border-radius: 8px !important;
+            min-height: 42px;
+            width:750px !important;
+        }
+
+            /* / Individual selected items (tags) / */
+            .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+                border-radius: 12px !important;
+                color: white !important;
+                padding: 2px 8px !important;
+                margin-right: 6px !important;
+                background-color: #007bff !important;
+                border: 1px solid #ced4da !important;
+            }
+
+                /* / Hover effect on tags / */
+                .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice:hover {
+                    background-color: #007bfa !important;
+                }
+
+            /* / Remove button (x) inside tags / */
+            .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+                color: #6c757d !important;
+                margin-right: 4px !important;
+                border-right: none !important;
+            }
+
+        /* / Change hover background color for dropdown options / */
+        .select2-container--bootstrap-5 .select2-results__option--selectable:hover {
+            background-color: #007bff !important;
+            color: #212529 !important;
+        }
+
+        /* / Selected option in dropdown / */
+        .select2-container--bootstrap-5 .select2-results__option--selected {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+</style>
+
+<div class="modal fade" id="model_DepartmentDetail" tabindex="-1" aria-labelledby="DepartmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="margin-top: 50px;">
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title standardColor" id="EmployeeModalLabel">
+                    @(Model.DepartmentId == 0 ? "Add Department" : "Edit Department")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="DepartmentForm" method="post">
+                    <input type="hidden" asp-for="DepartmentId" id="DepartmentId" />
+                    <!-- Department Name Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor">Department Name</label>
+                            <input asp-for="DepartmentName" id="DepartmentName" type="text" class="form-control" name="DepartmentName" required>
+                            <span id="DepartmentNameValidation" asp-validation-for="DepartmentName" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label standardColor">Choose Leader</label>
+                            @Html.DropDownListFor(
+                                     model => model.LeadBy,
+                                     new SelectList(Model.EmployeeList, "EmployeeCode", "EmployeeName"),
+                                     "--Select Leader--",
+                                     new { @class = "form-select", id = "leader-select" }
+                                     )
+                            <span id="LeadByValidation" asp-validation-for="LeadBy" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Leader and Employees Selection Row -->
+                    <div class="row mb-3">
+                        
+
+                        <div class="col-md-6 d-flex flex-column">
+                             <label class="form-label standardColor">Select Employees</label>
+
+                            <select class="form-select" id="multiple-select-clear-field" data-placeholder="Choose Employees" multiple>
+
+                            </select>
+
+
+                            <span id="SelectEmployeesValidation" asp-validation-for="SelectEmployees" class="text-danger"></span>
+                        </div>
+                    </div>
+
+
+                    <hr class="mt-4 mb-3 border-dark" style="margin-left: -24px; margin-right: -24px;">
+
+                    <!-- Buttons Aligned Right -->
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btnStdColor px-4 me-2 btnStdWid2" id="submitBtn" onclick="saveDepartment()">Save</button>
+                        <button type="button" class="btn btn-secondary px-3 me-2 btnStdWid2" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function initializeDepartmentModal() {
+        $(document).ready(function () {
+            $( '#multiple-select-clear-field' ).select2( {
+                theme: "bootstrap-5",
+                width: '100%',
+                placeholder: "Choose Employees",
+                closeOnSelect: false,
+            } );
+        });
+
+        bindEmployeesDropDown();
+
+        $('#leader-select').change(function (){
+            bindEmployeesDropDown();
+        });
+    }
+
+    function bindEmployeesDropDown(){
+        const $multiSelect = $('#multiple-select-clear-field');
+        const leaderCode = $('#leader-select').val() || 0;
+        $.ajax({
+            type: "GET",
+            url: '@Url.Action("BindEmployeeForDepartment", "Department")',
+            data: {LeaderId: leaderCode},
+            success: function (data) {
+                $multiSelect.empty();  // Clear existing options
+                $.each(data, function (index, item) {
+                    $multiSelect.append($('<option>', {
+                        value: item.employeeCode,    // Assuming your API returns this
+                        text: item.employeeName      // And this
+                    }));
+                });
+                performDepartmentAction();
+            },
+            error: function(){
+
+            }
+
+        });
+    }
+
+    
+
+
+    function performDepartmentAction(){
+        const preselectedEmployees = '@Model.SelectEmployees'.split(',').map(x => x.trim()).filter(x => x);
+        var departmentId = $('#DepartmentId').val();
+        const $multiSelect = $('#multiple-select-clear-field');
+        const leaderCode = $('#leader-select').val();
+        const leaderText = $("#leader-select option:selected").text();
+
+        // Remove any existing leader from the multiselect
+        $multiSelect.find('option[data-leader="true"]').remove();
+
+        if (leaderCode) {
+            // Add leader to the multiselect as selected and disable it
+            const leaderOption = new Option(leaderText, leaderCode, true, true);
+            $(leaderOption).attr('data-leader', 'true');
+            $multiSelect.append(leaderOption).trigger('change');
+
+            // Remove leader from normal options in multiselect
+            $multiSelect.find('option').each(function () {
+                if ($(this).val() === leaderCode && !$(this).attr('data-leader')) {
+                    $(this).remove();
+                }
+            });
+        }
+
+        // Refresh select2
+        $multiSelect.trigger('change');
+
+
+        // Prevent user from removing leader from multiselect
+        $multiSelect.on('select2:unselecting', function (e) {
+            const selectedVal = e.params.args.data.id;
+            const leaderCode = $('#leader-select').val();
+
+            if (selectedVal === leaderCode) {
+                e.preventDefault(); // prevent unselect
+            }
+        });
+
+        //bind selected employees while editing
+        if(departmentId > 0){
+            $('#multiple-select-clear-field')
+                .val(preselectedEmployees)
+                .trigger('change');
+        }
+    }
+     
+    
+     // save button
+      function saveDepartment() {
+            var departmentName = $('#DepartmentName').val();
+            var leaderCode = $('#leader-select').val();
+            var departmentId = $('#DepartmentId').val();
+            var selectedEmployeeCodes = $('#multiple-select-clear-field').val() || [];
+
+            var employeeCodes = selectedEmployeeCodes.join(',');
+
+            if(departmentName == ""){
+                $('#DepartmentNameValidation').text("Department Name is required");
+            }
+            if( employeeCodes == ""){
+                $('#LeadByValidation').text("Leader is required");
+            }
+            // if(selectedIds.length == 0){
+            //     $('#SelectEmployeesValidation').text("Employees are required");
+            // }
+
+            if(departmentName == "" || employeeCodes == ""){
+                return 
+            }
+
+              $.ajax({
+                  url: '@Url.Action("AddEditDepartment", "Department")',
+                  type: "POST",
+                  contentType: "application/json; charset=utf-8",
+                  data: JSON.stringify({
+                      DepartmentName:departmentName,
+                      LeadBy: leaderCode,
+                      SelectEmployees: employeeCodes,
+                      DepartmentId : departmentId
+                  }),
+                  success: function (data) {
+                      if (data.success) {
+                          toastr.success(data.message);
+
+                        //  Properly hide the modal using Bootstrap 5's Modal API
+                          var modalEl = document.getElementById('model_DepartmentDetail');
+                          var modal = bootstrap.Modal.getInstance(modalEl);
+                          if (modal) {
+                              modal.hide();
+                          }
+
+                          bindDepartmentGrid();
+                      } else {
+                          toastr.error(data.message);
+                      }
+                  },
+                  error: function (data) {
+                      toastr.error("Something went wrong.!");
+                  }
+              });
+      }
+</script>
+
+
+
+
+
+

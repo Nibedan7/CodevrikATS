@@ -1,0 +1,51 @@
+using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+using CdplATS.UI.Helpers;
+using CdplATS.Entity.Models;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text;
+using System.Collections.Generic;
+using NUnit.Framework;
+
+namespace CdplATS.UI.Controllers;
+
+public class HomeController : Controller
+{
+    private readonly WebApiHelper _webApiHelper;
+
+    public HomeController(WebApiHelper webApiHelper)
+    {
+        _webApiHelper = webApiHelper;
+    }
+
+
+public async Task<IActionResult> Index()
+     {
+
+        //// Sample login request (Replace with actual login form data)
+        //var loginData = new { Username = "admin", Password = "password" };
+        //LoginEntity loginEntity = new LoginEntity();
+        //loginEntity.Username = loginData.Username;
+        //loginEntity.Password = loginData.Password;  
+        //var response = await _webApiHelper.PostUnAuthorizedAsync<dynamic>("api/authapi/login",loginEntity);
+
+       
+        //    // Call API: GET /api/users/get-all
+           // var users = await _webApiHelper.GetAsync<List<User>>("api/userapi/get-all");
+
+        //    // Return data to View
+            return View();
+        //}
+        //catch (Exception ex)
+        //{
+        //    ViewBag.ErrorMessage = $"API Call Failed: {ex.Message}";
+        //    return View(new List<User>());
+        //}
+    }
+    public async Task<IActionResult> GetAllUser()
+    {
+        var users = await _webApiHelper.GetAsync<List<LoggerEntity>>("api/userapi/get-all");
+        return Json(users.Data);
+    }
+}

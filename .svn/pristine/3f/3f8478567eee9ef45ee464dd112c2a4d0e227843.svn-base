@@ -1,0 +1,58 @@
+﻿using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+
+namespace CdplATS.UI.Controllers
+{
+    public class AccountController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+        private readonly HttpClient _httpClient;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly CommonService _common;
+
+        public AccountController(WebApiHelper webApiHelper, IHttpContextAccessor httpContextAccessor,CommonService common)
+        {
+            _webApiHelper = webApiHelper;
+            _httpContextAccessor = httpContextAccessor;
+            _common = common;
+        }
+        public IActionResult Index()
+        {
+            return View("Login");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Login(LoginEntity model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            var response = await _webApiHelper.PostUnAuthorizedAsync<dynamic>(_apiHelper.LoginApi, model);
+            EmailEntity emailEntity = new EmailEntity();
+            emailEntity.Body = "Your login was successful";
+            emailEntity.Subject = "Login Success";  
+            emailEntity.Email = "cjoshi@succeedpartners.com";
+            _common.SendEmail(emailEntity);
+            if (response.Success)
+            {
+                return RedirectToAction("Index", "Leave");
+            }
+            else { 
+                ViewBag.ErrorMessage = response.Message;
+            }
+            return View();
+
+        }
+        public IActionResult Logout()
+        {
+            _httpContextAccessor.HttpContext.Session.Clear();
+
+            return RedirectToAction("Index", "Account");
+        }
+
+    }
+}

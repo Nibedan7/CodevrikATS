@@ -1,0 +1,118 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using DocumentFormat.OpenXml.Bibliography;
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace CdplATS.API.Services
+{
+    public class ClientService
+    {
+        private readonly GenericRepository _genericRepository;
+        public ClientService(GenericRepository genericRepository)
+        {
+            _genericRepository = genericRepository;
+        }
+        public async Task<ApiResponse<IEnumerable<ClientEntity>>> GetClientList(int Id = 0)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", SqlDbType.Int) { Value = Id }
+                };
+
+                var client = await _genericRepository.GetAllAsync<ClientEntity>("GetClientList", parameters);
+                return new ApiResponse<IEnumerable<ClientEntity>>(client, "Client data retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<ClientEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+
+        public async Task<ApiResponse<ClientEntity>> GetClientDetails(int Id)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", SqlDbType.Int) { Value = Id }
+                };
+
+                var client = await _genericRepository.GetAsync<ClientEntity>("GetClientList", parameters);
+                return new ApiResponse<ClientEntity>(client, "Client data retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<ClientEntity>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+
+        public async Task<ApiResponse<string>> AddEditClient(ClientEntity request)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", SqlDbType.Int) { Value = request.Id },
+                    new SqlParameter("@Client", SqlDbType.NVarChar) { Value = request.Client },
+                    new SqlParameter("@Project", SqlDbType.NVarChar) { Value = request.Project },
+                    new SqlParameter("@Client_Contact", SqlDbType.NVarChar) { Value = request.Client_Contact },
+                    new SqlParameter("@Dev_Team", SqlDbType.NVarChar) { Value = request.Dev_Team },
+                    new SqlParameter("@Status", SqlDbType.NVarChar) { Value = request.Status},
+                    new SqlParameter("@Issues", SqlDbType.NVarChar) { Value = request.Issues },
+                    new SqlParameter("@Date_schedule", SqlDbType.NVarChar) { Value = request.Date_schedule },
+                    new SqlParameter("@Hour_Status", SqlDbType.NVarChar) { Value = request.Hour_status },
+                };
+                    
+
+                var result = await _genericRepository.GetAsync<dynamic>("AddEditClient", parameters);
+
+                if (result.StatusCode == -1)
+                {
+                    return new ApiResponse<string> { Success = false, Message = "Project already exists!" };
+                }
+                else
+                {
+                    if (request.Id == 0)
+                    {
+                        return new ApiResponse<string> { Success = true, Message = "Client added successfully" };
+                    }
+                    else
+                    {
+                        return new ApiResponse<string> { Success = true, Message = "Client Updated successfully" };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string> { Success = false, Message = $"Error inserting/updating Client data: {ex.Message}" };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> DeleteClient(int Id)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", Id)
+                };
+                var result = await _genericRepository.ExecuteAsync("DeleteClient", parameters);
+                if (result == 0)
+                {
+                    return new ApiResponse<bool>(true, "Error: No Client data returned.", true);
+                }
+                return new ApiResponse<bool>(true, "Client deleted successfully.", true);
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<bool>(false, $"Error: {ex.Message}", false);
+            }
+        }
+
+    }
+}

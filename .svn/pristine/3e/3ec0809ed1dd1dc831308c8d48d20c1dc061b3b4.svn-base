@@ -1,0 +1,28 @@
+﻿using CdplATS.API.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EmployeeFileApi : ControllerBase
+    {
+        public readonly EmployeeFileServices _employeeFileServices;
+        public EmployeeFileApi(EmployeeFileServices employeeFileServices)
+        {
+            _employeeFileServices = employeeFileServices;
+        }
+
+        [HttpGet("GetEmployeeInfo")]
+        public async Task<IActionResult> GetEmployeeFileList()
+        {
+            var response = await _employeeFileServices.GetEmployeeInfo();
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+    }
+}

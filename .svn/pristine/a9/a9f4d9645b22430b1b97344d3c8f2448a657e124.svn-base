@@ -1,0 +1,111 @@
+﻿using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using static CdplATS.Entity.Models.EmployeeEntity;
+
+namespace CdplATS.UI.Controllers
+{
+    public class EmployeeController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public EmployeeController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+        }
+
+        //  employee index view
+        public IActionResult Index()
+        {
+            Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            Response.Headers["Pragma"] = "no-cache";
+            Response.Headers["Expires"] = "0";
+
+            var LoggedEmpCode = HttpContext.Session.GetInt32("authCode");
+            if (LoggedEmpCode == null)
+            {
+                return RedirectToAction("Index", "Account");
+            }
+            return View();
+        }
+
+        //get employee
+        public async Task<IActionResult> GetEmployees()
+        {
+            var employees = await _webApiHelper.GetAsync<List<EmployeeEntity>>(_apiHelper.GetEmployeeByIdApi);
+            return Json(employees.Data);
+        }
+
+        //add edit employee method(get)
+        [HttpGet]
+        public async Task<IActionResult> AddEditEmployee(int Id)
+        {
+            EmployeeEntity employee = new EmployeeEntity();
+            var department = await _webApiHelper.GetAsync<List<DepartmentList>>(_apiHelper.DepartmentDropdown);
+
+            ViewBag.DepartmentList = department.Data;
+
+            if (Id == 0)
+            {
+                return PartialView("/Views/Employee/AddEditEmployee.cshtml", employee);
+            }
+
+            var employees = await _webApiHelper.GetAsync<List<EmployeeEntity>>(_apiHelper.GetEmployeeByIdApi + $"?Id={Id}");
+
+            if (employees == null)
+            {
+                return NotFound("Employee Not Found");
+            }
+
+            return PartialView("/Views/Employee/AddEditEmployee.cshtml", employees.Data[0]);
+        }
+
+        //add edit employee method(post) 
+        [HttpPost]
+        public async Task<IActionResult> AddEditEmployee(EmployeeEntity request)
+        {
+            var LoggedEmpCode = HttpContext.Session.GetInt32("authCode");
+            request.authCode = LoggedEmpCode;
+            if (request == null)
+            {
+                return BadRequest("Invalid Data");
+            }
+
+            if (ModelState.IsValid)
+            {
+                var response = await _webApiHelper.PostAsync<EmployeeEntity>(_apiHelper.AddEditEmployeeApi, request);
+
+                if (response == null)
+                {
+                    return StatusCode(500, "Error adding/editing employee.");
+                }
+                return Json(response);
+            }
+            return BadRequest("Model validation failed.");
+        }
+
+        //delete employee method
+        [HttpDelete]
+        public async Task<IActionResult> DeleteEmployee(int Id)
+        {
+            if (Id <= 0)
+            {
+                return BadRequest("Invalid employee ID.");
+            }
+            var response = await _webApiHelper.DeleteAsync<bool>(_apiHelper.DeleteEmployeeApi+$"{Id}");
+
+            if (response == null || !response.Success)
+            {
+                return StatusCode(500, "Error deleting employee.");
+            }
+            return Json(new { success = true, message = "Employee deleted successfully." });
+        }
+    }
+}

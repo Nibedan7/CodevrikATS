@@ -1,0 +1,59 @@
+﻿using CdplATS.API.Services;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ClientApiController : ControllerBase
+    {
+        private readonly ClientService _clientServices;
+
+        public ClientApiController(ClientService clientServices)
+        {
+            this._clientServices = clientServices;
+        }
+
+        /// <summary>
+        /// Get Roles
+        /// </summary>
+        [HttpGet("GetClient")]
+        public async Task<IActionResult> GetClientList(int Id = 0)
+        {
+            var response = await _clientServices.GetClientList(Id);
+            return Ok(response);
+        }
+
+        [HttpGet("GetClientDetails")]
+        public async Task<IActionResult> GetClientDetails(int Id)
+        {
+            var response = await _clientServices.GetClientDetails(Id);
+            return Ok(response);
+        }
+
+        [HttpPost("AddEditClient")]
+        public async Task<IActionResult> AddEditClient([FromBody] ClientEntity client)
+        {
+            var response = await _clientServices.AddEditClient(client);
+            return Ok(response);
+        }
+
+        [HttpDelete("DeleteClient/{Id}")]
+        public async Task<IActionResult> DeleteClient(int Id)
+        {
+            if (Id <= 0)
+            {
+                return BadRequest(new { message = "Invalid client id" });
+            }
+            var response = await _clientServices.DeleteClient(Id);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+
+        }
+
+    }
+}

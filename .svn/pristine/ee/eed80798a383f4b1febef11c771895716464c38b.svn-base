@@ -1,0 +1,176 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
+using Microsoft.OpenApi.Models;
+using System.Text;
+using CdplATS.API.Repositories;
+using CdplATS.API.Services;
+using CdplATS.API.Configuration;
+using Hangfire;
+using Hangfire.SqlServer;
+using Azure.Core.Pipeline;
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+
+        // Load Configuration
+        var configuration = builder.Configuration;
+
+        // Hangfire configuration
+        builder.Services.AddHangfire(config =>
+        {
+            config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                  .UseSimpleAssemblyNameTypeSerializer()
+                  .UseRecommendedSerializerSettings()
+                  .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"), new SqlServerStorageOptions
+                  {
+                      CommandBatchMaxTimeout = TimeSpan.FromMinutes(30),
+                      SlidingInvisibilityTimeout = TimeSpan.FromMinutes(30),
+                      QueuePollInterval = TimeSpan.Zero,
+                      UseRecommendedIsolationLevel = true,
+                      DisableGlobalLocks = true
+                  });
+        });
+
+        builder.Services.AddHangfireServer();
+
+
+
+        // Add Services to the Container
+        ConfigureServices(builder.Services, configuration);
+
+        var app = builder.Build();
+
+        // Hangfire Dashboard
+        app.UseHangfireDashboard();
+
+        RecurringJob.AddOrUpdate<DailyJobService>(
+              "daily-employee-job",
+              job => job.SetupAllPunchFromEasyTimeToCDPLATS(),
+              Cron.Daily(hour: 8),
+              new RecurringJobOptions
+              {
+                  TimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time")
+              }
+          );
+
+
+        // Configure Middleware
+        ConfigureMiddleware(app);
+
+        app.Run();
+    }
+
+    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    {
+        // Load JWT settings from appsettings.json
+        var jwtSettings = new JwtSettings();
+        configuration.GetSection("Jwt").Bind(jwtSettings);
+        services.AddSingleton(jwtSettings);
+
+        // Add Redis caching
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration.GetConnectionString("Redis");
+        });
+        services.AddSingleton<RedisCacheHelper>();
+
+        services.AddControllers();
+        services.AddEndpointsApiExplorer();
+
+        // Swagger with JWT Authentication support
+        services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "CdplATS API", Version = "v1" });
+
+            // Add JWT Authentication to Swagger
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Description = "Enter 'Bearer {your_token_here}'",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "Bearer"
+            });
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new string[] {}
+                }
+            });
+        });
+
+        // Register Dependencies
+        services.AddScoped<UserService>();
+        services.AddScoped<AccountService>();
+        services.AddScoped<GenericRepository>();
+        services.AddScoped<HolidayService>(); // Register the HolidayService
+        services.AddScoped<DailyJobService>();
+        services.AddScoped<EmployeeService>();
+        services.AddScoped<CommonServices>();
+
+        services.AddScoped<ManualLogService>();
+        services.AddScoped<LeaveService>();
+        services.AddScoped<PunchService>();
+
+
+        // Redis Configuration
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var redisConfig = configuration.GetConnectionString("Redis");
+            return ConnectionMultiplexer.Connect(redisConfig);
+        });
+
+        // JWT Authentication
+        var key = Encoding.UTF8.GetBytes(configuration["Jwt:Key"]);
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                };
+            });
+
+        services.AddAuthorization();
+    }
+
+    private static void ConfigureMiddleware(WebApplication app)
+    {
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseHttpsRedirection();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapControllers();
+    }
+}

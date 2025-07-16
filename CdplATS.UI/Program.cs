@@ -1,0 +1,63 @@
+using System.Drawing.Text;
+using System.Text.Json;
+using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+var builder = WebApplication.CreateBuilder(args);
+
+
+//builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpContextAccessor(); // Required for accessing HttpContext
+builder.Services.AddDistributedMemoryCache(); // Required for session
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(60); // Set session timeout
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient(); // Add HttpClient factory
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddScoped<WebApiHelper>(); // Register WebApiHelper
+builder.Services.AddScoped<CommonService>();
+builder.Services.AddHostedService<DailyEmailSenderService>();
+
+
+builder.Services.Configure<EmailConfig>(builder.Configuration.GetSection("EmailConfig"));
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseSession(); // Enable session before authentication & authorization
+app.UseMiddleware<JwtRedirectMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Middleware for redirect can go after routing
+app.UseMiddleware<JwtRedirectMiddleware>();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Account}/{action=Index}/{id?}");
+
+//app.UseSession(); // Enable session before authentication & authorization
+//app.UseMiddleware<JwtRedirectMiddleware>();
+//app.UseAuthentication();
+//app.UseAuthorization();
+
+
+app.Run();

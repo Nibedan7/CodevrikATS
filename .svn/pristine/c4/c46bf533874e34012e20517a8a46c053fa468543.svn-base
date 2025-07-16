@@ -1,0 +1,243 @@
+﻿@{
+    ViewBag.Title = "Employee";
+}
+<script src="~/js/jquery.min.js"></script>
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Dashboard</a></li>
+		<li class="breadcrumb-item active standardColor" aria-current="page">Employee List</li>
+	</ol>
+</nav>
+
+<div class="container-fluid">
+    <!-- Table Header with Add Button -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="standardColor"><i class="fa-solid fa-users standardColor"></i> Employee Details</h5>
+		<button type="button" class="btn btnStdColor" data-bs-toggle="modal" data-bs-target="#model_EmployeeDetail" onclick="AddEditEmployee(0)">
+            <i class="fa-solid fa-plus"></i> Add Employee
+        </button>
+    </div>
+  
+		<div class="table-container">
+			<table id="tblEmployeeDetail" class="table table-bordered table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th hidden>Id</th>
+                                <th>FirstName</th>
+                                <th>LastName</th>
+                                <th>EmployeeId</th>
+                                <th>EmployeeCode</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>  
+             </table>
+		 </div>    
+</div>
+@* for add - edit *@
+<div id="div_EmployeeDetail"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+           bindEmployeeGrid();
+    });
+
+    function bindEmployeeGrid() {
+        $.ajax({
+            type: "GET",
+            url: '@Url.Action("GetEmployees", "Employee")',
+            dataType: "json",
+            success: function (data) {
+                EmployeeSuccHandler(data);
+
+            },
+            error: EmployeeErrhandler
+        });
+    }
+		function EmployeeErrhandler(xhr, status, error) {
+		console.error("Error fetching Employee data:", error);
+	}
+	function EmployeeSuccHandler(data) {
+		try {
+			var dataTableExample = $('#tblEmployeeDetail').DataTable();
+			if (dataTableExample != 'undefined') {
+				dataTableExample.destroy();
+			}
+			dataTableExample = $('#tblEmployeeDetail').DataTable({
+
+				scrollY: false,
+				"order": [],
+				"lengthMenu": [10, 30, 40, 50, 60],
+				"dom": 'frtlip',
+				"bFilter": true,
+				"aaData": data,
+				"language": {
+				  "lengthMenu": "Show _MENU_ entries,"
+			  },
+				"aoColumns": [
+					{
+						"mData": "Id",
+						"visible": false	
+					},
+					{
+						"sWidth": "6%",
+						"mData": "FirstName",
+						"className": "dt-left"
+
+					},
+					{
+						"sWidth": "6%",
+						"mData": "LastName",
+						"className": "dt-left"
+
+					},
+					{
+						"sWidth": "6%",
+						"mData": "EmployeeId",
+						"className": "dt-left"
+
+					},
+					{
+						"sWidth": "6%",
+						"mData": "EmployeeCode",
+						"className": "dt-left"
+
+					},
+					
+					{
+						"sWidth": "8%",
+						"mData": "Id",
+						"sortable": false,
+						"className": "dt-center",
+						"render": function (data, type, row, meta) {
+							//console.log(row.Id);
+						 var actionButtons = '<button onclick="AddEditEmployee(\'' + row.Id + '\')" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-pen-to-square"></i></button>';
+
+							actionButtons += '<button onclick="deleteEmployee(' + row.Id + ')" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-trash"></button>';
+
+							return actionButtons;
+						}
+					}
+				]
+			});
+			$(".dataTables_length").css('clear', 'none');
+			$(".dataTables_length").css('margin-right', '20px');
+			$(".dataTables_info").css('clear', 'none');
+			$(".dataTables_info").css('padding', '0');
+
+		} catch (e) {
+			alert(e.message);
+		}
+	}
+
+			function AddEditEmployee(Id) {
+		// Remove any existing modal and backdrop before adding a new one
+		if ($('#model_EmployeeDetail').length > 0) {
+			$('#model_EmployeeDetail').modal('hide'); // Hide modal
+			$('#model_EmployeeDetail').remove(); // Remove modal
+			$('.modal-backdrop').remove(); // Remove overlay
+		}
+
+		$.ajax({
+			url: '@Url.Action("AddEditEmployee", "Employee")',
+			type: "GET",
+			data: { Id: Id },
+			success: function (data) {
+				// Inject the new modal content
+				$('#div_EmployeeDetail').html(data);
+
+				// Ensure DOM updates before initializing the modal
+				setTimeout(() => {
+					var modalElement = document.getElementById('model_EmployeeDetail');
+					if (modalElement) {
+						var newModal = new bootstrap.Modal(modalElement, {
+							backdrop: 'static', // Prevent closing on background click
+							keyboard: false
+						});
+
+						// Show the new modal
+						newModal.show();
+
+						// Ensure modal event listeners don't duplicate
+						$(modalElement).on('hidden.bs.modal', function () {
+							$(this).remove(); // Remove modal on close
+							$('.modal-backdrop').remove(); // Remove any leftover backdrop
+						});
+					}
+				}, 200); // Small delay ensures modal is properly initialized
+			},
+			error: function () {
+				console.log("Error loading partial view.");
+			}
+		});
+	}
+
+
+
+
+
+	//EditEmployee 
+	function EditEmployee(Id){
+		// console.log(Id);
+		$.ajax({
+			url: '@Url.Action("GetEmployeeById", "Employee")',
+			type: "GET",
+			data: { Id: Id },
+			success: function (data) {
+				$('#div_EmployeeDetail').html(data);
+				var modal = new bootstrap.Modal(document.getElementById('model_EmployeeDetail'));
+				modal.show();
+			},
+			error: function (data) {
+				
+			}
+		});
+	}
+	
+		
+	//deleteEmployee
+	 function deleteEmployee(Id){
+		 bootbox.confirm({
+			 title: "Delete Employee",
+			 message: "Are you sure want to remove Employee?",
+			 buttons: {
+				 confirm: {
+					 label: 'Yes',
+					 className: 'btn btnStdColor px-4'
+				 },
+				 cancel: {
+					 label: 'No',
+					 className: 'btn btn-secondary px-4 py-1'
+				 }
+			 },
+			 callback: function (result) {
+				 if (result) {
+					 $.ajax({
+						 url: '@Url.Action("DeleteEmployee", "Employee")/' + Id,
+						 type: "DELETE",
+						 success: function (response) {
+						 if (response.success) {
+							 toastr.success("Employee deleted successfully!");
+
+							 setTimeout(function () {
+								 window.location.reload();
+							 }, 1000);
+						 } else {
+							 toastr.error("Error: " + response.message);
+						 }
+					 },
+					 error: function (xhr, status, error) {
+						 console.log("Error: " + status + " - " + error);
+						 toastr.error("An error occurred while deleting the employee.");
+					 }
+					 });
+				 }
+
+			 }
+		 });
+	 }
+
+
+</script>

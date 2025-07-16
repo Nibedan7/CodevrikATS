@@ -1,0 +1,27 @@
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.UI.Controllers
+{
+    public class AppraisalController : Controller
+    {
+        public IActionResult Index()
+        {
+            return View();
+        }
+        public IActionResult LoadTab1()
+        {
+            // You can replace this with any model or data you need to load
+            return PartialView("/Views/Appraisal/Tab1.cshtml");
+        }
+
+        public IActionResult LoadTab2()
+        {
+            return PartialView("Views/Appraisal/Tab2.cshtml");
+        }
+
+        public IActionResult LoadTab3()
+        {
+            return PartialView("Views/Appraisal/Tab3.cshtml");
+        }
+    }
+}

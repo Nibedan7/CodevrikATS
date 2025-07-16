@@ -1,0 +1,50 @@
+﻿using CdplATS.API.Services;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
+    public class RoleApiController : ControllerBase
+    {
+        private readonly RoleServices _roleServices;
+
+        public RoleApiController(RoleServices roleServices)
+        {
+            this._roleServices = roleServices;
+        }
+
+        /// <summary>
+        /// Get Roles
+        /// </summary>
+        [HttpGet("GetRoles")]
+        public async Task<IActionResult> GetRoles(int RoleId = 0)
+        {
+            var response = await _roleServices.GetRolesAsync(RoleId);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Add / Edit Roles
+        /// </summary>  
+        ///
+
+        [HttpPost("addEditRole")]
+        public async Task<IActionResult> AddEditRole([FromBody] RoleEntity roleEntity)
+        {
+            var response = await _roleServices.AddEditRolesAsync(roleEntity);
+            return Ok(response);
+        }
+
+        [HttpDelete("deleteRole/{roleId}")]
+        public async Task<IActionResult> DeleteRole(int roleId)
+        {
+            var response = await _roleServices.DeleteRoleAsync(roleId);
+            return Ok(response);
+        }
+    }
+}

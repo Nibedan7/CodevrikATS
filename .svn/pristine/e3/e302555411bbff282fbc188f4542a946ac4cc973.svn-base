@@ -1,0 +1,61 @@
+﻿using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.UI.Controllers
+{
+    public class RoleController : AuthController
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+        public RoleController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+        }
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRoleList()
+        {
+            var roles = await _webApiHelper.GetAsync<List<RoleEntity>>(_apiHelper.GetRoleById);
+            return Json(roles.Data);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRoleDetails(int RoleId)
+        {
+            RoleEntity roleModel = new RoleEntity();
+
+            if (RoleId != 0)
+            {
+                var role = await _webApiHelper.GetAsync<List<RoleEntity>>(_apiHelper.GetRoleById + $"?RoleId={RoleId}");
+                roleModel = role.Data[0];
+            }
+            return PartialView("/Views/Role/AddEditRole.cshtml", roleModel);
+        }
+        [HttpPost]
+        public async Task<IActionResult> SaveRole(RoleEntity roleEntity)
+        {
+            if (ModelState.IsValid)
+            {
+                var empCode = HttpContext.Session.GetInt32("authCode");
+                roleEntity.createdBy = empCode;
+                var result = await _webApiHelper.PostAsync<dynamic>(_apiHelper.AddEditRoles, roleEntity);
+
+                return Json(result);
+            }
+            return View("Index");
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteRole(int RoleId)
+        {
+            var result = await _webApiHelper.DeleteAsync<dynamic>(_apiHelper.DeleteRoleApi + $"{RoleId}");
+            return Json(result);
+        }
+    }
+}

@@ -1,0 +1,28 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CdplATS.Entity.Models
+{
+    public class AppraisalEntity
+    {
+        public int AssessmentCategoryId { get; set; }
+        public string AssessmentCategoryName { get; set; }
+        public int AssessmentId { get; set; }
+        public string Assessment { get; set; }
+        public string PlaceHolder { get; set; }
+        public int? SelfRating { get; set; }
+        public string SelfComment { get; set; }
+        public int IsSelfAssSubmitted { get; set; }
+        public int? Reviewer1_Rating { get; set; }
+        public string Reviewer1_Comment { get; set; }
+        public int IsReviewer1_Submitted { get; set; }
+        public int? Reviewer2_Rating { get; set; }
+        public string Reviewer2_Comment { get; set; }
+        public int IsReviewer2_Submitted { get; set; }
+        public string? Reviewer1Name { get; set; }
+        public string? Reviewer2Name { get; set; }
+    }
+}

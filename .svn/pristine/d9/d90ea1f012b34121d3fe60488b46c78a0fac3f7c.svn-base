@@ -1,0 +1,95 @@
+﻿using System.Data;
+using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+
+namespace CdplATS.API.Services
+{
+    public class EmployeeService
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public EmployeeService(GenericRepository genericRepository)
+        {
+            _genericRepository = genericRepository;
+        }
+
+        // Get all employees service
+        public async Task<ApiResponse<IEnumerable<EmployeeEntity>>> GetAllEmployees()
+        {
+            try
+            {
+                var employees = await _genericRepository.GetAllAsync<EmployeeEntity>("GetAllEmployee");
+                if (employees == null)
+                {
+                    return new ApiResponse<IEnumerable<EmployeeEntity>>(null, "No employees found!", false);
+                }
+                return new ApiResponse<IEnumerable<EmployeeEntity>>(employees, "Employees retrieved successfully.", true);
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<EmployeeEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        //get employee by id employee service
+        public async Task<ApiResponse<EmployeeEntity>> GetEmployeeById(int Id)
+        {
+            try
+            {
+                var employee = await _genericRepository.GetAsync<EmployeeEntity>("GetEmployeeById", new SqlParameter[] { new SqlParameter("@Id", Id) });
+                return new ApiResponse<EmployeeEntity>(employee, "employee retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<EmployeeEntity>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+
+        // add edit employee service
+        public async Task<ApiResponse<EmployeeEntity>> AddEditEmployee(EmployeeEntity request)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", request.Id),
+                    new SqlParameter("@FirstName", request.FirstName),
+                    new SqlParameter("@LastName", request.LastName),
+                    new SqlParameter("@EmployeeId", request.EmployeeId),
+                    new SqlParameter("@EmployeeCode", request.EmployeeCode),
+                    
+
+                };
+                var employee = await _genericRepository.GetAsync<EmployeeEntity>("AddEditEmployee", parameters);
+                return new ApiResponse<EmployeeEntity>(employee, "employee retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<EmployeeEntity>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        //delete employee service
+        public async Task<ApiResponse<bool>> DeleteEmployee(int Id)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", Id)
+                };
+
+                await _genericRepository.ExecuteAsync("DeleteEmployee", parameters);
+                return new ApiResponse<bool>(true, "Employee deleted successfully.", true);
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<bool>(false, $"Error: {ex.Message}", false);
+            }
+        }
+
+
+    }
+}

@@ -1,0 +1,53 @@
+﻿using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using CdplATS.Entity.Models;
+
+namespace CdplATS.UI.Helpers
+{
+    public class AuthController : Controller
+    {
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            var controllerName = context.RouteData.Values["controller"]?.ToString();
+            var actionName = context.RouteData.Values["action"]?.ToString();
+
+            var rightsJson = HttpContext.Session.GetString("RoleRights");
+
+            if (string.IsNullOrEmpty(rightsJson))
+            {
+                context.Result = new UnauthorizedResult();
+                return;
+            }
+
+            var rights = JsonConvert.DeserializeObject<List<AuthRoleRightEntity>>(rightsJson);
+
+            var matchedRight = rights.FirstOrDefault(r =>
+                string.Equals(r.MenuName, controllerName, StringComparison.OrdinalIgnoreCase));
+
+            if (matchedRight == null)
+            {
+                context.Result = new ForbidResult();
+                return;
+            }
+
+            bool hasAccess = actionName.ToLower() switch
+            {
+                "index" => matchedRight.CanView == 1,
+                var a when a.Contains("add") => matchedRight.CanAdd == 1,
+                var a when a.Contains("edit") => matchedRight.CanEdit == 1,
+                var a when a.Contains("delete") => matchedRight.CanDelete == 1,
+                _ => true // allow unknown actions by default (or change to false)
+            };
+
+            if (!hasAccess)
+            {
+                context.Result = new RedirectToActionResult("AccessDenied", "Account", null);
+                return;
+            }
+
+            base.OnActionExecuting(context);
+        }
+    }
+
+}

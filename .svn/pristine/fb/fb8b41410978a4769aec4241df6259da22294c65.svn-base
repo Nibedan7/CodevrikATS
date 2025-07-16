@@ -1,0 +1,31 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CdplATS.Entity.Models
+{
+    public class ResetPasswordEntity
+    {
+        public int EmployeeCode { get; set; }
+        [Required(ErrorMessage ="The New Password field is required.")]
+        public string NewPassword { get; set; }
+        [Required(ErrorMessage = "The Confirm Password field is required.")]
+        public string ConfirmPassword { get; set; }
+        
+        public string? CurrentPassword { get; set; }
+    }
+
+    public class ChangePasswordEntity
+    {
+        public int EmployeeCode { get; set; }
+        [Required(ErrorMessage = "The New Password field is required.")]
+        public string NewPassword { get; set; }
+        [Required(ErrorMessage = "The Confirm Password field is required.")]
+        public string ConfirmPassword { get; set; }
+        [Required(ErrorMessage = "The Current Password field is required.")]
+        public string CurrentPassword { get; set; }
+    }
+}

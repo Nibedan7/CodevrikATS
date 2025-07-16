@@ -1,0 +1,217 @@
+﻿@using CdplATS.Entity.Models
+@model List<AppraisalEntity>
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+	var LoggedEmpName = HttpContextAccessor.HttpContext.Session.GetString("authName");
+}
+
+<div>
+	<div class="d-flex  align-items-center mb-3 filterBar">
+		<div class="d-flex gap-2">
+		</div>
+		<div style="margin-left:auto;">
+			<button type="button" class="btn btnStdColor addEdit-Leave-btn" onclick="saveAssessment()">
+				Save
+			</button>
+		</div>
+	</div>
+
+	<div id="assessment-table">
+		@foreach (var AssessmentCategoryGroup in Model.GroupBy(x => new { x.AssessmentCategoryId, x.AssessmentCategoryName, x.Reviewer1Name, x.Reviewer2Name }))
+		{
+			<p class="btnStdColor addEdit-Leave-btn AssessmentCategory" style="margin-bottom:0;"><b>@AssessmentCategoryGroup.Key.AssessmentCategoryName</b></p>
+			<div>
+				<table class="table table-bordered AssessmentTable">
+					<thead>
+						<tr>
+							<th width="20%">Assessment</th>
+							<th width="27%">Self</th>
+							<th width="27%">Reviewer 1 (@AssessmentCategoryGroup.Key.Reviewer1Name)</th>
+							<th>Reviewer 2 (@AssessmentCategoryGroup.Key.Reviewer2Name)</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var Assessment in AssessmentCategoryGroup)
+						{
+
+							<tr>
+								<td>
+									<input type="hidden" class="AssessmentCategory-id" value="@Assessment.AssessmentCategoryId" />
+									<input type="hidden" class="Assessment-id" value="@Assessment.AssessmentId" />
+									@Assessment.Assessment
+								</td>
+								<td>
+									<div class="d-flex gap-4">
+										<!-- Rating Dropdown -->
+										<select class=" self-rating-input form-select apprisal-Select" style="margin-left:10px;" disabled="@(Assessment.IsSelfAssSubmitted == 1 ? "disabled" : null)">
+											<option disabled selected="@(Assessment.SelfRating == null ? "selected" : null)">--Select Rating--</option>
+											<option value="1" selected="@(Assessment.SelfRating == 1 ? "selected" : null)" >1</option>
+											<option value="2" selected="@(Assessment.SelfRating == 2 ? "selected" : null)">2</option>
+											<option value="3" selected="@(Assessment.SelfRating == 3 ? "selected" : null)">3</option>
+											<option value="4" selected="@(Assessment.SelfRating == 4 ? "selected" : null)">4</option>
+											<option value="5" selected="@(Assessment.SelfRating == 5 ? "selected" : null)">5</option>
+											<option value="0" selected="@(Assessment.SelfRating == 0 ? "selected" : null)">N/A</option>
+										</select>
+
+										<textarea class=" self-comment comment-input" placeholder="@Assessment.PlaceHolder" disabled="@(Assessment.IsSelfAssSubmitted == 1 ? "disabled" : null)">@Assessment.SelfComment</textarea>
+									</div>
+								</td>
+								<td>
+									<div class="d-flex gap-4">
+										@if (LoggedEmpName == AssessmentCategoryGroup.Key.Reviewer1Name)
+										{
+											<select class=" reviewer1-rating-input form-select apprisal-Select" style="margin-left:10px;" disabled="@(Assessment.IsReviewer1_Submitted == 1 ? "disabled" : null)">
+												<option disabled selected="@(Assessment.Reviewer1_Rating == null ? "selected" : null)">--Select Rating--</option>
+												<option value="1" selected="@(Assessment.Reviewer1_Rating == 1 ? "selected" : null)">1</option>
+												<option value="2" selected="@(Assessment.Reviewer1_Rating == 2 ? "selected" : null)">2</option>
+												<option value="3" selected="@(Assessment.Reviewer1_Rating == 3 ? "selected" : null)">3</option>
+												<option value="4" selected="@(Assessment.Reviewer1_Rating == 4 ? "selected" : null)">4</option>
+												<option value="5" selected="@(Assessment.Reviewer1_Rating == 5 ? "selected" : null)">5</option>
+												<option value="0" selected="@(Assessment.Reviewer1_Rating == 0 ? "selected" : null)">N/A</option>
+											</select>
+
+											<textarea class=" reviewer1-comment comment-input" placeholder="@Assessment.PlaceHolder" disabled="@(Assessment.IsReviewer1_Submitted == 1 ? "disabled" : null)">@Assessment.Reviewer1_Comment</textarea>
+										}
+
+									</div>
+								</td>
+								<td>
+									<div class="d-flex gap-4">
+										@if (LoggedEmpName == AssessmentCategoryGroup.Key.Reviewer2Name)
+										{
+											<select class=" reviewer2-rating-input form-select apprisal-Select" style="margin-left:10px;" disabled="@(Assessment.IsReviewer2_Submitted == 1 ? "disabled" : null)">
+												<option disabled selected="@(Assessment.Reviewer2_Rating == null ? "selected" : null)">--Select Rating--</option>
+												<option value="1" selected="@(Assessment.Reviewer2_Rating == 1 ? "selected" : null)">1</option>
+												<option value="2" selected="@(Assessment.Reviewer2_Rating == 2 ? "selected" : null)">2</option>
+												<option value="3" selected="@(Assessment.Reviewer2_Rating == 3 ? "selected" : null)">3</option>
+												<option value="4" selected="@(Assessment.Reviewer2_Rating == 4 ? "selected" : null)">4</option>
+												<option value="5" selected="@(Assessment.Reviewer2_Rating == 5 ? "selected" : null)">5</option>
+												<option value="0" selected="@(Assessment.Reviewer2_Rating == 0 ? "selected" : null)">N/A</option>
+											</select>
+
+											<textarea class=" reviewer2-comment comment-input" placeholder="@Assessment.PlaceHolder" disabled="@(Assessment.IsReviewer2_Submitted == 1 ? "disabled" : null)">@Assessment.Reviewer2_Comment</textarea>
+										}
+										
+									</div>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	</div>
+     
+    
+</div>
+
+<script>
+	// Store changed fields for each row
+	const changedData = new Map();
+
+	document.querySelectorAll("#assessment-table table tbody tr").forEach(row => {
+		row.querySelectorAll("select, textarea").forEach(input => {
+			input.addEventListener("change", () => {
+				if (!changedData.has(row)){
+					changedData.set(row, {});
+				}
+				const rowData = changedData.get(row);
+				let value = input.value;
+
+				// Ignore placeholder
+				if (input.tagName === "SELECT" && value === "--select rating--") return;
+
+				// Track field based on class
+				if (input.classList.contains("self-rating-input")) {
+					rowData["SelfRating"] = parseInt(value);
+				}
+				if (input.classList.contains("self-comment")) {
+					rowData["SelfComment"] = value;
+				}
+				if (input.classList.contains("reviewer1-rating-input")) {
+					rowData["Reviewer1_Rating"] = parseInt(value);
+				}
+				if (input.classList.contains("reviewer1-comment")) {
+					rowData["Reviewer1_Comment"] = value;
+				}
+				if (input.classList.contains("reviewer2-rating-input")) {
+					rowData["Reviewer2_Rating"] = parseInt(value);
+				}
+				if (input.classList.contains("reviewer2-comment")) {
+					rowData["Reviewer2_Comment"] = value;
+				}
+			});
+		});
+	});
+
+	function saveAssessment() {
+		const changedRows = Array.from(changedData.entries());
+
+		if (changedRows.length === 0) {
+			alert("No changes detected.");
+			return;
+		}
+
+		const data = [];
+
+		changedRows.forEach(([row, changes]) => {
+			const categoryId = parseInt(row.querySelector(".AssessmentCategory-id").value);
+			const assessmentId = parseInt(row.querySelector(".Assessment-id").value);
+
+			const result = {
+				AssessmentCategoryId: categoryId,
+				AssessmentId: assessmentId
+			};
+
+			// Only include fields that were changed
+			for (const key in changes) {
+				result[key] = changes[key];
+			}
+
+			data.push(result);
+		});
+		debugger;
+		console.log("Sending data:", JSON.stringify(data, null, 2));
+
+		$.ajax({
+			url: '/Appraisal/UpdateAssessment',
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(data),
+			success: function (response) {
+				alert("Saved successfully!");
+				changedData.clear(); // Clear changes after save
+			},
+			error: function (xhr, status, error) {
+				console.error("Error:", error);
+				alert("Something went wrong.");
+			}
+		});
+	}
+</script>
+
+
+<style>
+	.AssessmentCategory {
+		padding: 10px !important;
+		margin-left: 1px;
+		border-radius: 12px 12px 0 0;
+		width: 20% !important;
+	}
+
+	.AssessmentTable {
+		margin-bottom: 50px;
+		border-radius: 12px 12px 12px 12px !important;
+	}
+
+	.apprisal-Select {
+		width: 100px;
+		height: 35px;
+		margin-left: 0 !important;
+	}
+
+	.comment-input {
+		width: 100%;
+		min-height: 30px;
+	}
+</style>

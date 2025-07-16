@@ -1,0 +1,59 @@
+﻿using CdplATS.API.Services;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EmployeeApiController : ControllerBase
+    {
+        private readonly EmployeeService _employeeService;
+
+        public EmployeeApiController(EmployeeService employeeService)
+        {
+            _employeeService = employeeService;
+        }
+
+        //get all employee controller method
+        [HttpGet("GetEmployeeById")]
+        public async Task<IActionResult> GetEmployeeById(int Id = 0, int Status = 1)
+        {
+            var response = await _employeeService.GetEmployeeByIdAsync(Id, Status);
+
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+
+        }
+
+        //add edit employee controller method
+        [HttpPost("AddEditEmployee")]
+        public async Task<IActionResult> AddEditEmployee([FromBody] EmployeeEntity employee)
+        {
+            var response = await _employeeService.AddEditEmployeeAsync(employee);
+            return Ok(response);
+        }
+
+        //delete employee controller method
+        [HttpDelete("DeleteEmployee/{Id}")]
+        public async Task<IActionResult> DeleteEmployee(int Id)
+        {
+            if (Id <= 0)
+            {
+                return BadRequest(new { message = "Invalid employee ID." });
+            }
+
+            var response = await _employeeService.DeleteEmployeeAsync(Id);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+    }
+}

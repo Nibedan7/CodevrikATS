@@ -1,0 +1,37 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace CdplATS.API.Services
+{
+    public class LeaveReportService
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public LeaveReportService(GenericRepository genericRepository)
+        {
+            this._genericRepository = genericRepository;
+        }
+
+        public async Task<ApiResponse<IEnumerable<LeaveReportEntity>>> GetLeaveReport(int EmpCode, string StartDate, string EndDate)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@logger_id", SqlDbType.Int) { Value = EmpCode },
+                    new SqlParameter("@startDate", SqlDbType.Date) { Value = StartDate},
+                    new SqlParameter("@endDate", SqlDbType.Date) { Value = EndDate }
+                };
+
+                var LeaveReport = await _genericRepository.GetAllAsync<LeaveReportEntity>("GetLeaveReport", parameters);
+                return new ApiResponse<IEnumerable<LeaveReportEntity>>(LeaveReport, "Punch retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<LeaveReportEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+    }
+}

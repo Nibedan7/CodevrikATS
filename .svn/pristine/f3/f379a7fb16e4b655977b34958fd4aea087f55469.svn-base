@@ -1,0 +1,105 @@
+﻿using System.Data;
+using Azure.Core;
+using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+
+namespace CdplATS.API.Services
+{
+    public class EmployeeService
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public EmployeeService(GenericRepository genericRepository)
+        {
+            _genericRepository = genericRepository;
+        }
+
+        //get employee by id employee service
+        public async Task<ApiResponse<IEnumerable<EmployeeEntity>>> GetEmployeeByIdAsync(int Id, int? DepartmentCode)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+               {
+                    new SqlParameter("@Id", SqlDbType.Int) { Value = Id },
+                    new SqlParameter("@DepartmentCode", SqlDbType.Int) { Value = DepartmentCode },
+               };
+                var employee = await _genericRepository.GetAllAsync<EmployeeEntity>("GetEmployeeById",parameters);
+                return new ApiResponse<IEnumerable<EmployeeEntity>>(employee, "Employee retrieved successfully.", true);
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<EmployeeEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        //add edit employee service
+        public async Task<ApiResponse<string>> AddEditEmployeeAsync(EmployeeEntity request)
+            {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", SqlDbType.Int) { Value = request.Id },
+                    new SqlParameter("@FirstName", SqlDbType.NVarChar) { Value = request.FirstName },
+                    new SqlParameter("@LastName", SqlDbType.NVarChar) { Value = request.LastName },
+                    new SqlParameter("@EmployeeId", SqlDbType.NVarChar) { Value = request.EmployeeId },
+                    new SqlParameter("@EmployeeCode", SqlDbType.Int) { Value = request.EmployeeCode },
+                    new SqlParameter("@Email", SqlDbType.NVarChar) { Value = request.Email },
+                    new SqlParameter("@DepartmentCode", SqlDbType.Int) { Value = request.Department },
+                    new SqlParameter("@AccessCardNumber", SqlDbType.NVarChar) { Value = request.AccessCardNumber },
+                    new SqlParameter("@BirthDate", SqlDbType.Date) { Value = request.BirthDate },
+                    new SqlParameter("@HireDate", SqlDbType.Date) { Value = request.HireDate },
+                    new SqlParameter("@ContactNumber1", SqlDbType.NVarChar) { Value = request.ContactNumber1 },
+                    new SqlParameter("@ContactNumber2", SqlDbType.NVarChar) { Value = request.ContactNumber2 },
+                    new SqlParameter("@Gender", SqlDbType.Char) { Value = request.Gender },
+                    new SqlParameter("@CreatedBy", SqlDbType.Char) { Value = request.authCode },
+                };
+
+                var result = await _genericRepository.ExecuteAsync("AddEditEmployee", parameters);
+
+                if (result == -1)
+                {
+                    return new ApiResponse<string> { Success = false, Message = "EmployeeCode already exists!"};
+                }
+                else if (result == 1 && request.Id == 0)
+                {
+                    return new ApiResponse<string> { Success = true, Message = "Employee created successfully." };
+                }
+                else if (result == 1 && request.Id != 0)
+                {
+                    return new ApiResponse<string> { Success = true, Message = "Employee updated successfully." };
+                }
+                else
+                {
+                    return new ApiResponse<string> { Success = false, Message = "Failed to insert/update employee data." };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string> { Success = false, Message = $"Error inserting/updating employee data: {ex.Message}" };
+            }
+        }
+
+        //delete employee service
+        public async Task<ApiResponse<bool>> DeleteEmployeeAsync(int Id)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", Id)
+                };
+
+                await _genericRepository.ExecuteAsync("DeleteEmployee", parameters);
+                return new ApiResponse<bool>(true, "Employee deleted successfully.", true);
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<bool>(false, $"Error: {ex.Message}", false);
+            }
+        }
+    }
+}

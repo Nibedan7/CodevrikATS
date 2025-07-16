@@ -1,0 +1,288 @@
+﻿@model CdplATS.Entity.Models.EmployeeEntity
+@using CdplATS.Entity.Models
+@{
+	Layout = "_Layout";
+	ViewBag.Title = "Employee";
+	var DepartmentList = ViewBag.DepartmentList;
+}
+
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Employee</a></li>
+		<li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-users"></i> Employee Details</li>
+	</ol>
+</nav>
+
+<div class="container-fluid">
+	<!-- Table Header with Add Button -->
+	<div class="d-flex  align-items-center mb-3 filterBar">
+		<div class="d-flex gap-2">
+			<div style="padding-top:8px;">
+				<label class="standardColor" style="width:max-content; ">Employee Department: </label>
+			</div>
+
+			@Html.DropDownListFor(
+							model => model.DepartMentCode,
+							new SelectList(Model.Departments, "DepartmentCode", "DepartmentName"),
+							"Select Department",
+							new { @class = "form-select", id = "departmentDropdown", onchange = "bindEmployeeGrid()" }
+							)
+
+		</div>
+
+		<div class="d-flex gap-2">
+			<div style="padding-top:8px; margin-left:20px;">
+				<label class="standardColor" style="width:max-content; ">Active Status</label>
+			</div>
+			<select class="form-select h-25" id="ActiveStatus" onchange="bindEmployeeGrid()">
+				<option value="1">Active Employees</option>
+				<option value="2">InActive Employees</option>
+			</select>
+		</div>
+
+		<div style="margin-left:auto;">
+			<button type="button" class="btn btnStdColor" data-bs-toggle="modal"  data-bs-target="#AddEditEmployee" onclick="AddEditEmployee(0)">
+				<i class="fa-solid fa-plus"></i> Add Employee
+			</button>
+		</div>
+	</div>
+
+	<div class="table-container">
+		<table id="tblEmployeeDetail" class="table table-bordered table-striped table-hover">
+			<thead>
+				<tr>
+					<th hidden>Id</th>
+					<th hidden>Status</th>
+					<th>Employee Code</th>
+					<th>Employee Name</th>
+					<th hidden>Employee Id</th>
+					<th>Gender</th>
+					<th>Email</th>
+					<th>Contact Number1</th>
+					<th>Contact Number2</th>
+					<th>Birth Date</th>
+					<th>Department Name</th>
+					<th>Accesscard Number</th>
+					<th>Hire Date</th>
+					<th>Action</th>
+				</tr>
+			</thead>
+		</table>
+	</div>
+</div>
+
+<div id="div_EmployeeDetail"></div>
+
+<script>
+	$(document).ready(function () {
+		   bindEmployeeGrid();
+	});
+
+	   function bindEmployeeGrid() {
+		var departmentCode = $('#departmentDropdown').val();
+		var ActiveStatus = $('#ActiveStatus').val()
+		$.ajax({
+			type: "GET",
+			url: '@Url.Action("GetEmployees", "Employee")',
+			dataType: "json",
+			data: { departmentCode: departmentCode,ActiveStatus:ActiveStatus },
+			success: function (data) {
+				EmployeeSuccHandler(data);
+			},
+			error: EmployeeErrhandler
+		});
+	}
+		function EmployeeErrhandler(xhr, status, error) {
+	}
+
+	//employee success handler
+	function EmployeeSuccHandler(data) {
+		try {
+			var dataTableExample = $('#tblEmployeeDetail').DataTable();
+			if (dataTableExample != 'undefined') {
+				dataTableExample.destroy();
+			}
+			dataTableExample = $('#tblEmployeeDetail').DataTable({
+
+				scrollY: false,
+				"order": [],
+				"lengthMenu": [50, 75,100,150],
+				"dom": 'frtlip',
+				"bFilter": true,
+				"aaData": data,
+				"language": {
+				  "lengthMenu": "Show _MENU_ entries,"
+			  },
+				"aoColumns": [
+					{
+						"mData": "id",
+						"visible": false
+					},
+					{
+						"mData":"status",
+						"visible":false
+					},
+					{
+						"sWidth": "5%",
+						"mData": "employeeCode",
+						"className": "dt-left"
+
+					},
+					{
+						"sWidth": "6%",
+						"mData": "employeeName",
+						"className": "dt-left"
+
+					},
+					{
+						"sWidth": "6%",
+						"mData": "employeeId",
+						"className": "dt-left",
+						"visible": false
+					},
+					{
+						"sWidth": "5%",
+						"mData": "genderText",
+						"className": "dt-left"
+
+					},
+					{
+						"sWidth": "10%",
+						"mData": "email",
+						"className": "dt-left"
+					},
+					{
+						"sWidth": "6%",
+						"mData": "contactNumber1",
+						"className": "dt-left"
+					},
+					{
+						"sWidth": "6%",
+						"mData": "contactNumber2",
+						"className": "dt-left"
+					},
+					{
+						"sWidth": "6%",
+						"mData": "birthDate",
+						"className": "dt-left",
+						 "render":function(data,type,row,meta){
+						return new Date(data).toLocaleDateString('en-GB');
+					}
+					},
+					{
+						"sWidth": "6%",
+						"mData": "department",
+						"className": "dt-left"
+					},
+					{
+						"sWidth": "6%",
+						"mData": "accessCardNumber",
+						"className": "dt-left"
+					},
+					{
+						"sWidth": "6%",
+						"mData": "hireDate",
+						"className": "dt-left",
+						 "render":function(data,type,row,meta){
+						return new Date(data).toLocaleDateString('en-GB');
+					}
+					},
+					{
+						"sWidth": "5%",
+						"mData": "Id",
+						"sortable": false,
+						"className": "dt-center",
+						"render": function (data, type, row, meta) {
+							if(row.status == 1){
+								 var actionButtons = '<button onclick="AddEditEmployee(\'' + row.id + '\')" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-pen-to-square"></i></button>';
+
+								actionButtons += '<button onclick="deleteEmployee(' + row.id + ',' + 2 + ', \'' + row.employeeName.replace(/'/g, "\\'") + '\')" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-trash"></i></button>';
+
+								
+							}else{
+									actionButtons = '<button onclick="deleteEmployee(' + row.id + ',' + 1 + ', \'' + row.employeeName.replace(/'/g, "\\'") + '\')" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-undo square-icon"></i></button>';
+							}
+							return actionButtons;
+						
+						}
+					}
+				]
+			});
+			$(".dataTables_length").css('clear', 'none');
+			$(".dataTables_length").css('margin-right', '20px');
+			$(".dataTables_info").css('clear', 'none');
+			$(".dataTables_info").css('padding', '0');
+
+		} catch (e) {
+		}
+	}
+
+
+		function AddEditEmployee(Id) {
+		
+		// Remove existing modal
+		if ($('#model_EmployeeDetail').length > 0) {
+			$('#model_EmployeeDetail').modal('hide');
+			$('#model_EmployeeDetail').remove();
+			$('.modal-backdrop').remove();
+		}
+		 $.ajax({
+			 url: encodeURI('@Url.Action("AddEditEmployee", "Employee")'),
+			 type: "GET",
+			 data: {Id: Id },
+			 success: function (data) {
+				$('#div_EmployeeDetail').html(data);
+				var modal = new bootstrap.Modal(document.getElementById('model_EmployeeDetail'));
+				modal.show();
+			 },
+			 error: function (data) {
+				 
+			 }
+		 });
+	}
+
+	//deleteEmployee
+	 function deleteEmployee(Id,status,employeeName){
+		 
+		 bootbox.confirm({
+			 title: status == 2 ? "Delete Employee": "Revoke Employee",
+			 message: status == 2 ? "Are you sure to delete Employee: <strong>"+ employeeName + "</strong>?":"Are you sure to Revoke Employee: <strong>"+ employeeName + "</strong>?",
+			 buttons: {
+				 confirm: {
+					 label: 'Yes',
+					  className: 'btn btnStdColor px-4 btnStdWid2'
+				 },
+				 cancel: {
+					 label: 'No',
+					 className: 'btn btn-secondary px-4 py-1 btn-sm'
+				 }
+			 },
+			 callback: function (result) {
+			
+				 if (result) {
+					 $.ajax({
+						
+						 url: '@Url.Action("DeleteEmployee", "Employee")/' + Id + '/' + status,
+						 type: "DELETE",
+						 dataType: "json",
+						success: function (data) {
+							if(data.success){
+								toastr.success(data.message);
+								bindEmployeeGrid();
+							}
+							else {
+								 toastr.error(data.message);
+							 }
+						},
+						error: function (xhr, status, error) {
+							toastr.error("An error occurred while deleting employee.");
+						}
+						});
+				 }
+			 }
+		 });
+	 }
+
+</script>

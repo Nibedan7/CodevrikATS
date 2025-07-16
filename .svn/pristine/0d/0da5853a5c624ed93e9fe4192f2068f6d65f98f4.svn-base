@@ -1,0 +1,75 @@
+﻿using CdplATS.API.Services;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ManualLogApiController : ControllerBase
+    {
+        private readonly ManualLogService _manualLogService;
+
+        public ManualLogApiController(ManualLogService manualLogService)
+        {
+            this._manualLogService = manualLogService;
+        }
+
+        /// <summary>
+        /// Get all Manual logs of  Employee
+        /// </summary>
+        [HttpGet("getManualLogByEmpCode/{EmpCode}/{Status}")]
+        public async Task<IActionResult> GetManualLogByEmpCode(int EmpCode, int Status)
+        {
+            var response = await _manualLogService.GetManualLogByEmpCodeAsync(EmpCode, Status);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Get manual log by log id
+        /// </summary>
+        [HttpGet("getManualLogByLogId/{LogId}")]
+        public async Task<IActionResult> GetManualLogByLogId(int LogId)
+        {
+            var response = await _manualLogService.GetLogByLogIdAsync(LogId);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Add / Edit Manual Log
+        /// </summary>  
+        ///
+
+        [HttpPost("addEditManualLog")]
+        public async Task<IActionResult> AddEditManualLog([FromBody] ManualLogEntity manualLogEntity)
+        {
+            var response = await _manualLogService.AddEditManualLogAsync(manualLogEntity);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// delete Manual log
+        /// </summary>  
+        ///
+
+        [HttpDelete("deleteManualLog/{LogId}")]
+        public async Task<IActionResult> DeleteManualLeave(int LogId)
+        {
+            var response = await _manualLogService.DeleteManualLogAsync(LogId);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// approve&Reject manual log
+        /// </summary>  
+        ///
+
+        [HttpDelete("approveRejectManualLog/{logId}/{status}/{empCode}")]
+        public async Task<IActionResult> ApproveRejectManualLog(int logId, int status, int empCode)
+        {
+            var response = await _manualLogService.ApproveRejectManualLogAsync(logId, status, empCode);
+            return Ok(response);
+        }
+    }
+}

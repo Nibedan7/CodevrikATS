@@ -1,0 +1,61 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using CdplATS.Entity.Models;
+using CdplATS.API.Services;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize] // Requires authentication
+    public class UserApiController : ControllerBase
+    {
+        private readonly UserService _userService;
+
+        public UserApiController(UserService userService)
+        {
+            _userService = userService;
+        }
+
+        /// <summary>
+        /// Get all users
+        /// </summary>
+        [HttpGet("get-all")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var response = await _userService.GetAllUsers();
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Get user by ID
+        /// </summary>
+        [HttpGet("get/{id}")]
+        public async Task<IActionResult> GetUserById(int id)
+        {
+            var response = await _userService.GetUserById(id);
+            return Ok(response);
+        }
+
+        //[HttpPost("create")]
+        //public async Task<IActionResult> CreateUser([FromBody] LoggerEntity user)
+        //{
+        //    var response = await _userService.CreateUserAsync(user);
+        //    return Ok(response);
+        //}
+        //[HttpPut("update")]
+        //public async Task<IActionResult> UpdateUser([FromBody] LoggerEntity user)
+        //{
+        //    var response = await _userService.UpdateUserAsync(user);
+        //    return Ok(response);
+        //}
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var response = await _userService.DeleteUser(id);
+            return Ok(response);
+        }
+    }
+}

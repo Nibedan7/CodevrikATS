@@ -1,0 +1,26 @@
+﻿using CdplATS.API.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
+    public class AppraisalApiController : ControllerBase
+    {
+        private readonly AppraisalService _appraisalService;
+
+        public AppraisalApiController(AppraisalService appraisalService)
+        {
+            this._appraisalService = appraisalService;
+        }
+
+        [HttpGet("getApprisal/{TabId}/{EmployeeCode}")]
+        public async Task<IActionResult> GetApprisal(int TabId, int EmployeeCode)
+        {
+            var response = await _appraisalService.GetaAppraisalAsync(TabId, EmployeeCode);
+            return Ok(response);
+        }
+    }
+}

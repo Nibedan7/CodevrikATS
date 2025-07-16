@@ -1,0 +1,39 @@
+﻿@{
+    Layout = "_Layout";
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Employee</a></li>
+        <li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-users"></i> Employee Details</li>
+    </ol>
+</nav>
+
+<div class="container-fluid">
+    <div class="d-flex  align-items-center mb-3 filterBar">
+        <div style="margin-left:auto;">
+            <button type="button" class="btn btnStdColor" data-bs-toggle="modal" data-bs-target="#SendEmployeeFile" onclick="SendEmployeeFile()">
+                <i class="bi bi-send"></i> Send FORM-16
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function SendEmployeeFile() {
+        $.ajax({
+            url: '@Url.Action("SendFileInMail", "EmployeeFile")',
+            type: "GET",
+            success: function (data) {
+                if (data.success) {
+                    toastr.success(data.message);
+                }
+            },
+            error: function () {
+                toastr.error("An error occurred while sending mail");
+            }
+        });
+    }
+</script>

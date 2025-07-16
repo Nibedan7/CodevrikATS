@@ -1,0 +1,61 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace CdplATS.API.Services
+{
+    public class RoleRightService
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public RoleRightService(GenericRepository genericRepository)
+        {
+            this._genericRepository = genericRepository;
+        }
+
+        public async Task<ApiResponse<IEnumerable<RoleRightEntity>>> GetRoleRightAsync(int RoleId)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@RoleId", SqlDbType.Int) { Value = RoleId }
+                };
+
+                var roles = await _genericRepository.GetAllAsync<RoleRightEntity>("GetRoleRights", parameters);
+                return new ApiResponse<IEnumerable<RoleRightEntity>>(roles, "Roles Right retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<RoleRightEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        public async Task<ApiResponse<string>> UpdateRoleRightAsync(RoleRightEntity roleRightEntity)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@RoleRightsJson", SqlDbType.Text) { Value = roleRightEntity.RoleRightsJson},
+                    new SqlParameter("@CreatedBy", SqlDbType.Int) { Value = roleRightEntity.loggedEmpCode},
+                };
+
+                var result = await _genericRepository.GetAsync<dynamic>("UpdateRoleRight", parameters);
+                if (result.IsSuccess == 1)
+                {
+                    return new ApiResponse<string> { Success = true, Message = "RoleRight Updated Successfully!" };
+                }
+                else
+                {
+                    return new ApiResponse<string> { Success = false, Message = "Failed to Update RoleRight data." };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string> { Success = false, Message = $"Error While Updating roleRight data: {ex.Message}" };
+            }
+        }
+    }
+}

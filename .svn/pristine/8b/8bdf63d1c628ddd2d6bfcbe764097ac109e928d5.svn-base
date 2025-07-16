@@ -1,0 +1,107 @@
+﻿using System.Data;
+using Microsoft.Data.SqlClient;
+using CdplATS.Entity.Models;
+using CdplATS.API.Repositories;
+using DocumentFormat.OpenXml.Bibliography;
+
+public class DashboardService
+{
+    private readonly GenericRepository _genericRepository;
+
+    public DashboardService(GenericRepository genericRepository)
+    {
+        _genericRepository = genericRepository;
+    }
+
+
+    //  total work hours per employee service
+    public async Task<ApiResponse<IEnumerable<GetTotalWorkHourPerEmployeeEntity>>> GetTotalWorkHourPerEmployee(int? year, int? month)
+    {
+       
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@Year", SqlDbType.Int) { Value = (object?)year ?? DBNull.Value },
+                new SqlParameter("@Month", SqlDbType.Int) { Value = (object?)month ?? DBNull.Value }
+            };
+
+            var result = await _genericRepository.GetAllAsync<GetTotalWorkHourPerEmployeeEntity>(
+                "GetTotalWorkHourPerEmployee", parameters);
+
+            return new ApiResponse<IEnumerable<GetTotalWorkHourPerEmployeeEntity>>(
+                result, "Working hours data retrieved successfully.", true);
+        
+    
+    }
+
+
+    //  avg work hours per employee service
+    public async Task<ApiResponse<IEnumerable<GetMonthlyAvgWorkHoursPerDayEntity>>> GetMonthlyAvgWorkHoursPerDay(int? year, int? month)
+    {
+
+        var parameters = new SqlParameter[]
+        {
+                new SqlParameter("@Year", SqlDbType.Int) { Value = (object?)year ?? DBNull.Value },
+                new SqlParameter("@Month", SqlDbType.Int) { Value = (object?)month ?? DBNull.Value }
+        };
+
+        var result = await _genericRepository.GetAllAsync<GetMonthlyAvgWorkHoursPerDayEntity>(
+            "GetMonthlyAvgWorkHoursPerDay", parameters);
+
+        return new ApiResponse<IEnumerable<GetMonthlyAvgWorkHoursPerDayEntity>>(
+            result, "Working hours data retrieved successfully.", true);
+
+    }
+
+    //  on time first punch (in %)
+    public async Task<ApiResponse<IEnumerable<GetEmployeePunctualityEntity>>> GetEmployeePunctuality(int? year, int? month)
+    {
+
+        var parameters = new SqlParameter[]
+        {
+                new SqlParameter("@Year", SqlDbType.Int) { Value = (object?)year ?? DBNull.Value },
+                new SqlParameter("@Month", SqlDbType.Int) { Value = (object?)month ?? DBNull.Value }
+        };
+
+        var result = await _genericRepository.GetAllAsync<GetEmployeePunctualityEntity>(
+            "GetEmployeePunctuality", parameters);
+
+        return new ApiResponse<IEnumerable<GetEmployeePunctualityEntity>>(
+            result, "Working hours data retrieved successfully.", true);
+
+    }
+
+    //  annual leave summary service
+    public async Task<ApiResponse<IEnumerable<GetAnnualLeaveSummaryByYearEntity>>> GetAnnualLeaveSummaryByYear(int? year)
+    {
+
+        var parameters = new SqlParameter[]
+        {
+                new SqlParameter("@Year", SqlDbType.Int) { Value = (object?)year ?? DBNull.Value },
+        };
+
+        var result = await _genericRepository.GetAllAsync<GetAnnualLeaveSummaryByYearEntity>(
+            "GetAnnualLeaveSummaryByYear", parameters);
+
+        return new ApiResponse<IEnumerable<GetAnnualLeaveSummaryByYearEntity>>(
+            result, "Working hours data retrieved successfully.", true);
+
+    }
+
+    //  for hybrid work
+    public async Task<ApiResponse<IEnumerable<MonitorHybridWorkBalanceEntity>>> MonitorHybridWorkBalance(int? year, int? month)
+    {
+
+        var parameters = new SqlParameter[]
+        {
+                new SqlParameter("@Year", SqlDbType.Int) { Value = (object?)year ?? DBNull.Value },
+                 new SqlParameter("@Month", SqlDbType.Int) { Value = (object?)month ?? DBNull.Value }
+        };
+
+        var result = await _genericRepository.GetAllAsync<MonitorHybridWorkBalanceEntity>(
+            "MonitorHybridWorkBalance", parameters);
+
+        return new ApiResponse<IEnumerable<MonitorHybridWorkBalanceEntity>>(
+            result, "Working hours data retrieved successfully.", true);
+
+    }
+}

@@ -1,0 +1,86 @@
+﻿using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CdplATS.Entity.Models
+{
+    public class ApiHelper
+    {
+        #region API URLs
+
+        public static string _AccountApiUrl = "api/accountapi/";
+        public static string _HolidayApiUrl = "api/HolidayApi/";
+
+        public static string _LeaveApiUrl = "api/LeaveApi/";
+
+        public static string _PunchApiUrl = "api/PunchApi/";
+
+        public static string _ManualLogApiUrl = "api/ManualLogApi/";
+
+        public static string _CommonApiUrl = "api/CommonApi/";
+
+        public static string _EmployeeApiUrl = "api/EmployeeApi/";
+
+        #endregion
+
+        #region Common APIs
+
+        public string EmpDropDown = _CommonApiUrl + "GetAllFillDropDownForEmployeeList/";
+        public string DepartmentDropdown = _CommonApiUrl + "GetDepartment/";
+        #endregion
+
+        #region Account APIs
+
+        public string LoginApi = _AccountApiUrl + "login";
+
+        #endregion
+
+        #region Leave APIs
+
+        public string GetLeaveByEmpCodeApi = _LeaveApiUrl + "getAllLeaveByUserId/";
+
+        public string GetLeaveByGroupIdApi = _LeaveApiUrl + "getLeaveByGroupId/";
+
+        public string AddEditLeaveApi = _LeaveApiUrl + "addEditLeave";
+
+        public string DeleteLeaveApi = _LeaveApiUrl + "deleteLeave/";
+
+        public string ApproveRejectLeaveApi = _LeaveApiUrl + "approveRejectLeave/";
+
+        
+
+        #endregion
+
+        #region Holiday APIs
+
+        public string GetAllHolidayApi = _HolidayApiUrl + "GetAllHolidaysById/";
+        public string AddEditHolidayApi = _HolidayApiUrl + "AddEditHoliday/";
+        public string DeleteHolidayApi = _HolidayApiUrl + "DeleteHoliday/";
+
+        #endregion
+
+        #region Punch APIs
+        public string GetPunchesByEmpCode = _PunchApiUrl + "getPunchByEmpCode/";
+
+
+        #endregion
+
+        #region Manual Log APIs
+        public string GetManualLogByEmpCodeApi = _ManualLogApiUrl + "getManualLogByEmpCode/";
+        public string GetManualLogByLogIdApi = _ManualLogApiUrl + "getManualLogByLogId/";
+        public string AddEditManualLogApi = _ManualLogApiUrl + "addEditManualLog/";
+        public string DeleteManualLogApi = _ManualLogApiUrl + "deleteManualLog/";
+        public string ApproveRejectManualLogApi = _ManualLogApiUrl + "approveRejectManualLog/";
+        #endregion
+
+        #region Employee API
+
+        public string GetEmployeeByIdApi = _EmployeeApiUrl + "GetEmployeeById/";
+        public string AddEditEmployeeApi = _EmployeeApiUrl + "AddEditEmployee/";
+        public string DeleteEmployeeApi = _EmployeeApiUrl + "DeleteEmployee/";
+
+        #endregion
+    }
+}

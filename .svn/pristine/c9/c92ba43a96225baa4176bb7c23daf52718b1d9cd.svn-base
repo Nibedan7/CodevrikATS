@@ -1,0 +1,45 @@
+﻿using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+
+namespace CdplATS.UI.Controllers
+{
+    public class AppraisalController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public AppraisalController(WebApiHelper webApiHelper)
+        {
+            this._webApiHelper = webApiHelper;
+        }
+        public IActionResult Index()
+        {
+            return View();
+        }
+        public async Task<IActionResult> LoadTab1( int TabId = 1)
+        {
+            var LoggedEmpCode = HttpContext.Session.GetInt32("authCode");
+            var apprisalList = await _webApiHelper.GetAsync<List<AppraisalEntity>>(_apiHelper.GetApprisalApi + $"{TabId}/{LoggedEmpCode}");
+            return PartialView("/Views/Appraisal/Tab1.cshtml", apprisalList.Data);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateAssessment([FromBody] List<AppraisalEntity> appraisalEntities)
+        {
+            var jsonAssessment = JsonConvert.SerializeObject(appraisalEntities);
+            return Ok();
+        }
+
+        public IActionResult LoadTab2()
+        {
+            return PartialView("Views/Appraisal/Tab2.cshtml");
+        }
+
+        public IActionResult LoadTab3()
+        {
+            return PartialView("Views/Appraisal/Tab3.cshtml");
+        }
+    }
+}

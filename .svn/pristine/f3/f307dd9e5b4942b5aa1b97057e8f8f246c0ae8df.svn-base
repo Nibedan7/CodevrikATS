@@ -1,0 +1,42 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=CEM01\\SQLEXPRESS;Database=CDPLATS_DEV;User Id=sa;Password=Cem@12345;TrustServerCertificate=True;",
+    "Redis": "localhost:6379"
+  },
+
+  "Jwt": {
+    "Key": "dfadfafdfadfadfadfadfadfdfadf435342344234234234234",
+    "Issuer": "CdplATS",
+    "Audience": "CdplATSUsers",
+    "ExpireMinutes": 60
+  },
+
+  "CacheSettings": {
+    "AbsoluteExpirationInHours": 1,
+    "SlidingExpirationInMinutes": 30
+  },
+  "runtimeOptions": {
+    "configProperties": {
+      "System.Globalization.Invariant": false
+    }
+
+  },
+  "EmailConfig": {
+    "smtpPort": 587,
+    "smtpServer": "smtp.gmail.com",
+    "hostEmail": "cementdigital247@gmail.com",
+    "hostEmailAppPassword": "rjyp nrgg vymx xpsx",
+    "SenderName": "ATS - Cement Digital"
+  },
+  "ApiSettings": {
+    "BaseUrl": "https://localhost:7137/"
+  }
+}

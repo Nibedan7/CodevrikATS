@@ -1,0 +1,54 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CdplATS.Entity.Models
+{
+    class CommonEntity
+    {
+    }
+
+    public class EmpDropDownList
+    {
+        public int EmpCode { get; set; }
+        public string EmpName { get; set; }
+        public decimal? TotalAnnualLeave { get; set; }
+        public decimal? UsedLeave { get; set; }
+    }
+
+    public class DepartmentList
+    {
+        public int DepartmentCode { get; set; }
+        public string DepartmentName { get; set; }
+    }
+    public class EmailConfig
+    {
+        public int SmtpPort { get; set; }
+        public string SmtpServer { get; set; }
+        public string HostEmail { get; set; }
+        public string HostEmailAppPassword { get; set; }
+        public string SenderName { get; set; }
+    }
+
+    public class ChildWithParentList
+    {
+        public int EmployeeCode { get; set; }
+        public string EmployeeName { get; set; }
+        public int DeptCode { get; set; }
+        public string Email { get; set; }
+    }
+
+    public class EmployeeRole
+    {
+        public int RoleId { get; set; }
+        public string RoleName { get; set; }
+    }
+
+    public class Reviewer
+    {
+        public int EmployeeId { get; set; }
+        public string EmployeeName { get; set; }
+    }
+}

@@ -1,0 +1,18 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "EmailConfig": {
+    "smtpPort": 587,
+    "smtpServer": "smtp.gmail.com",
+    "hostEmail": "cementdigital247@gmail.com",
+    "hostEmailAppPassword": "rjyp nrgg vymx xpsx",
+    "SenderName": "ATS - Cement Digital"
+  },
+  "ApiSettings": {
+    "BaseUrl": "https://localhost:44378/"
+  }
+}

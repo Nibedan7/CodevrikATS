@@ -1,0 +1,62 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CdplATS.Entity.Models
+{
+    public class Enum
+    {
+        #region Leave/ManualLogStatusEnum
+            public enum statusEnum
+            {
+                Pending = 1,
+                Deleted = 2,
+                Approved = 3,
+                Rejected = 4,
+                Cancelled = 5,
+            }
+        #endregion
+
+        #region WeekdayEnum
+
+        public enum WeekDay
+        {
+            Sunday = 1,
+            Monday = 2,
+            Tuesday = 3,
+            Wednesday = 4,
+            Thursday = 5,
+            Friday = 6,
+            Saturday = 7
+        }
+
+        #endregion
+
+        #region DepartmentEnum
+
+        public enum Department
+        {
+            HR = 0,
+            TeamAmit = 2,
+            TeamAkash = 3,
+            TeamKapil = 4,
+            TeamMaitry = 24,
+            TeamVikas = 14,
+            TeamJay = 6,
+            TeamJaydip = 20
+        }
+
+        #endregion
+
+        #region Gender
+        public enum GenderEnum
+        {
+            Male,
+            Female
+        }
+
+        #endregion
+    }
+}

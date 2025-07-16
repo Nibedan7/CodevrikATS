@@ -1,0 +1,130 @@
+﻿using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CdplATS.Entity.Models
+{
+    public class ApiHelper
+    {
+        #region API URLs
+
+        public static string _AccountApiUrl = "api/accountapi/";
+        public static string _HolidayApiUrl = "api/HolidayApi/";
+
+        public static string _LeaveApiUrl = "api/LeaveApi/";
+
+        public static string _PunchApiUrl = "api/PunchApi/";
+
+        public static string _ManualLogApiUrl = "api/ManualLogApi/";
+
+        public static string _CommonApiUrl = "api/CommonApi/";
+
+        public static string _EmployeeApiUrl = "api/EmployeeApi/";
+
+        public static string _DepartmentApiUrl = "api/DepartmentApi/";
+
+        public static string _RoleApiUrl = "api/RoleApi/";
+
+        public static string _RoleRightApiUrl = "api/RoleRightApi/";
+        public static string _LeaveReportApiUrl = "api/LeaveReportApi/";
+        public static string _ApprisalApiUrl = "api/AppraisalApi/";
+
+        #endregion
+
+        #region Common APIs
+
+        public string EmpDropDown = _CommonApiUrl + "GetAllFillDropDownForEmployeeList/";
+        public string BindDepartmentListApi = _CommonApiUrl + "BindDepartmentList/";
+        public string BindYearListApi = _CommonApiUrl + "BindYearList/";
+        public string SendEmailApi = _CommonApiUrl + "GetEmailByEmployeeCode/";
+        public string ChildWithParents = _CommonApiUrl + "GetChildWithParent/";
+        public string ResetPasswordApi = _CommonApiUrl + "ResetPassword/";
+        public string BindRoleListApi = _CommonApiUrl + "BindRoleList/";
+        public string BindEmployeeListApi = _CommonApiUrl + "BindEmployeeList/";
+        #endregion
+
+        #region Account APIs
+
+        public string LoginApi = _AccountApiUrl + "login";
+
+        #endregion
+
+        #region Leave APIs
+
+        public string GetLeaveListByEmpCodeApi = _LeaveApiUrl + "GetLeaveListByEmpCode/";
+
+        public string GetLeaveByGroupIdApi = _LeaveApiUrl + "getLeaveByGroupId/";
+
+        public string AddEditLeaveApi = _LeaveApiUrl + "addEditLeave";
+
+        public string DeleteLeaveApi = _LeaveApiUrl + "deleteLeave/";
+
+        public string ApproveRejectLeaveApi = _LeaveApiUrl + "approveRejectLeave/";
+
+        public string GetLeaveCountByEmpCodeApi = _LeaveApiUrl + "GetLeaveCountByEmpCode/";
+
+        #endregion
+
+        #region Holiday APIs
+
+        public string AddEditHolidayApi = _HolidayApiUrl + "AddEditHoliday/";
+        public string DeleteHolidayApi = _HolidayApiUrl + "DeleteHoliday/";
+        public string GetHolidayDetailsApi = _HolidayApiUrl + "GetHolidayDetails/";
+        public string GetHolidayListApi = _HolidayApiUrl + "GetHolidayList/";
+
+        #endregion
+
+        #region Punch APIs
+        public string GetPunchByEmpCode = _PunchApiUrl + "GetPunchByEmpCode/";
+
+
+        #endregion
+
+        #region Manual Log APIs
+        public string GetManualLogByEmpCodeApi = _ManualLogApiUrl + "getManualLogByEmpCode/";
+        public string GetManualLogByManualLogIdApi = _ManualLogApiUrl + "getManualLogByManualLogId/";
+        public string AddEditManualLogApi = _ManualLogApiUrl + "addEditManualLog/";
+        public string DeleteManualLogApi = _ManualLogApiUrl + "deleteManualLog/";
+        public string ApproveRejectManualLogApi = _ManualLogApiUrl + "approveRejectManualLog/";
+        #endregion
+
+        #region Employee API
+
+        public string GetEmployeeListApi = _EmployeeApiUrl + "GetEmployeeList/";
+        public string GetEmployeeDetailsApi = _EmployeeApiUrl + "GetEmployeeDetails";
+        public string AddEditEmployeeApi = _EmployeeApiUrl + "AddEditEmployee/";
+        public string DeleteEmployeeApi = _EmployeeApiUrl + "DeleteEmployee/";
+
+        #endregion
+
+        #region Department API
+        public string GetDepartment = _DepartmentApiUrl + "GetDepartment/";
+        public string AddEditDepartmentApi = _DepartmentApiUrl + "AddEditDepartment/";
+        public string DeleteDepartmentApi = _DepartmentApiUrl + "DeleteDepartment/";
+        public string EmployeeListApi = _DepartmentApiUrl + "GetAllEmployee/";
+        #endregion
+
+        #region Role Api
+        public string GetRoleById = _RoleApiUrl + "GetRoleById/";
+        public string AddEditRoles = _RoleApiUrl + "addEditRole/";
+        public string DeleteRoleApi = _RoleApiUrl + "deleteRole/";
+
+        #endregion
+
+        #region RoleRight API
+        public string GetRoleRightListApi = _RoleRightApiUrl + "GetRoleRightList/";
+        public string UpdateRoleRightApi = _RoleRightApiUrl + "UpdateRoleRight/";
+        #endregion
+
+        #region Leave Report API
+        public string GetLeaveReporListApi = _LeaveReportApiUrl + "getLeaveReportList/";
+        #endregion
+
+        #region Apprisal API
+        public string GetApprisalApi = _ApprisalApiUrl + "getApprisal/";
+        #endregion
+
+    }
+}

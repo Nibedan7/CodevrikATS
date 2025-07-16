@@ -1,0 +1,355 @@
+﻿@page
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@using CdplATS.Entity.Models
+@using static CdplATS.Entity.Models.Enum
+
+@{
+	Layout = "_Layout";
+	var statusEnumValue = System.Enum.GetValues(typeof(statusEnum)).Cast<statusEnum>();
+	var selectedEmpCode = ViewBag.SelectedEmpCode;
+}
+<link href="~/css/CDPLATS.css" rel="stylesheet" />
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item standardColor"><a href="#" class="standardColor">ManualLog</a></li>
+		<li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-fingerprint standardColor"></i> Log Details</li>
+	</ol>
+</nav>
+
+<div class="container-fluid">
+	<!-- Table Header with Add Button -->
+	<div class="d-flex  align-items-center mb-3 filterBar">
+		<div class="d-flex gap-2">
+			<div style="padding-top:8px;">
+				<label class="standardColor" style="width:max-content; ">Employee Name: </label>
+			</div>
+			<div>
+				<select class="form-select-lg h-25 select2" id="empDropdown" style="width: 100%;" onchange="bindManualLogGrid()">
+					@if (ViewBag.EmpList != null)
+					{
+						@foreach (var emp in ViewBag.EmpList)
+						{
+							<option title="@emp.EmpName" value="@emp.EmpCode" selected="@(emp.EmpCode == selectedEmpCode ? "selected" : null)">
+								@emp.EmpName
+							</option>
+						}
+					}
+				</select>
+			</div>
+			<div style="padding-top:8px; margin-left:20px;">
+				<label class="standardColor" style="width:max-content; ">Log Status: </label>
+			</div>
+			<select class="form-select h-25" id="statusDropdown" onchange="bindManualLogGrid()">
+				<option value="0">--All status--</option>
+				@foreach (var status in statusEnumValue)
+				{
+					<option value="@(Convert.ToInt32(status))">@status</option>
+				}
+			</select>
+		</div>
+		<div style="margin-left:auto;">
+			<button type="button" class="btn btnStdColor addEdit-Leave-btn" onclick="AddEditManualLog(0)">
+				<i class="fa-solid fa-plus"></i> Add Maual Log
+			</button>
+		</div>
+	</div>
+
+	<div class="table-container">
+		<table id="manualLogTable" class="table table-bordered table-striped table-hover">
+			<thead>
+				<tr>
+					<th hidden>Log Id</th>
+					<th>Name</th>
+					<th>PunchTime</th>
+					<th>Reason</th>
+					<th>Approved By</th>
+					<th>Approve Time</th>
+					<th>Status</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+		</table>
+	</div>
+</div>
+
+<div id="div_LogDetail"></div>
+
+<script>
+	let loginEmployeeCode = '@(HttpContextAccessor?.HttpContext?.Session?.GetInt32("authCode") ?? 0)';
+
+	$(document).ready(function () {
+		bindManualLogGrid();
+		try {
+			$('.select2').select2({
+				width: 'auto',
+				dropdownAutoWidth: true,
+				minimumResultsForSearch: 5
+			});
+		} catch(e) {
+			toastr.error("Select2 initialization failed:", e);
+		}
+	});
+
+	function bindManualLogGrid(){
+		 empCode = $('#empDropdown').val();   // Get the selected value
+		 var status = $('#statusDropdown').val();
+		 $.ajax({
+			 type: "GET",
+			 url: encodeURI('@Url.Action("GetAllManualLog", "ManualLog")'),
+			 dataType: "json",
+			 data : {empCode:empCode, Status:status},
+			 success: function(data){
+				 ManualLogSuccHandler(data);
+			 },
+			 error: ManualLogErrHandler
+		 });
+	}
+
+	function ManualLogErrHandler(){
+
+	}
+
+	function ManualLogSuccHandler(data){
+		try{
+			var dataTableExample = $('#manualLogTable').DataTable();
+			if (dataTableExample != 'undefined') {
+				dataTableExample.destroy();
+			}
+
+			dataTableExample = $('#manualLogTable').DataTable({
+				 scrollY: false,
+				 "order": [],
+				 "lengthMenu": [10, 30, 40, 50, 60],
+				 "dom": 'frtlip',
+				 "bFilter": true,
+				 "aaData": data,
+				 "language": {
+					  "lengthMenu": "Show _MENU_ entries,"
+				 },
+				 "aoColumns": [
+					{
+						"mData": "id",
+						"visible": false
+					},
+					{
+						 "sWidth":"10%",
+						 "mData": "employeeName",
+						 "className": "dt-left"
+					},
+					{
+						 "sWidth":"10%",
+						 "mData": "punchTime",
+						 "className": "dt-left",
+						 "render":function(data,type,row,meta){
+								return new Date(data).toLocaleString('en-GB', {
+									day: '2-digit',
+									month: '2-digit',
+									year: 'numeric',
+									hour: '2-digit',
+									minute: '2-digit',
+									second: '2-digit',
+									hour12: false
+								});
+						 }
+					},
+					{
+						 "sWidth":"20%",
+						 "mData": "reason",
+						 "className": "dt-left"
+					},
+					{
+						 "sWidth":"10%",
+						 "mData": "approvedBy",
+						 "className": "dt-left"
+					},
+					{
+						 "sWidth":"10%",
+						 "mData": "approvalTime",
+						 "className": "dt-left",
+						 "render":function(data,type,row,meta){
+								if(row.status != 3){
+									return '';
+								}
+								return new Date(data).toLocaleString('en-GB', {
+									day: '2-digit',
+									month: '2-digit',
+									year: 'numeric',
+									hour: '2-digit',
+									minute: '2-digit',
+									second: '2-digit',
+									hour12: false
+								});
+						 }
+					},
+					{
+						 "sWidth":"10%",
+						 "mData": "status",
+						 "className": "dt-center",
+						 "render": function (data, type, row, meta) {
+							 var renderBtn = '';
+							 if (row.status == 3) {
+								 renderBtn = '<button type="button" class="btn btn-success statusBtn">Approved</button>';
+							 } else if(row.status == 2){
+								 renderBtn = '<button type="button" style="background-color: #A9A9A9; color: #fff;" class="btn statusBtn">Deleted</button>';
+							 }else if(row.status == 4){
+								 renderBtn = '<button type="button" style="background-color: #E63946; color: #fff;" class="btn statusBtn">Rejected</button>';
+							 }else if(row.status == 5){
+								 renderBtn = '<button type="button" style="background-color: #af90e8; color: #fff;" class="btn statusBtn">Cancelled</button>';
+							 }
+							 else {
+								 renderBtn = '<button type="button" class="btn btn-warning statusBtn">Pending</button>';
+							 }
+							 return renderBtn;
+						 }
+					},
+					{
+						 "sWidth":"5%",
+						 "mData": null,
+						 "className": "dt-center",
+						 "render" : function(data, type, row, meta){
+							 if(row.empCode == loginEmployeeCode ){
+								 if(row.status != 1){
+									 var ActionbuttonEdit = '';
+
+									var ActionButtonDelete = '';
+								 }else{
+									 var ActionbuttonEdit = '<button type="button" onclick="AddEditManualLog(' + row.id + ')" class="btn btn-sm borderNone action-btn edit-btn" title="Edit Manual Log"><i class="fa-solid fa-pen-to-square"></i></button>';
+
+									var ActionButtonDelete = '<button onclick="DeleteManualLog(' + row.id + ')" class="btn btn-sm borderNone action-btn delete-btn" title="Delete Manual Log"><i class="fa-solid fa-trash"></i></button>';
+								 }
+
+								 return ActionbuttonEdit + ActionButtonDelete;
+
+							 }else{
+								 if(row.status == 1){
+									var ApproveButton = '<button type="button" onclick="ApproveRejectManualLog(' + row.id + ',3)" class="btn btn-sm borderNone action-btn edit-btn" style="padding:0;" title="Approve Manual Log"><i class="fa-solid fa-square-check" style="font-size: 20px;"></i></button>';
+									var RejectButton = '<button type="button" onclick="ApproveRejectManualLog(' + row.id + ',4)" class="btn btn-sm borderNone action-btn edit-btn" title="Reject Manual Log" ><i class="fa-solid fa-square-xmark" style="font-size: 20px;"></i></button>';
+								 }else if(row.status == 3){
+									 var ApproveButton = '<button type="button" class="btn btn-sm borderNone action-btn edit-btn " style="padding:0;"><i class="fa-solid fa-square-check" style="font-size: 20px; visibility: hidden;"></i></button>';
+									var RejectButton = '<button type="button" onclick="ApproveRejectManualLog(' + row.id + ',5)" class="btn btn-sm borderNone action-btn edit-btn" style="padding:0;" title="Cancel Manual Log"><i class="fa-solid fa-undo square-icon"></i></button>';
+								 }
+								 else{
+									var ApproveButton = '';
+									var RejectButton = '';
+								 }
+
+								 return ApproveButton + RejectButton;
+							 }
+						 }
+					},
+				 ]
+			});
+			$(".dataTables_length").css('clear', 'none');
+			$(".dataTables_length").css('margin-right', '20px');
+			$(".dataTables_info").css('clear', 'none');
+			$(".dataTables_info").css('padding', '0');
+		}catch(e){
+			alert(e.message);
+		}
+	}
+
+
+	 function AddEditManualLog(id) {
+		 $('.modal-backdrop').remove();
+		 $('body').removeClass('modal-open');
+		 $('#model_LogDetail').remove();
+
+		 $.ajax({
+			 url: encodeURI('@Url.Action("AddEditManualLog", "ManualLog")'),
+			 type: "GET",
+			 data: {LogId: id },
+			 success: function (data) {
+				$('#div_LogDetail').html(data);
+				var modal = new bootstrap.Modal(document.getElementById('model_LogDetail'));
+				modal.show();
+			 },
+			 error: function (data) {
+				 toastr.error("error loading partial view");
+			 }
+		 });
+	 }
+
+	 function DeleteManualLog(id){
+		 var empCode = $("#empDropdown").val();
+		 bootbox.confirm({
+			 title: "Remove Log",
+			 message: "Are you sure to remove Log?",
+			 buttons: {
+				 confirm: {
+					 label: 'Yes',
+					 className: 'btn btnStdColor px-4 btnStdWid2'
+				 },
+				 cancel: {
+					 label: 'No',
+					 className: 'btn btn-secondary px-4 py-1 btn-sm'
+				 }
+			 },
+			 callback: function (result) {
+				 if (result) {
+					 $.ajax({
+						 url: encodeURI('@Url.Action("DeleteManualLog", "ManualLog")'),
+						 type: "POST",
+						 dataType: "json",
+						 data: { LogId: id },
+						 success: function (data) {
+							 if (data.success) {
+								 var sStatus = localStorage.getItem("status");
+								 toastr.success(data.data);
+								 bindManualLogGrid();
+							 }
+							 else {
+								 toastr.error(data.data);
+							 }
+						 },
+						 error: function () {
+
+						 }
+					 });
+				 }
+			 }
+		 });
+	 }
+
+
+	 function ApproveRejectManualLog(logId, status){
+		 bootbox.confirm({
+			 title: status == 3 ? "Approve Manual Log": status == 4 ? "Reject Manual Log" : "Cancel Manual Log",
+			 message: status == 3 ? "Are you sure to approve this log?" : status == 4 ? "Are you sure to reject this log?" : "Are you sure to cancel this log?",
+			 buttons: {
+				 confirm: {
+					 label: 'Yes',
+					 className: 'btn btnStdColor px-4 btnStdWid3'
+				 },
+				 cancel: {
+					 label: 'No',
+					 className: 'btn btn-secondary px-4 py-1'
+				 }
+			 },
+			 callback: function (result) {
+				 if (result) {
+					 $.ajax({
+						 url: encodeURI('@Url.Action("ApproveRejectManualLog", "ManualLog")'),
+						 type: "POST",
+						 dataType: "json",
+						 data: { LogId: logId, Status: status},
+						 success: function (data) {
+							 if (data.success) {
+								 var sStatus = localStorage.getItem("status");
+								 toastr.success(data.data);
+								 bindManualLogGrid();
+							 }
+							 else {
+								 toastr.error(data.data);
+							 }
+						 },
+						 error: function () {
+
+						 }
+					 });
+				 }
+			 }
+		 });
+	 }
+</script>

@@ -1,0 +1,103 @@
+﻿@model CdplATS.Entity.Models.RoleEntity
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper AuthoringTagHelpers.TagHelpers.EmailTagHelper, AuthoringTagHelpers
+
+@{
+	ViewData["Title"] = "Add Role";
+}
+
+
+<link href="~/css/toastr.css" rel="stylesheet" />
+<script src="~/js/toaster.js"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<script src="~/lib/jquery-validation/dist/additional-methods.min.js"></script>
+<script src="~/lib/jquery-validation/dist/additional-methods.js"></script>
+
+<form id="formRole" method="post" role="form">
+	<div class="hs-overlay-open:mt-7 ti-modal-box mt-0 ease-out md:!max-w-2xl md:w-full m-3 md:mx-auto">
+
+		<div class="ti-modal-content">
+			<div class="ti-modal-header">
+				<h6 class="modal-title" id="staticBackdropLabel2">
+					 @if (Model.id == 0) 
+					 { 
+					 	<i class="icon-task pull-left mr-10 mt-5"></i> 
+					 	<lable>Add Role</lable> 
+					 } 
+					 else 
+					 { 
+					 	<i class="icon-task pull-left mr-10 mt-5"></i> 
+					 	<lable>Edit Role</lable> 
+					 } 
+				</h6>
+				<button type="button" class="hs-dropdown-toggle ti-modal-close-btn" data-hs-overlay="#model_RoleDetail">
+					<span class="sr-only">Close</span>
+					<img class="w-3.5 h-3.5" src="~/image/close.svg" />
+				</button>
+			</div>
+			<div class="ti-modal-body">
+				<div class="grid grid-cols-12 gap-2">
+					<div class="xl:col-span-12 col-span-12">
+						<input type="hidden" class="form-control" asp-for="id" placeholder="">
+					</div>
+					<div class="xl:col-span-6 col-span-12 mb-2">
+						<label asp-for="role" class="form-label"></label>
+						<input type="text" class="form-control" asp-for="role" placeholder="First Name">
+						@Html.ValidationMessageFor(m => m.role, "", new { @class = "text-danger" })
+					</div>
+					@* <div class="xl:col-span-6 col-span-12 mb-2"> *@
+					@* 	<label asp-for="createdBy" class="form-label"></label> *@
+					@* 	<input type="text" class="form-control" asp-for="createdBy" placeholder="Last Name"> *@
+					@* 	<span asp-validation-for="createdBy" class="text-danger"></span> *@
+					@* </div> *@
+				</div>
+			</div>
+			<div class="ti-modal-footer">
+				<button type="button" class="hs-dropdown-toggle ti-btn ti-btn-light" data-hs-overlay="#model_RoleDetail"> Cancel </button>
+				<button class="ti-btn ti-btn-primary-full" type="button" OnClick="return SaveRole();"> Submit </button>
+			</div>
+		</div>
+	</div>
+</form>
+
+@section Scripts {
+	<partial name="_ValidationScriptsPartial" />
+}
+
+<script> 
+	function SaveRole() {
+		if ($('#formRole').valid()) {
+
+			var form = $("#formRole");
+			try {
+				var formdata = $('form').serialize();
+				$.ajax({
+					url: '@Url.Action("SaveRole", "Role")',
+					async: false,
+					type: 'POST',
+					data: formdata,
+					success: function (data) {
+						if (data.status) {
+							debugger;
+							$('#model_RoleDetail').addClass("hidden");
+							$("div").remove(".hs-overlay-backdrop");
+							toastr.success(data.message);
+							bindCustomerGrid();
+						}
+						else {
+							debugger;
+							toastr.error(data.message);
+						}
+					}
+					//ValidationForm();
+				});
+			}
+			catch {
+
+			}
+		}
+	}
+</script>
+
+

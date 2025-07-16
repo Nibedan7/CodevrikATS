@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CdplATS.Entity.Models
+{
+    public class ClientEntity
+    {
+        public int Id { get; set; }
+        public string Client  { get; set; }
+        public string Project { get; set; }
+        public string Client_Contact { get; set; }
+        public string Dev_Team { get; set; }
+        public string Status { get; set; }
+        public string Issues { get; set; }
+        public string Date_schedule { get; set; }
+        public string Hour_status { get; set; }
+
+    }
+}

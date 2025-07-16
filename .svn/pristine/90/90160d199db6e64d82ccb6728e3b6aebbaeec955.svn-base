@@ -1,0 +1,54 @@
+﻿using CdplATS.API.Services;
+using CdplATS.Entity.Models;
+using DocumentFormat.OpenXml.Bibliography;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
+    public class DepartmentApiController : ControllerBase
+    {
+        private readonly DepartmentService _departmentService;
+        public DepartmentApiController(DepartmentService departmentService)
+        {
+            _departmentService = departmentService;
+        }
+
+        /// <summary>
+        /// Get Punch Records by Employee Code
+        /// </summary>
+
+        [HttpGet("GetDepartment")]
+        public async Task<IActionResult> GetDepartment(int DepartmentId = 0)
+        {
+            var response = await _departmentService.GetDepartment(DepartmentId);
+            return Ok(response);
+        }
+        
+        [HttpGet("GetAllEmployee")]
+        public async Task<IActionResult> GetAllEmployee()
+        {
+            var response = await _departmentService.GetAllEmployee();
+            return Ok(response);
+        }
+
+        [HttpPost("AddEditDepartment")]
+        public async Task<IActionResult> AddEditDepartment([FromBody] DepartmentEntity department)
+        {
+            var response = await _departmentService.AddEditDepartmentAsync(department);
+            return Ok(response);
+        }
+
+        [HttpDelete("DeleteDepartment/{DepartmentId}")]
+        public async Task<IActionResult> DeleteDepartment(int DepartmentId)
+        {
+            var response = await _departmentService.DeleteDepartment(DepartmentId);
+          
+            return Ok(response);
+
+        }
+    }
+}

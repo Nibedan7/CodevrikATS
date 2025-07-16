@@ -1,0 +1,269 @@
+﻿@using CdplATS.Entity.Models
+@model List<AppraisalEntity>
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+	var LoggedEmpName = HttpContextAccessor.HttpContext.Session.GetString("authName");
+	var LoggedEmpCode = HttpContextAccessor.HttpContext.Session.GetInt32("authCode");
+	var LoggedEmpRole = HttpContextAccessor.HttpContext.Session.GetInt32("authRoleId");
+}
+
+<div>
+	<div class="d-flex  align-items-center mb-3 filterBar">
+		<div class="d-flex gap-2">
+			<div style="padding-top:8px;">
+				<label class="standardColor" style="width:max-content; ">Average Self Rating: </label>
+			</div>
+			<span style="padding-top:8px;" id="avgSelfRating2">00</span>
+		</div>
+		<div style="margin-left:auto;">
+			<button type="button" class="btn btnStdColor addEdit-Leave-btn" onclick="saveAssessment()">
+				<i class="bi bi-save"></i> Save
+			</button>
+		</div>
+	</div>
+
+	<div id="assessment-table">
+		@foreach (var AssessmentCategoryGroup in Model.GroupBy(x => new { x.AssessmentCategoryId, x.AssessmentCategoryName, x.IsRating, x.Reviewer1Name, x.Reviewer2Name, x.Reviewer1Id, x.Reviewer2Id, x.SelfRatingAVG, x.Reviewer1RatingAVG, x.Reviewer2RatingAVG, x.EmployeeCode }))
+		{
+			<div class="d-flex">
+				<p class="btnStdColor addEdit-Leave-btn Tab2AssessmentCategory" style="margin-bottom:0;"><b>@AssessmentCategoryGroup.Key.AssessmentCategoryName</b></p>
+				<div class="d-flex Avg-Div">
+					<p class="standardColor">
+						@if (AssessmentCategoryGroup.Key.IsRating == 1)
+						{
+							<span>Avg:@AssessmentCategoryGroup.Key.SelfRatingAVG</span>
+						}
+					</p>
+				</div>
+			</div>
+
+			<div>
+				<table class="table table-bordered AssessmentTable">
+					<thead>
+						<tr>
+							<th width="10%">Assessment</th>
+							<th width="27%">Self</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var Assessment in AssessmentCategoryGroup)
+						{
+							<tr>
+								<td>
+									<input type="hidden" class="AssessmentCategory-id" value="@Assessment.AssessmentCategoryId" />
+									<input type="hidden" class="Assessment-id" value="@Assessment.AssessmentId" />
+									<input type="hidden" class="Employee-code" value="@Assessment.EmployeeCode" />
+									<input type="hidden" class="Employee-AssesmentId" value="@Assessment.EmployeeAssessmentId" />
+									<input type="hidden" class="is-rating" value="@Assessment.IsRating" />
+									@Assessment.Assessment
+								</td>
+								<td>
+									<div class="d-flex gap-4">
+										@if (Assessment.IsRating == 1)
+										{
+											<select class=" self-rating-input form-select apprisal-Select @(Assessment.SelfRating != Assessment.CorrectedSelfRating ? "highlight-select" : "")" 
+													style="margin-left:10px;" 
+													disabled="@(Assessment.IsSelfAssSubmitted == 1 || LoggedEmpCode != Assessment.EmployeeCode ? "disabled" : null)">
+												<option disabled selected="@(Assessment.CorrectedSelfRating == null ? "selected" : null)">--Select Rating--</option>
+												<option value="1" selected="@(Assessment.CorrectedSelfRating == 1 ? "selected" : null)">1</option>
+												<option value="2" selected="@(Assessment.CorrectedSelfRating == 2 ? "selected" : null)">2</option>
+												<option value="3" selected="@(Assessment.CorrectedSelfRating == 3 ? "selected" : null)">3</option>
+												<option value="4" selected="@(Assessment.CorrectedSelfRating == 4 ? "selected" : null)">4</option>
+												<option value="5" selected="@(Assessment.CorrectedSelfRating == 5 ? "selected" : null)">5</option>
+												<option value="-1" selected="@(Assessment.CorrectedSelfRating == -1 ? "selected" : null)">N/A</option>
+											</select>
+										}
+										<textarea class=" self-comment comment-input" placeholder="@Assessment.PlaceHolder" disabled="@(Assessment.IsSelfAssSubmitted == 1 || LoggedEmpCode != Assessment.EmployeeCode ? "disabled" : null)">@Assessment.SelfComment</textarea>
+									</div>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	</div>
+
+
+</div>
+<script>
+
+	$(document).ready(function () {
+		LoadTab2Avarage()
+	});
+
+	function LoadTab2Avarage(){
+		const empCode = $('#empDropdown').val();
+		const assessmentId = $('#apprisalDropdown').val();
+
+		$.ajax({
+			type: "GET",
+			url: '@Url.Action("GetTabAvarageByEmployee", "Appraisal")',
+			data: {EmployeeCode: empCode, TabId: 2, EmpAssessementId:assessmentId},
+			success: function (data) {
+				if(data){
+					$('#avgSelfRating2').text(data.selfRatingAVG ?? 0);
+
+				}
+			
+			},
+			error: function(){
+
+			}
+
+		});
+	}
+
+	window.changedData = window.changedData || new Map();
+
+	$(document).on('change', '#assessment-table select, #assessment-table textarea', function () {
+		const row = $(this).closest('tr')[0];
+		if (!changedData.has(row)) {
+			changedData.set(row, {});
+		}
+
+		const rowData = changedData.get(row);
+		let value = $(this).val();
+
+		if ($(this).prop("tagName") === "SELECT" && value === "--Select Rating--") return;
+		if ($(this).hasClass("self-rating-input")) {
+			rowData["SelfRating"] = parseInt(value);
+		}
+		if ($(this).hasClass("self-comment")) {
+			rowData["SelfComment"] = value;
+		}
+
+		hasUnsavedChanges = true;
+	});
+
+
+	function saveAssessment() {
+		const changedRows = Array.from(changedData.entries());
+		let validationPassed = true;
+
+		if (changedRows.length === 0) {
+			return;
+		}
+
+		const data = [];
+		const loggedEmployeeCode = '@(HttpContextAccessor?.HttpContext?.Session?.GetInt32("authCode") ?? 0)';
+
+		// Clear all previous error indicators
+		$(".invalid-input").removeClass("invalid-input");
+
+		changedRows.forEach(([row, changes]) => {
+			const categoryId = parseInt(row.querySelector(".AssessmentCategory-id").value);
+			const assessmentId = parseInt(row.querySelector(".Assessment-id").value);
+			const employeeCode = parseInt(row.querySelector(".Employee-code").value);
+			const employeeAssesmentId = parseInt(row.querySelector(".Employee-AssesmentId").value);
+			const isRating = parseInt(row.querySelector(".is-rating").value);
+
+			let rowValid = true;
+
+			const selfRatingEl = row.querySelector(".self-rating-input");
+			const selfCommentEl = row.querySelector(".self-comment");
+
+			// Self Validation
+			const selfRating = selfRatingEl ? selfRatingEl.value : null;
+			const selfComment = selfCommentEl ? selfCommentEl.value.trim() : "";
+
+			if ("SelfRating" in changes || "SelfComment" in changes && isRating == 1) {
+				if ((selfRating && selfRating !== "--Select Rating--" && !selfComment) ||
+					(selfComment && (!selfRating || selfRating === "--Select Rating--"))) {
+					rowValid = false;
+					if (!selfRating || selfRating === "--Select Rating--") selfRatingEl?.classList.add("invalid-input");
+					if (!selfComment) selfCommentEl?.classList.add("invalid-input");
+				}
+			}
+
+			if (!rowValid) {
+				validationPassed = false;
+				return; // skip pushing invalid row
+			}
+
+			const result = {
+				EmployeeCode:employeeCode,
+				LoggedEmpCode: loggedEmployeeCode,
+				EmployeeAssessmentId: employeeAssesmentId,
+				TabId: 2,
+				AssessmentCategoryId: categoryId,
+				AssessmentId: assessmentId,
+				SelfRating: changes.SelfRating || null,
+				SelfComment: changes.SelfComment || null
+			};
+
+			data.push(result);
+		});
+
+		if (!validationPassed) {
+			toastr.error("Please ensure rating and comment are both filled where changed.");
+			return;
+		}
+
+		$.ajax({
+			url: '/Appraisal/UpdateAssessment',
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(data),
+			success: function (response) {
+				if(response.success){
+					toastr.success(response.message);
+					hasUnsavedChanges = false;
+					LoadTab2Avarage()
+					loadTabContent('#tab2', '/Appraisal/LoadTab2');
+				}
+				else {
+					toastr.error(response.message);
+				}
+				changedData.clear();
+			},
+			error: function (xhr, status, error) {
+				toastr.error("Something went wrong");
+			}
+		});
+	}
+
+
+
+</script>
+
+
+<style>
+	.Tab2AssessmentCategory {
+		padding: 10px !important;
+		margin-left: 1px;
+		border-radius: 12px 12px 0 0;
+		width: 27% !important;
+	}
+
+	.AssessmentTable {
+		margin-bottom: 50px;
+		border-radius: 12px 12px 12px 12px !important;
+		/* width:60vw !important; */
+	}
+
+	.apprisal-Select {
+		width: 100px;
+		height: 35px;
+		margin-left: 0 !important;
+	}
+
+	.comment-input {
+		width: 100%;
+		min-height: 30px;
+	}
+
+	.Avg-Div {
+		padding-left: 250px;
+	}
+
+	.invalid-input {
+		border: 2px solid red !important;
+		/* background-color: #fff0f0 !important; */
+	}
+
+	.highlight-select {
+		border: 2px solid #f0ad4e;
+		background-color: #ffe6e6;
+	}
+</style>

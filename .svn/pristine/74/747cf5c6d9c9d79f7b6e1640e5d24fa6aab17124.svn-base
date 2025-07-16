@@ -1,0 +1,27 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace CdplATS.Entity.Models
+{
+    public class RoleEntity
+    {
+        [Key]
+        [JsonPropertyName("id")]
+        public int id { get; set; }
+
+        [Required(ErrorMessage = "Role is required.")]
+        [JsonPropertyName("role")]
+        public string role { get; set; }
+
+        [Required(ErrorMessage = "Created By is required.")]
+        [JsonPropertyName("createdBy")]
+        public string createdBy { get; set; }
+
+    }
+
+}

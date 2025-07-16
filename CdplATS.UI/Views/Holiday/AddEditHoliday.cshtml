@@ -1,0 +1,90 @@
+﻿
+<!-- jQuery Validation -->
+
+
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+@model CdplATS.Entity.Models.HoliDayEntity
+
+<div class="modal fade" id="model_HolidayDetail" tabindex="-1" aria-labelledby="HolidayModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="margin-top: 50px;">
+        <!-- Adjusted vertical position -->
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title standardColor" id="HolidayModalLabel">@(Model.Id == 0 ? "Add Holiday" : "Edit Holiday")</h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="Holidayform">
+                    <div class="row-border mb-3">
+                        <div class="col-md-6">
+                            <label hidden class="form-label standardColor fw-bold">Id</label>
+                            <input hidden id="festivalId" type="text" class="form-control" asp-for="Id" name="Id" />
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">Date</label>
+                            <input id="festivalDate" type="date" class="form-control" asp-for="Date" required />
+                            <span asp-validation-for="Date" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">Festival Name</label>
+                            <input id="festivalName" type="text" class="form-control" asp-for="FestivalName" name="FestivalName" required />
+                            <span asp-validation-for="FestivalName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+
+                    <!-- Full-Width Separator Line -->
+                    <hr class="mt-4 mb-3 border-dark" style="margin-left: -24px; margin-right: -24px;"> 
+
+                    <!-- Buttons Aligned Right -->
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btnStdColor px-4 me-2 btnStdWid2 " onclick="saveHoliday()" id="submitbtn">Save</button>
+                        <button type="button" class="btn btn-secondary px-3 me-2 btnStdWid2" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script>
+        function saveHoliday() {
+        var form = $("#Holidayform");
+
+        // Trigger validation
+        if (form.valid()) {
+            var formData = form.serialize();
+
+            $.ajax({
+                url: '@Url.Action("AddEditHoliday", "Holiday")',
+                type: "POST",
+                data: formData,
+                success: function (data) {
+                    if(data.success){
+                         toastr.success(data.message);
+
+                    $('#model_HolidayDetail').modal('hide');
+                    bindHolidayGrid();
+                    }else{
+                        toastr.error(data.message)
+                    }
+                   
+                },
+                error: function (data) {
+                    toastr.error('Error in saving holiday. Please try again.');
+                }
+            });
+        }
+    }
+</script>
+

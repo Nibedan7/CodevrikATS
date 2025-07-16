@@ -1,0 +1,79 @@
+﻿using CdplATS.API.Services;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class HolidayApiController : ControllerBase
+    {
+        private readonly HolidayService _holidayService;
+        public HolidayApiController(HolidayService holidayService)
+        {  
+            _holidayService = holidayService;
+        }
+        /// <summary>
+        /// Get all holidays or Get one holiday
+        /// </summary>
+        [HttpGet("GetAllHolidaysById")]
+        public async Task<IActionResult> GetAllHolidays(int Id = 0)
+        {
+
+            var response = await _holidayService.GetHolidaysAsync(Id);
+
+            if (response == null || !response.Success)
+            {
+                return StatusCode(500, response?.Message ?? "Error occurred while Loading holiday.");
+            }
+            return Ok(response);
+            
+        }
+
+
+        /// <summary>
+        /// Api for Add and Edit Holiday
+        /// </summary>
+        [HttpPost("AddEditHoliday")]
+        public async Task<IActionResult> AddEditHoliday([FromBody] HoliDayEntity holiday)
+        {
+            if (holiday == null)
+            {
+                return BadRequest("Invalid holiday data.");
+            }
+
+            var response = await _holidayService.AddEditHoliday(holiday);
+
+            if (response == null || !response.Success)
+            {
+                return StatusCode(500, response?.Message ?? "Error occurred while adding/editing the holiday.");
+            }
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Api for Delete Holiday
+        /// </summary>
+        
+
+        [HttpDelete("DeleteHoliday/{Id}")]
+        public async Task<IActionResult>DeleteHoliday(int Id)
+        {
+            if(Id <= 0)
+            {
+                return BadRequest(new { message = "Invalid holiday id" });
+            }
+            var response = await _holidayService.DeleteHoliday(Id);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+
+        }
+
+      
+    }
+}

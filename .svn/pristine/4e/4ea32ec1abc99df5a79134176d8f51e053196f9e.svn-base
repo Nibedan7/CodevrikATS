@@ -1,0 +1,112 @@
+﻿@model CdplATS.Entity.Models.EmployeeEntity
+
+<!-- Toastr CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+<!-- Your HTML content goes here -->
+
+
+<div class="modal fade" id="model_EmployeeDetail" tabindex="-1" aria-labelledby="EmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="margin-top: 50px;">
+        <!-- Adjusted vertical position -->
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold standardColor" id="EmployeeModalLabel">Add Employee</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="EmployeeForm" method="post" asp-action="AddEditEmployee">
+
+                    <label class="form-label standardColor fw-bold" hidden >Id</label>
+                    <input id="empId" asp-for="Id" type="text" class="form-control" hidden>
+
+                    <!-- Row 1 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">FirstName</label>
+                            <input asp-for="FirstName" type="text" class="form-control" name="FirstName" required>
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">LastName</label>
+                            <input asp-for="LastName" type="text" class="form-control" required>
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">EmployeeId</label>
+                            <input asp-for="EmployeeId" type="text" class="form-control" required>
+                            <span asp-validation-for="EmployeeId" class="text-danger"></span>
+                        </div>
+                        @if(Model.Id == 0)
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label standardColor fw-bold">EmployeeCode</label>
+                                <input asp-for="EmployeeCode" type="text" class="form-control" required>
+                                <span asp-validation-for="EmployeeCode" class="text-danger"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label standardColor fw-bold">EmployeeCode</label>
+                                <input disabled asp-for="EmployeeCode" type="text" class="form-control" required>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Full-Width Separator Line -->
+                    <hr class="mt-4 mb-3 border-dark" style="margin-left: -24px; margin-right: -24px;">
+
+                    <!-- Buttons Aligned Right -->
+                    <div class="d-flex justify-content-end">
+                       
+                        <button type="button" id="submitBtn" onclick="saveEmployee()" class="btn btnStdColor px-4 me-2">Submit</button> 
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancle</button>
+                       
+                    </div>  
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+       function saveEmployee() {
+        var form = $("#EmployeeForm");
+
+        // Trigger validation
+        if (form.valid()) {
+            var formData = form.serialize();
+
+            $.ajax({
+                url: '@Url.Action("AddEditEmployee", "Employee")',
+                type: "POST",
+                data: formData,
+                success: function (data) {
+                    toastr.success('Employee saved successfully!');
+                    setTimeout(function () {
+                        window.location.href = '@Url.Action("Index", "Employee")';
+                    }, 2000);
+                },
+                error: function (data) {
+                    console.log("Error loading partial view.", data);
+                    toastr.error('Error saving Employee. Please try again.');
+                }
+            });
+        } else {
+            toastr.error('Please fill in all the required fields.');
+        }
+    }
+
+</script>
+

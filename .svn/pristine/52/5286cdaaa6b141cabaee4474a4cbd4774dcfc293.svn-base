@@ -1,0 +1,73 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
+using CdplATS.Entity.Models;
+using System.CodeDom;
+using System.Text.Json;
+
+namespace CdplATS.UI.Controllers
+{
+    public class RoleController : Controller
+    {
+        private IHttpContextAccessor _httpContextAccessor;
+        public RoleController(IHttpContextAccessor httpContextAccessor)
+        {
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        List<RoleEntity> roles = new List<RoleEntity>()
+        {
+            new RoleEntity {id = 1,role = "Admin", createdBy = "Super Admin"},
+            new RoleEntity { id = 2, role = "Hr",createdBy = "Admin"},
+            new RoleEntity {id = 3, role = "Senior Developer",createdBy = "Admin"},
+            new RoleEntity {id = 4, role = "Intern",createdBy = "Admin"},
+            new RoleEntity {id = 5, role = "Data Analyst",createdBy = "Admin"},
+            new RoleEntity {id = 6, role = "Java Developer",createdBy = "Admin"}
+        };
+        private readonly IHttpContextAccessor httpContextAccessor;
+
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult GetAllRole()
+        {
+            var token = _httpContextAccessor.HttpContext?.Session?.GetString("authToken");
+            var user = _httpContextAccessor.HttpContext?.Session?.GetString("authUser");
+            var u = JsonSerializer.Deserialize<LoggerEntity>(user, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return Json(roles);
+        }
+
+        [HttpGet]
+        public IActionResult AddEditRole(int Roleid)
+        {
+            RoleEntity role = new RoleEntity();
+           
+            if(Roleid > 0)
+            {
+                role = roles.FirstOrDefault(i => i.id == Roleid);
+                return View(role);
+            }
+
+            return PartialView("/Views/Role/AddEditRole.cshtml", role);
+
+        }
+
+        [HttpPost]
+        public IActionResult SaveRole(RoleEntity role)
+        {
+            if (ModelState.IsValid)
+            {
+                return View("Index");
+            }
+            return View("Index");
+        }
+
+        [HttpPost]
+        public IActionResult DeleteRole(int Roleid)
+        {
+            return View("Index");
+        }
+    }
+}

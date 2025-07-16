@@ -1,0 +1,36 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+using static CdplATS.Entity.Models.LeaveEntity;
+using System.Data;
+
+namespace CdplATS.API.Services
+{
+    public class CommonServices
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public CommonServices(GenericRepository genericRepository)
+        {
+            this._genericRepository = genericRepository;
+        }
+
+        public async Task<ApiResponse<IEnumerable<EmpList>>> GetAllFillDropDownForEmployeeList(int empCode)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@empCode", SqlDbType.Int) { Value = empCode }
+                };
+
+                var emps = await _genericRepository.GetAllAsync<EmpList>("GetEmpByDept", parameters);
+                return new ApiResponse<IEnumerable<EmpList>>(emps, "Leave retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<EmpList>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+    }
+}

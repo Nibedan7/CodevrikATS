@@ -1,0 +1,215 @@
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@using CdplATS.Entity.Models
+@using Newtonsoft.Json
+@model RoleRightEntity
+
+@{
+	Layout = "_Layout";
+	var roles = ViewBag.RoleList;
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Role/Rights</a></li>
+		<li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-person-walking-arrow-right"></i> Role/Rights Details</li>
+	</ol>
+</nav>
+
+<div class="container-fluid">
+	<!-- Table Header with Add Button -->
+	<div class="d-flex  align-items-center mb-3 filterBar">
+		<div class="d-flex gap-2">
+			<div style="padding-top:5px;">
+				<label class="standardColor" style="width:max-content; ">Roles: </label>
+			</div>
+			<div>
+				@Html.DropDownListFor(
+								Model => Model.SelectedRole,
+								new SelectList(Model.RolesList, "RoleId", "RoleName",Model.SelectedRole),
+								new { @class = "form-select", id = "roleDropdown", 
+								onchange = "bindRoleRightGrid()" }
+				)
+			</div>
+			
+		</div>
+		<div style="margin-left:auto;">
+			<button type="button" class="btn btnStdColor addEdit-Leave-btn" onclick="SaveRoleRights()">
+				<i class="fa-solid fa-plus"></i> Save
+			</button>
+		</div>
+	</div>
+
+	<div class="table-container">
+		<table id="roleRightTable" class="table table-bordered table-striped table-hover">
+			<thead>
+				<tr>
+					<th hidden>Role Id</th>
+					<th>Menu</th>
+					<th>View</th>
+					<th>Add</th>
+					<th>Edit</th>
+					<th>Delete</th>
+				</tr>
+			</thead>
+		</table>
+	</div>
+
+</div>
+
+
+
+	<div id="div_RoleDetail"></div>
+
+
+
+<script>
+
+	$(document).ready(function () {
+		bindRoleRightGrid();
+	});
+
+	function bindRoleRightGrid() {
+		roleId = $("#roleDropdown").val();
+		 $.ajax({
+			 type: "GET",
+			 url: encodeURI('@Url.Action("GetAllRoleRights", "RoleRightsManagement")'),
+			 dataType: "json",
+			 data:{RoleId : roleId},
+			 success: function(data){
+				 RoleRightSuccHandler(data);
+			 },
+			 error: RoleRightErrHandler
+		});
+	}
+
+	 function RoleRightErrHandler(){
+
+	 }
+
+	 var dataTableExample;
+
+	function RoleRightSuccHandler(data){
+		try{
+			var dataTableExample = $('#roleRightTable').DataTable();
+			 if (dataTableExample != 'undefined') {
+				 dataTableExample.destroy();
+			 }
+
+			 dataTableExample = $('#roleRightTable').DataTable({
+				 scrollY: false,
+				 "order": [],
+				 "lengthMenu": [25,50,100,200,],
+				 "dom": 'frtlip',
+				 "bFilter": true,
+				 "aaData": data,
+				 "language": {
+					  "lengthMenu": "Show _MENU_ entries,"
+				  },
+				  "aoColumns": [
+					 {
+						 "mData": "roleRightId",
+						 "visible": false
+					 },
+					 {
+						 "mData": "menuName",
+						 "className": "dt-left"
+					 },
+					 {
+						 "mData": "canView",
+						 "className": "dt-left",
+						"mRender": function (data, type, row, meta) {
+							var checked = data == 1 ? 'checked' : '';
+							return `<input type="checkbox" class="checkbox-canView" data-id="${row.menuId}" ${checked}>`;
+						}
+					 },
+					 {
+						 "mData": "canAdd",
+						 "className": "dt-left",
+						"mRender": function (data, type, row, meta) {
+							var checked = data == 1 ? 'checked' : '';
+							return `<input type="checkbox" class="checkbox-canAdd" data-id="${row.menuId}" ${checked}>`;
+						}
+					 },
+					 {
+						 "mData": "canEdit",
+						 "className": "dt-left",
+						"mRender": function (data, type, row, meta) {
+							var checked = data == 1 ? 'checked' : '';
+							return `<input type="checkbox" class="checkbox-canEdit" data-id="${row.menuId}" ${checked}>`;
+						}
+					 },
+					 {
+						 "mData": "canDelete",
+						 "className": "dt-left",
+						"mRender": function (data, type, row, meta) {
+							var checked = data == 1 ? 'checked' : '';
+							return `<input type="checkbox" class="checkbox-canDelete" data-id="${row.menuId}" ${checked}>`;
+						}
+					 }
+				  ]
+			 });
+			$(".dataTables_length").css('clear', 'none');
+			$(".dataTables_length").css('margin-right', '20px');
+			$(".dataTables_info").css('clear', 'none');
+			$(".dataTables_info").css('padding', '0');
+		}catch (e) {
+			 alert(e.message);
+		 }
+	}
+
+
+
+	function SaveRoleRights(){
+		var modifiedData = getModifiedRoleRights();
+			try {
+				$.ajax({
+					url: '@Url.Action("UpdateRoleRight", "RoleRightsManagement")',
+				    type: 'POST',
+				    contentType: 'application/json',
+					data: JSON.stringify(modifiedData),
+					success: function (data) {
+						if (data.success) {
+							toastr.success(data.message);
+							bindRoleRightGrid();
+						}
+						else {
+							toastr.error(data.message);
+						}
+					}
+				});
+			}
+			catch {
+
+			}
+	}
+
+	
+	function getModifiedRoleRights() {
+		var modifiedData = [];
+		var menuIds = new Set();
+		var roleId = $('#roleDropdown').val();
+
+		// Get all unique menuId from checkboxes
+		$('.checkbox-canView, .checkbox-canAdd, .checkbox-canEdit, .checkbox-canDelete').each(function() {
+			var menuId = $(this).data('id');
+			menuIds.add(menuId);
+		});
+		debugger;
+		// Create an object for each menuId
+		menuIds.forEach(function (menuId) {
+			var rowData = {
+				roleId: roleId,
+				menuId: menuId,
+				canView: $('.checkbox-canView[data-id="' + menuId + '"]').is(':checked') ? 1 : 0,
+				canAdd: $('.checkbox-canAdd[data-id="' + menuId + '"]').is(':checked') ? 1 : 0,
+				canEdit: $('.checkbox-canEdit[data-id="' + menuId + '"]').is(':checked') ? 1 : 0,
+				canDelete: $('.checkbox-canDelete[data-id="' + menuId + '"]').is(':checked') ? 1 : 0
+			};
+			modifiedData.push(rowData);
+		});
+
+		return modifiedData;
+	}
+
+</script>

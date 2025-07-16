@@ -1,0 +1,158 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+using System.Data;
+using static CdplATS.Entity.Models.LeaveEntity;
+
+namespace CdplATS.API.Services
+{
+    public class LeaveService
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public LeaveService(GenericRepository genericRepository)
+        {
+            _genericRepository = genericRepository;
+        }
+
+        public async Task<ApiResponse<IEnumerable<LeaveEntity>>> GetLeaveByEmpCode(int? EmpCode, int? Status, string? GroupId, int? Year)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@UserCode", SqlDbType.Int) { Value = EmpCode },
+                    new SqlParameter("@Status", SqlDbType.Int) { Value = Status },
+                    new SqlParameter("@GroupId", SqlDbType.Text) { Value = GroupId },
+                    new SqlParameter("@Year", SqlDbType.Int) { Value = Year },
+                };
+
+                var leaves = await _genericRepository.GetAllAsync<LeaveEntity>("GetLeaveByEmpCode", parameters);
+                return new ApiResponse<IEnumerable<LeaveEntity>>(leaves, "Leaves retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<LeaveEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+
+        public async Task<ApiResponse<string>> AddEditLeave(LeaveEntity leaveEntity)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@empCode", SqlDbType.Int) { Value = leaveEntity.EmpCode },
+                    new SqlParameter("@StartDate", SqlDbType.Date) { Value = leaveEntity.StartDate },
+                    new SqlParameter("@EndDate", SqlDbType.Date) { Value = leaveEntity.EndDate },
+                    new SqlParameter("@LeaveType", SqlDbType.Int) { Value = leaveEntity.LeaveType},
+                    new SqlParameter("@Reason", SqlDbType.NVarChar) { Value = leaveEntity.Reason},
+                    new SqlParameter("@GroupId", SqlDbType.NVarChar) { Value = leaveEntity.GroupId},
+                };
+
+                var result = await _genericRepository.GetAsync<dynamic>("AddEditLeave", parameters);
+
+                if (result.IsSuccess == 1 && result.RowsInserted == 0)
+                {
+                    return new ApiResponse<string> { Success = false, Message = "Please select a working day!" };
+                }
+                else if (result.IsSuccess == 1 && leaveEntity.GroupId == "0")
+                {
+                    return new ApiResponse<string> { Success = true, Message = "Leave Created Successfully!" };
+                }
+                else if (result.IsSuccess == 1 && leaveEntity.GroupId != "0")
+                {
+                    return new ApiResponse<string> { Success = true, Message = "Leave Updated successfully." };
+                }
+                else
+                {
+                    return new ApiResponse<string> { Success = false, Message = "Failed to insert/update Leave data." };
+                }
+            }
+            catch (Exception ex)
+            {
+                return  new ApiResponse<string> { Success = false, Message = $"Error inserting/updating Leave data: {ex.Message}" };
+            }
+        }
+        
+        public async Task<ApiResponse<string>> DeleteLeave(string groupId)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@groupId", SqlDbType.Text) { Value = groupId }
+                };
+
+                var result = await _genericRepository.ExecuteAsync("DeleteLeave", parameters);
+                if (result < 0)
+                {
+                    return new ApiResponse<string>( "Leave data deleted successfully.");
+                }
+                else
+                {
+                    return new ApiResponse<string>("Failed to delete leave data.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string>( $"Error deleting leave data: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<string>> ApproveRejectLeave(string groupId, int status, int empCode)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@groupId", SqlDbType.Text) { Value = groupId },
+                    new SqlParameter("@empCode", SqlDbType.Int) { Value = empCode },
+                    new SqlParameter("@status", SqlDbType.Int) { Value = status }
+                };
+
+                var result = await _genericRepository.ExecuteAsync("ApproveRejectLeave", parameters);
+                if (result < 0 && status == 3)
+                {
+                    return new ApiResponse<string>("Leave Approved successfully.");
+                }
+                else if (result < 0 && status == 4)
+                {
+                    return new ApiResponse<string>("Leave Rejected successfully.");
+                }
+                else if (result < 0 && status == 5)
+                {
+                    return new ApiResponse<string>("Leave Cancelled successfully.");
+                }
+                else
+                {
+                    return new ApiResponse<string>("Failed to Approve/Reject leave data.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string>($"Error deleting leave data: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<EmpDropDownList>>> GetLeaveCountByEmpCode(int empCode, int year)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@EmployeeCode", SqlDbType.Int) { Value = empCode },
+                    new SqlParameter("@Year", SqlDbType.Int) { Value = year }
+                };
+
+                var emps = await _genericRepository.GetAllAsync<EmpDropDownList>("GetLeaveCountByEmpCode", parameters);
+                return new ApiResponse<IEnumerable<EmpDropDownList>>(emps, "Leave Count retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<EmpDropDownList>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+    }
+}

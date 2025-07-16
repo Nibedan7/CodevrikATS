@@ -1,0 +1,41 @@
+﻿using System.ComponentModel.DataAnnotations;
+using static CdplATS.Entity.Models.Enum;
+
+namespace CdplATS.Entity.Models
+{
+    public class LeaveEntity
+    {
+        [Key]
+        public string GroupId { get; set; }
+
+        public int? EmpCode { get; set; }
+        public int? LogEmpCode { get; set; }
+        public string? EmployeeName { get; set; }
+
+        [Required(ErrorMessage = "Start Date is required.")]
+        public DateTime? StartDate { get; set; }
+
+        [Required(ErrorMessage = "End Date is required.")]
+        public DateTime? EndDate { get; set; }
+
+        public decimal? NoOfDays { get; set; }
+
+        public int LeaveType { get; set; }
+
+        [Required(ErrorMessage = "Reason is required.")]
+        public string Reason { get; set; }
+
+        public string? ApprovedBy { get; set; }
+
+        public DateTime? ApproveTime { get; set; }
+
+        public statusEnum? ApprovalStatus { get; set; }
+
+        public DateTime? AppliedDate { get; set; }
+
+        public List<EmpDropDownList>? EmployeeDropDownList { get; set; }
+
+        public List<int>? LeaveYears { get; set; }
+        public int? CurrentYear { get; set; }
+    }
+}

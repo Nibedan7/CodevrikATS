@@ -1,0 +1,203 @@
+﻿@{
+	ViewData["Title"] = "Role";
+}
+
+<link href="~/css/bootbox-modal-custom.css" rel="stylesheet" />
+<script src="~/js/jquery.min.js"></script>
+
+<div class="block justify-between page-header md:flex">
+    <ol class="flex items-center whitespace-nowrap min-w-0">
+        <li class="text-[0.813rem] ps-[0.5rem]">
+            <a class="flex items-center text-primary hover:text-primary dark:text-primary truncate" href="javascript:void(0);">
+				<i class="ri-user-settings-line side-menu__icon"></i>
+                @ViewData["Title"]
+                <i class="ti ti-chevrons-right flex-shrink-0 text-[#8c9097] dark:text-white/50 px-[0.5rem] overflow-visible rtl:rotate-180"></i>
+            </a>
+        </li>
+        <li class="text-[0.813rem] text-defaulttextcolor font-semibold hover:text-primary dark:text-[#8c9097] dark:text-white/50 " aria-current="page"> Role Details </li>
+    </ol>
+    <div>
+		<button type="button" class="hs-dropdown-toggle ti-btn ti-btn-primary-full !px-2 !text-[0.75rem]" data-hs-overlay="#model_RoleDetail" onclick="AddEditRole(0)">
+			<i class="ri-add-line font-semibold align-middle"></i>
+			Add Role
+		</button>
+    </div>
+</div>
+<div class="grid grid-cols-12 gap-6">
+	<div class="xl:col-span-12 col-span-12">
+		<div class="box custom-box custom-box-position">
+			<div class="box-header justify-between">
+				<div class="box-title">Role Summary</div>
+			</div>
+			<div class="box-body">
+				<div class="table-responsive">
+					<table class="table whitespace-nowrap ti-striped-table table-hover min-w-full ti-custom-table-hover " id="tblRoleDetail">
+						<thead>
+							<tr>
+								<th hidden>Role Id</th>
+								<th>Role Name</th>
+								<th>Created By</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="model_RoleDetail" class="hs-overlay ti-modal hidden" data-backdrop="">
+	<div id="div_RoleDetail">
+	</div>
+</div>
+
+@section Scripts {
+	<partial name="_ValidationScriptsPartial" />
+}
+
+<script>
+	$(document).ready(function () {
+		bindRoleGrid();
+	});
+
+	function bindRoleGrid() {
+		$.ajax({
+			type: "GET",
+			url: encodeURI('@Url.Action("GetAllRole", "Role")'),
+			dataType: "json",
+			success: function(data){
+				console.log("Data Received:", data);
+				RoleSuccHandler(data);
+			},
+			error: RoleErrHandler
+		});
+	}
+
+	function RoleErrHandler(xhr, status, error) {
+		console.error("Error fetching leave data:", error);
+	}
+
+	function RoleSuccHandler(data) {
+		console.log("Binding Leave Grid...");
+	try {
+		var dataTableExample = $('#tblRoleDetail').DataTable();
+		if (dataTableExample != 'undefined') {
+			dataTableExample.destroy();
+		}
+		dataTableExample = $('#tblRoleDetail').DataTable({
+
+			scrollY: false,
+			"order": [],
+			"lengthMenu": [10, 30, 40, 50, 60],
+			"dom": 'frtlip',
+			"bFilter": true,
+			"aaData": data,
+			"aoColumns": [
+				{
+					"mData": "id",
+					"visible": false
+				},
+				{
+					"sWidth": "8%",
+					"mData": "role",
+					"className": "dt-left"
+
+				},
+				{
+					"sWidth": "8%",
+					"mData": "createdBy",
+					"className": "dt-left"
+
+				},
+				{
+					"sWidth": "10%",
+					"mData": "id",
+					"sortable": false,
+					"className": "dt-center",
+					"render": function (data, type, row, meta) {
+						var ActionbuttonEdit = '';
+						var ActionButtonDelete = '';
+
+						ActionbuttonEdit = '<a onclick="AddEditRole(' + row.id + ')" href="#" data-hs-overlay="#model_RoleDetail" title="Edit" class="hs-tooltip-toggle ti-btn ti-btn-primary ti-btn-sm disabled"><i class="ri-edit-line"></i></a> &nbsp;&nbsp;';
+
+						ActionButtonDelete = '<a id="lnkDelete_' + row.id + '"  onclick="DeleteRole(' + row.id + ')" class="hs-tooltip-toggle ti-btn ti-btn-danger ms-1 ti-btn-sm task-delete-btn disabled" href = "#"   data-toggle="tooltip" title = "Delete" > <i class="ri-delete-bin-5-line" > </i></a > ';
+						return ActionbuttonEdit + ActionButtonDelete;
+						
+					}
+				}
+			]
+		});
+		$(".dataTables_length").css('clear', 'none');
+		$(".dataTables_length").css('margin-right', '20px');
+		$(".dataTables_info").css('clear', 'none');
+		$(".dataTables_info").css('padding', '0');
+
+		} catch (e) {
+			alert(e.message);
+		}
+	}
+
+	function AddEditRole(id) {
+		$.ajax({
+			url: encodeURI('@Url.Action("AddEditRole", "Role")'),
+			type: "GET",
+			data: { Roleid: id },
+			success: function (data) {
+				$('#div_RoleDetail').html(data);
+				// Show modal after content is loaded
+				const modal = new HSOverlay(document.querySelector('#model_RoleDetail'));
+				modal.open();
+			},
+			error: function (data) {
+				console.log("error loading partial view");
+			}
+		});
+	}
+
+	function DeleteRole(id){
+		bootbox.confirm({
+			title: "Remove Role",
+			message: "Are you sure want to remove Role?",
+			buttons: {
+				confirm: {
+					label: 'Yes',
+					className: 'ti-btn ti-btn-primary-full'
+				},
+				cancel: {
+					label: 'No',
+					className: 'hs-dropdown-toggle ti-btn ti-btn-light'
+				}
+			},
+			callback: function (result) {
+				if (result) {
+					$.ajax({
+						url: encodeURI('@Url.Action("DeleteRole", "Role")'),
+						type: "POST",
+						dataType: "json",
+						data: { Roleid: id },
+						success: function (data) {
+							if (data.status) {
+								toastr.success(data.message);
+								bindRoleGrid();
+							}
+							else {
+								if (data.Flag.indexOf('The DELETE statement conflicted with the REFERENCE constraint') !== -1) {
+									toastr.error('Delete operation cancelled due to foreign-key constraint.');
+								}
+								else {
+									toastr.error(data.Flag, 'BMWWhatBom');
+								}
+							}
+						},
+						error: function () {
+
+						}
+					});
+				}
+
+			}
+		});
+	}
+</script>
+

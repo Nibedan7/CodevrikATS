@@ -1,0 +1,96 @@
+﻿@model CdplATS.Entity.Models.ManualLogEntity
+
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+
+<link href="~/css/toastr.css" rel="stylesheet" />
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<script src="~/lib/jquery-validation/dist/additional-methods.min.js"></script>
+<script src="~/lib/jquery-validation/dist/additional-methods.js"></script>
+<script src="~/js/toaster.js"></script>
+<script src="~/js/toastr.min.js"></script>
+
+<div class="modal fade" id="model_LogDetail" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="margin-top: 50px;">
+        <!-- Adjusted vertical position -->
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+
+                <h5 class="modal-title  standardColor" id="logModalLabel">@(Model.Id == null ? "Add" : "Edit") Manual Log</h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="maualLogForm" method="post" role="form">
+                    <input type="hidden" asp-for="Id" id="Id" />
+
+                    <!-- Row 1: Start Date & End Date -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Punch Time</label>
+                            <input type="datetime-local" asp-for="PunchTime" class="form-control" id="StartDate" placeholder="Punch Time">
+                            <span asp-validation-for="PunchTime" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Reason</label>
+                            <textarea class="form-control" asp-for="Reason" id="PunchReason" rows="1" placeholder="Enter reason"></textarea>
+                            <span asp-validation-for="Reason" id="span-reason" class="text-danger"></span>
+                        </div>
+                    </div>
+
+
+                    <!-- Full-Width Separator Line -->
+                    <hr class="mt-4 mb-3 border-dark" style="margin-left: -24px; margin-right: -24px;">
+
+                    <!-- Buttons Aligned Right -->
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btnStdColor px-4 me-2 btnStdWid2 " onclick="SaveManualLog()">Save</button>
+                        <button type="button" class="btn btn-secondary px-3 me-2 btnStdWid2" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+
+<script>
+    function SaveManualLog() {
+        if ($('#maualLogForm').valid()) {
+            var form = $("#maualLogForm");
+            try {
+                var formdata = $('form').serialize();
+                $.ajax({
+                    url: '@Url.Action("SaveManualLog", "ManualLog")',
+                    async: false,
+                    type: 'POST',
+                    data: formdata,
+                    success: function (data) {
+                        if (data.success) {
+                            // $('modal').addClass("hidden");
+                            // $("div").remove(".hs-overlay-backdrop");
+                            toastr.success(data.data);
+
+                            $('#model_LogDetail').modal('hide');
+                            bindManualLogGrid();
+                        }
+                        else {
+                            debugger;
+                            toastr.error(data.data);
+                        }
+                    }
+                    //ValidationForm();
+                });
+            }
+            catch {
+
+            }
+        }
+    }
+</script>

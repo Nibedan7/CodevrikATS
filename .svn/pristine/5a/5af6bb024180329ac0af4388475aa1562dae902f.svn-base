@@ -1,0 +1,30 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace CdplATS.API.Services
+{
+    public class DailyJobService
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public DailyJobService(GenericRepository genericRepository)
+        {
+            _genericRepository = genericRepository;
+        }
+
+        public async Task<ApiResponse<string>> SetupAllPunchFromEasyTimeToCDPLATS()
+        {
+            try
+            {
+                var result = await _genericRepository.ExecuteAsync("SetupAllPunchFromEasyTimeToCDPLATS", null);                
+                return new ApiResponse<string>("Punch setup sccessfully.");                
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string>($"Error in setup punch data: {ex.Message}");
+            }
+        }
+    }
+}

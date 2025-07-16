@@ -1,0 +1,206 @@
+﻿@page
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+@{
+    Layout = "_Layout";
+}
+<script src="~/js/jquery.min.js"></script>
+<link href="~/css/cdplats.css" rel="stylesheet" />
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Department</a></li>
+        <li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-sitemap"></i> 
+            Department Details
+        </li>
+    </ol>
+</nav>
+
+<div class="d-flex  align-items-center mb-3 filterBar">
+    <div class="d-flex gap-2">
+    </div>
+    <div style="margin-left:auto;">
+        <button type="button" class="btn btnStdColor" onclick="AddEditDepartment(0)">
+            <i class="fa-solid fa-plus"></i> Add Department
+        </button>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="table-container">
+        <table id="departmentTable" class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr>
+                    <th hidden> Deptartment Id</th>
+                    <th>Department Name</th>
+                    <th>Employee Names</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+<div id="div_DepartmentDetail"></div>
+
+<script>
+
+    $(document).ready(function () {
+        bindDepartmentGrid();
+
+         try {
+            $('.select2').select2({
+                width: 'auto',
+                dropdownAutoWidth: true,
+                minimumResultsForSearch: 5
+            });
+        } catch(e) {
+            console.error("Select2 initialization failed:", e);
+        }
+
+    });
+
+    function bindDepartmentGrid() {
+        var employeeCode = $('#departmentDropdown').val();
+        $.ajax({
+        type: "GET",
+        url: '@Url.Action("GetDepartment", "Department")',
+        dataType: "json",
+        success: function (data) {
+            DepartmentSuccHandler(data);
+        },
+        error: DepartmentErrHandler
+        
+    });
+
+    }
+
+        function DepartmentErrHandler(xhr, status, error) {
+    }
+
+    function DepartmentSuccHandler(data) {
+        try {
+            var dataTableExample = $('#departmentTable').DataTable();
+
+            if (typeof dataTableExample !== 'undefined') {
+                dataTableExample.destroy();
+            }
+
+            $('#departmentTable').DataTable({
+                scrollY: false,
+                "order": [],
+                "lengthMenu": [10, 20, 30, 40, 50],
+                "dom": 'frtlip',
+                "bFilter": true,
+                "aaData": data,
+                "language": {
+                    "lengthMenu": "Show _MENU_ entries,"
+                },
+                "aoColumns": [
+                    {
+                        "mData": "departmentId",
+                        "visible": false
+                    },
+                    {
+                        "sWidth":"10%",
+                        "mData": "departmentName",
+                        "className": "dt-left"
+                    },
+                    {
+                        "mData": "employeeNames",
+                        "className": "dt-left"
+                    },
+                    {
+                        "sWidth": "5%",
+                        "mData": "departmentId",
+                        "sortable": false,
+                        "className": "dt-center",
+                        "render": function (data, type, row, meta) {
+                         var actionButtons = '<button onclick="AddEditDepartment(\'' + row.departmentId + '\')" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-pen-to-square"></i></button>';
+
+                            actionButtons += '<button onclick="deleteDepartment(\'' + row.departmentId +'\' )" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-trash"></i></button>';
+
+                            return actionButtons;
+                        }
+                    }
+                    
+                ]
+            });
+
+            $(".dataTables_length").css('clear', 'none');
+            $(".dataTables_length").css('margin-right', '20px');
+            $(".dataTables_info").css('clear', 'none');
+            $(".dataTables_info").css('padding', '0');
+
+        } catch (err) {
+            
+        }
+
+    }
+    function AddEditDepartment(Id) {
+ 
+    // Remove existing modal
+    if ($('#model_DepartmentDetail').length > 0) {
+        $('#model_DepartmentDetail').modal('hide');
+        $('#model_DepartmentDetail').remove();
+        $('.modal-backdrop').remove();
+    }
+        $.ajax({
+             
+            url: encodeURI('@Url.Action("AddEditDepartment", "Department")'),
+            type: "GET",
+            data: {Id: Id },
+            success: function (data) {
+
+                $('#div_DepartmentDetail').html(data);
+            var modal = new bootstrap.Modal(document.getElementById('model_DepartmentDetail'));
+            modal.show();
+            },
+            error: function (data) {
+                
+            }
+        });
+    }
+
+        //deleteEmployee
+     function deleteDepartment(Id){
+
+         bootbox.confirm({
+             title: "Delete Department",
+             message:"Are you sure to delete Department: ",
+             buttons: {
+                 confirm: {
+                     label: 'Yes',
+                      className: 'btn btnStdColor px-4 btnStdWid2'
+                 },
+                 cancel: {
+                     label: 'No',
+                     className: 'btn btn-secondary px-4 py-1 btn-sm'
+                 }
+             },
+             callback: function (result) {
+                debugger;
+                 if (result) {
+                     $.ajax({
+
+                         url: '@Url.Action("DeleteDepartment", "Department")/' + Id,
+                         type: "DELETE",
+                         dataType: "json",
+                        success: function (data) {
+                            if(data.success){
+                                toastr.success(data.message);
+                                bindDepartmentGrid();
+                            }
+                            else {
+                                 toastr.error(data.message);
+                             }
+                        },
+                        error: function (xhr, status, error) {
+                            toastr.error("An error occurred while deleting Department.");
+                        }
+                     });
+                 }
+             }
+         });
+     }
+</script>

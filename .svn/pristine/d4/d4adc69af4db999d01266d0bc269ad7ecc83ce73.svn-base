@@ -1,0 +1,80 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CdplATS.Entity.Models
+{
+
+    public class ProjectTrackerCellViewModel
+    {
+        public int ValueId { get; set; }
+        public string Value { get; set; }
+        public string? ValueColorCode { get; set; }
+
+        public int RowId { get; set; }
+        public string RowName { get; set; }
+        public int RowSortOrder { get; set; }
+
+        public int ColumnId { get; set; }
+        public string ColumnName { get; set; }
+        public int ColumnSortOrder { get; set; }
+        public int Status { get; set; }
+    }
+
+    public class ProjectTrackerCellAddEdit
+    {
+        public int Id { get; set; }
+        public int Type { get; set; }
+        public string? Name { get; set; }
+
+        public int? RowId { get; set; }
+        public int? ColumnId { get; set; }
+        public string? Value { get; set; }
+
+        public string? Direction { get; set; }
+        
+    }
+
+    public class ProjectTrackerColumn
+    {
+        public int ColumnId { get; set; }
+        public string ColumnName { get; set; }
+        public int SortOrder { get; set; }
+        public string? ColumnColorCode { get; set; }
+
+        public ICollection<ProjectTrackerValue> Values { get; set; }
+    }
+
+    public class ProjectTrackerRow
+    {
+        public int RowId { get; set; }
+        public string RowName { get; set; }
+        public int SortOrder { get; set; }
+        public string? RowColorCode { get; set; }
+
+        public ICollection<ProjectTrackerValue> Values { get; set; }
+    }
+
+    public class ProjectTrackerValue
+    {
+        public int ValueId { get; set; }
+        public string? Value { get; set; }
+        public int ColumnId { get; set; }
+        public int RowId { get; set; }
+        public string? ValueColorCode { get; set; }
+
+        public ProjectTrackerColumn Column { get; set; }
+        public ProjectTrackerRow Row { get; set; }
+    }
+
+    public class ProjectTrackerColour
+    {
+        public int ColorId { get; set; }
+        public string ColorStatus { get; set; }
+        public string? ColorCode { get; set; }
+    }
+
+
+}

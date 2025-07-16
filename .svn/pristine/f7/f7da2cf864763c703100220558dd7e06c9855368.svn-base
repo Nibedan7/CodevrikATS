@@ -1,0 +1,190 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Employee Management</title>
+
+    <!-- Bootstrap & Icons -->
+    <script src="~/js/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link href="~/css/select2.min.css" rel="stylesheet" />
+    <link href="~/css/cdplats.css" rel="stylesheet" />
+    <link href="~/css/toastr.css" rel="stylesheet" />
+    <link href="~/css/CDPLATS.css" rel="stylesheet" />
+    <script src="~/js/select2.min.js"></script>
+
+
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg bg-light shadow-sm fixed-top" id="headerNav">
+        <div class="container-fluid navContainer">
+            <!-- Logo -->
+            <a class="navbar-brand">
+                <img src="~/image/cdpl_logo_new.png" alt="Company Logo" height="40">
+            </a>
+
+            <!-- Navbar Toggler for Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            @if (!string.IsNullOrEmpty(Context.Session.GetString("BirthDayEmployee")))
+            {
+                <!-- Happy Birthday Message with Balloons -->
+                <div class="d-flex align-items-center birthday-container">
+                    <span class="birthday-message">🎂 Happy Birthday @Context.Session.GetString("BirthDayEmployee") </span>
+                    <div class="balloons">
+                        <div class="balloon balloon1"></div>
+                        <div class="balloon balloon2"></div>    
+                    </div>
+                </div>
+                <canvas id="confettiCanvas"></canvas>
+            }
+           
+
+            <!-- Confetti Animation (Now Limited to Header) -->
+            <!-- Navigation Links -->
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link standardColor" href="@Url.Action("Index","Leave")">Leave</a></li>
+                    <li class="nav-item"><a class="nav-link standardColor" href="@Url.Action("Index","Employee")">Employee </a></li>
+                    <li class="nav-item"><a class="nav-link standardColor" href="@Url.Action("Index","Holiday")">Holiday </a></li>
+                    <li class="nav-item">
+                        <a class="nav-link standardColor" href="@Url.Action("Index","Punch")">Punch</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link standardColor" href="@Url.Action("Index","ManualLog")">Manual Log</a>
+                    </li>
+                    <!-- Reports Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle standardColor" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown">
+                            Reports
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+                            <li><a class="dropdown-item standardColor" href="#">Attendance Report</a></li>
+                            <li><a class="dropdown-item standardColor" href="#">Performance Report</a></li>
+                        </ul>
+                    </li>
+
+                    
+
+
+                    <li class="nav-item"><a class="nav-link standardColor" href="#">Settings</a></li>
+                </ul>
+            </div>
+
+            <!-- Profile Section -->
+            <div class="d-flex align-items-center">
+                <button id="dropdown-profile" type="button" class="btn p-0 border-0 bg-transparent" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-user-circle fa-lg me-2 standardColor"></i>
+                    <span class="loggerName standardColor">@Context.Session.GetString("authName")</span>
+                </button>
+                
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-profile">
+                    <li><a class="dropdown-item" href="@Url.Action("Logout","Account")">LogOut</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        @RenderBody()
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <span class="standardColor">&copy; 2025 CDPL Employee Management System. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="~/js/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/6.0.0/bootbox.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="~/js/select2.min.js"></script>
+
+    
+    <script src="~/js/toaster.js"></script>
+    <script src="~/js/toastr.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var currentUrl = window.location.pathname.toLowerCase(); // Get the current URL path
+
+            $(".navbar-nav .nav-link").each(function () {
+                var linkUrl = $(this).attr("href").toLowerCase();
+
+                // Check if the current URL contains the link URL to handle parameterized URLs
+                if (currentUrl.includes(linkUrl)) {
+                    $(".navbar-nav .nav-link").removeClass("active-nav"); // Remove previous active class
+                    $(this).addClass("active-nav"); // Add active class to current page link
+                }
+            });
+            var canvas = document.getElementById("confettiCanvas");
+            if(canvas){
+                var ctx = canvas.getContext("2d");
+
+                function resizeCanvas() {
+                var header = document.getElementById("headerNav");
+                canvas.width = header.offsetWidth;
+                canvas.height = header.offsetHeight;
+                }
+
+                resizeCanvas();
+                window.addEventListener("resize", resizeCanvas);
+
+                // Generate Less Confetti
+                var confetti = [];
+                for (var i = 0; i < 15; i++) {  // Reduced from 50 to 15
+                    confetti.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        r: Math.random() * 4 + 2,  // Smaller confetti
+                        d: Math.random() * 1 + 0.5,  // Slower fall
+                        color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                        tilt: Math.random() * 10 - 5
+                    });
+                }
+
+                function drawConfetti() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    for (var i = 0; i < confetti.length; i++) {
+                        var c = confetti[i];
+                        ctx.beginPath();
+                        ctx.fillStyle = c.color;
+                        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    moveConfetti();
+                }
+
+                function moveConfetti() {
+                    for (var i = 0; i < confetti.length; i++) {
+                        var c = confetti[i];
+                        c.y += c.d;  // Slower fall speed
+                        if (c.y > canvas.height) {
+                            c.y = 0;
+                            c.x = Math.random() * canvas.width;
+                        }
+                    }
+                }
+
+                setInterval(drawConfetti, 30);
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+﻿namespace CdplATS.UI.Helpers
+{
+    public class JwtRedirectMiddleware
+    {
+        private readonly RequestDelegate _next;
+
+        public JwtRedirectMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
+
+        public async Task Invoke(HttpContext context)
+        {
+            var token = context.Session.GetString("authToken");
+            var path = context.Request.Path.Value?.ToLower() ?? "";
+
+            // Exclude login page and static resources
+            var isPublicPath =
+                path.Contains("/account/index") ||
+                path.Contains("/account/login") ||
+                path.StartsWith("/css") ||
+                path.StartsWith("/js") ||
+                path.StartsWith("/lib") ||
+                path.StartsWith("/images");
+
+            if (string.IsNullOrEmpty(token) && !isPublicPath)
+            {
+                context.Response.Redirect("/Account/Index");
+                return;
+            }
+
+            await _next(context);
+        }
+    }
+}

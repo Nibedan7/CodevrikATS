@@ -1,0 +1,95 @@
+﻿using System.Data;
+using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+
+namespace CdplATS.API.Services
+{
+    public class ProjectTrackerService
+    {
+        private readonly GenericRepository _genericRepository;
+        public ProjectTrackerService(GenericRepository genericRepository)
+        {
+            _genericRepository = genericRepository;
+        }
+        public async Task<ApiResponse<IEnumerable<ProjectTrackerCellViewModel>>> GetProjectTrackerList()
+        {
+            try
+            {
+
+                var PTracker = await _genericRepository.GetAllAsync<ProjectTrackerCellViewModel>("GetProjectTracker");
+                return new ApiResponse<IEnumerable<ProjectTrackerCellViewModel>>(PTracker, "Client data retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<ProjectTrackerCellViewModel>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        public async Task<ApiResponse<string>> AddEditColumnRow(ProjectTrackerCellAddEdit request)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", SqlDbType.Int) { Value = request.Id },
+                    new SqlParameter("@Type", SqlDbType.Int) { Value = request.Type },
+                    new SqlParameter("@Name", SqlDbType.NVarChar) { Value = request.Name },
+                };
+
+
+                var result = await _genericRepository.GetAsync<dynamic>("AddEditPtColumnRow", parameters);
+
+                if (result.StatusCode == -1)
+                {
+                    return new ApiResponse<string> { Success = false, Message = "Column Name already exists!" };
+                }
+                else
+                {
+                    if (request.Id == 0)
+                    {
+                        return new ApiResponse<string> { Success = true, Message = "Row/Column added successfully" };
+                    }
+                    else
+                    {
+                        return new ApiResponse<string> { Success = true, Message = "Row?Column Updated successfully" };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string> { Success = false, Message = $"Error inserting/updating Row/Column data: {ex.Message}" };
+            }
+        }
+
+        public async Task<ApiResponse<string>> AddEditPtValue(ProjectTrackerCellAddEdit request)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@ColumnId", SqlDbType.Int) { Value = request.ColumnId },
+                    new SqlParameter("@RowId", SqlDbType.Int) { Value = request.RowId },
+                    new SqlParameter("@Value", SqlDbType.NVarChar) { Value = request.Value }
+                };
+
+
+                var result = await _genericRepository.GetAsync<dynamic>("AddEditPtValue", parameters);
+
+                if (result.StatusCode == 1)
+                {
+                    return new ApiResponse<string> { Success = true, Message = "Value Added/Updated Successfully." };
+                }
+
+                return new ApiResponse<string> { Success = true, Message = "Operation completed." };
+
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string> { Success = false, Message = $"Error inserting/updating Value: {ex.Message}" };
+            }
+        }
+
+
+    }
+}

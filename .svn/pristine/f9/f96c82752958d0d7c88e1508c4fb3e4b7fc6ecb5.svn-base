@@ -1,0 +1,161 @@
+﻿@model CdplATS.Entity.Models.LeaveEntity
+
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+
+<link href="~/css/toastr.css" rel="stylesheet" />
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<script src="~/lib/jquery-validation/dist/additional-methods.min.js"></script>
+<script src="~/lib/jquery-validation/dist/additional-methods.js"></script>
+<script src="~/js/toaster.js"></script>
+<script src="~/js/toastr.min.js"></script>
+
+<div class="modal fade" id="model_LeaveDetail" tabindex="-1" aria-labelledby="leaveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="margin-top: 50px;">
+        <!-- Adjusted vertical position -->
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+
+                <h5 class="modal-title  standardColor" id="leaveModalLabel">@(Model.GroupId == null ? "Add Leave" : "Edit Leave")</h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="leaveForm" method="post" role="form">
+                    <input type="hidden" asp-for="GroupId" id="GroupId"/>
+
+                    <!-- Row 1: Start Date & End Date -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Start Date</label>
+                            <input type="date" asp-for="StartDate" class="form-control" id="StartDate"  placeholder="Start Date">
+                            <span asp-validation-for="StartDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6" id="endDate">
+                            <label class="form-label standardColor ">End Date</label>
+                            <input type="date" asp-for="EndDate" class="form-control" id="EndDate" placeholder="End Date">
+                            <span asp-validation-for="EndDate" id="span-end" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Leave Name & Leave Type -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Leave Type</label>
+                            <select class="form-select" asp-for="LeaveType" id="LeaveType">
+                                <option class="selectOption" disabled selected value="">Select Type</option>
+                                <option class="selectOption" value="1" >Full Day</option>
+                                <option class="selectOption" value="2">Half Day</option>
+                            </select>
+                            <span asp-validation-for="LeaveType" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    
+
+                    <!-- Row 3: Reason -->
+                    <div class="row mb-3">
+
+                        <div class="col-md-12">
+                            <label class="form-label standardColor ">Reason</label>
+                            <textarea class="form-control" asp-for="Reason" id="LeaveReason" rows="1" placeholder="Enter reason"></textarea>
+                            <span asp-validation-for="Reason" id="span-reason" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Full-Width Separator Line -->
+                    <hr class="mt-4 mb-3 border-dark" style="margin-left: -24px; margin-right: -24px;">
+
+                    <!-- Buttons Aligned Right -->
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btnStdColor px-4 me-2 btnStdWid " onclick="SaveLeave()">Save</button>
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script>
+
+    $(document).ready(function () {
+
+        var leaveType = @Model.LeaveType
+        
+        if(leaveType == 2){
+            $("#endDate").css("display", "none");
+        }else{
+            $("#endDate").css("display", "block");
+        }
+
+        
+        $("#leaveForm").change(function(){
+            var startDate = $("#StartDate").val();
+            var leaveType = $("#LeaveType").val();
+
+            // When the Start Date changes, dynamically set the min for End Date
+            $("#EndDate").attr("min", startDate);
+
+            // If the End Date is earlier than the Start Date, clear the End Date
+            var endDate = $("#EndDate").val();
+            if (endDate && endDate < startDate) {
+                $("#EndDate").val("");  
+            }
+
+            if (leaveType === "2" ) {
+                $("#endDate").css("display", "none");
+            }
+            if(leaveType === "2" && startDate){
+                $("#EndDate").val(startDate);
+                $("#endDate").css("display", "none");
+            }
+            if(leaveType === "1"){
+                $("#endDate").css("display", "block");
+            }
+        });
+    }); 
+
+
+    function SaveLeave() {
+        var empCode = $("#empDropdown").val();
+        var sStatus = localStorage.getItem("status");
+
+        if ($('#leaveForm').valid()) {
+            var form = $("#leaveForm");
+            try {
+                var formdata = $('form').serialize();
+                $.ajax({
+                    url: '@Url.Action("SaveLeave", "Leave")',
+                    async: false,
+                    type: 'POST',
+                    data: formdata,
+                    success: function (data) {
+                        
+                        if (data.success) {
+                            // $('modal').addClass("hidden");
+                            // $("div").remove(".hs-overlay-backdrop");
+                            toastr.success(data.data);
+
+                            $('#model_LeaveDetail').modal('hide');
+                            bindLeaveGrid(empCode,sStatus);
+                        }
+                        else {
+                            toastr.error(data.data);
+                        }
+                    }
+                    //ValidationForm();
+                });
+            }
+            catch {
+
+            }
+        }
+    }
+</script>

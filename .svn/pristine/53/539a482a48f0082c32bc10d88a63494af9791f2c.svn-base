@@ -1,0 +1,55 @@
+﻿using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
+
+namespace CdplATS.UI.Controllers
+{
+
+    public class ResetPasswordController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public ResetPasswordController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+      
+        }
+
+        [HttpGet]
+        public IActionResult Index(int code)
+        {
+            var model = new ResetPasswordEntity
+            {
+                EmployeeCode = code
+            };
+            return View(model);
+        }
+
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> Index(ResetPasswordEntity model)
+        {
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            if (model.NewPassword != model.ConfirmPassword)
+            {
+                ModelState.AddModelError(string.Empty, "Passwords do not match.");
+                return View(model);
+            }
+
+           
+            var apiResponse = await _webApiHelper.PostAsync<string>(_apiHelper.ResetPasswordApi,model);
+            ViewBag.Message = apiResponse.Data;
+
+            return RedirectToAction("Index","Account");
+
+        }
+    }
+
+}

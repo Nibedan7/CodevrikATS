@@ -1,0 +1,28 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
+namespace CdplATS.Entity.Models
+{
+    public class EmployeeEntity
+    {
+        public readonly object UserCode;
+
+        [JsonPropertyName("Id")]
+        public int Id { get; set; }
+        [JsonPropertyName("FirstName")]
+        [Required(ErrorMessage = "FirstName is required")]
+        public string FirstName { get; set; }
+        [JsonPropertyName("LastName")]
+        [Required(ErrorMessage = "LastName is required")]
+        public string LastName { get; set; }
+        [JsonPropertyName("EmployeeId")]
+        [Required(ErrorMessage = "EmployeeId is required")]
+        public string EmployeeId { get; set; }
+        [JsonPropertyName("EmployeeCode")]
+        [Required(ErrorMessage = "EmployeeCode is required")]
+        public int EmployeeCode { get; set; }
+
+        public int? Status { get; set; }
+
+    }
+}

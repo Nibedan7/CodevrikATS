@@ -1,0 +1,250 @@
+﻿@using CdplATS.Entity.Models
+@model ClientEntity
+
+@{
+    Layout = "_Layout";
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Client</a></li>
+        <li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-eye"></i>  Client Details</li>
+    </ol>
+</nav>
+
+<div class="container-fluid">
+    <div class="d-flex  align-items-center mb-3 filterBar">
+
+        <div style="margin-left:auto;">
+
+            <button type="button" class="btn btnStdColor" data-bs-toggle="modal" id="AddClient" data-bs-target="#AddEditClient" onclick="AddEditClient(0)">
+                <i class="fa-solid fa-plus"></i> Add Client
+            </button>
+
+        </div>
+
+    </div>
+    
+
+    <div class="table-container">
+        <table id="clientTable" class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr>
+                    <th hidden>Id</th>
+                    <th contenteditable="true" class="editable-header" data-field="client">Client</th>
+                    <th>Project</th>
+                    <th>Client Contact</th>
+                    <th>Dev Team</th>
+                    <th>Status</th>
+                    <th>Issues</th>
+                    <th>Date</th>
+                    <th>Hour Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<div id="div_ClientDetail"></div>
+
+
+<script>
+  
+    $(document).ready(function(){
+        bindClientGrid();
+    });
+    function bindClientGrid() {
+        $.ajax({
+            type: "GET",
+            url: encodeURI('@Url.Action("GetClientList", "Client")'),
+            dataType: "json",
+            success: function (data) {
+                ClientSuccHandler(data);
+            },
+            error: ClientErrHandler
+        });
+    }
+    function ClientErrHandler(xhr, status, error) {
+    }
+    function ClientSuccHandler(data) {
+        try {
+            var dataTableExample = $('#clientTable').DataTable();
+
+            if (typeof dataTableExample !== 'undefined') {
+                dataTableExample.destroy();
+            }
+
+            $('#clientTable').DataTable({
+                scrollY: false,
+                "order": [],
+                "lengthMenu": [50, 100, 150, 200],
+                  "drawCallback": function(settings) {
+                    const tableTop = $('#clientTable').offset().top;
+                    window.scrollTo({ top: tableTop - 500, behavior: 'smooth' });
+                },
+                "dom": 'frtlip',
+                "bFilter": true,
+                "aaData": data,
+                "language": {
+                    "lengthMenu": "Show _MENU_ entries,"
+                },
+                "aoColumns": [
+                    {
+                        "sWidth":"5%",
+                        "mData": "id",
+                        "visible":false,
+                        "className": "dt-left"
+                    },
+                    // {
+                    //     "sWidth":"7%",
+                    //     "mData": "client",
+                    //     "className": "dt-left"
+                    // },
+                    {
+                            "sWidth":"7%",
+                            "mData": "client",
+                            "className": "dt-left",
+                            "render": function (data, type, row, meta) {
+                                return `<div contenteditable="true" class="editable" data-field="client" data-id="${row.id}">${data}</div>`;
+                            }
+
+                    },
+                    {
+                        "sWidth":"7%",
+                        "mData": "project",
+                        "className": "dt-left"
+                    },
+                    {
+                        "sWidth":"7%",
+                        "mData": "client_Contact",
+                        "className": "dt-left"
+                    },
+                    {
+                        "sWidth":"7%",
+                        "mData": "dev_Team",
+                        "className": "dt-left"
+                    },
+                    {
+                        "sWidth":"7%",
+                        "mData": "status",
+                        "className": "dt-left"
+                    },
+                    {
+                        "sWidth":"7%",
+                        "mData": "issues",
+                        "className": "dt-left",
+                        "render": function (data) {
+                            return data == 0 ? "" : data;
+                        }
+                    },
+                    {
+                        "sWidth":"7%",
+                        "mData": "date_schedule",
+                        "className": "dt-left",
+                        "render": function (data) {
+                            return data == 0 ? "" : data;
+                        }
+                    },
+                    {
+                        "sWidth":"7%",
+                        "mData": "hour_status",
+                        "className": "dt-left",
+                        "render": function (data) {
+                            return data == 0 ? "" : data;
+                        }
+                    },
+                    {
+                        "sWidth": "5%",
+                        "mData": null,
+                        "sortable": false,
+                        "className": "dt-center",
+                        "render": function (data, type, row, meta) {
+                            var actionButtons = '';
+
+                            actionButtons += '<button onclick="AddEditClient(\'' + row.id + '\')" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-pen-to-square"></i></button>';
+
+                            actionButtons += '<button onclick="DeleteClient(' + row.id + ')" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-trash"></i></button>';
+
+                            return actionButtons;
+                        }
+                    }
+                   
+                ]
+            });
+
+            $(".dataTables_length").css('clear', 'none');
+            $(".dataTables_length").css('margin-right', '20px');
+            $(".dataTables_info").css('clear', 'none');
+            $(".dataTables_info").css('padding', '0');
+
+        } catch (err) {
+
+        }
+    }
+
+        let editedHeaders = {};
+
+    $(document).on('input', '.editable-header', function () {
+        const field = $(this).data('field');
+        const newName = $(this).text().trim();
+
+        editedHeaders[field] = newName;
+    });
+
+
+    function AddEditClient(Id) {
+        $.ajax({
+            url: '@Url.Action("GetClientDetails", "Client")',
+            type: "GET",
+            data: { Id: Id},
+            success: function (data) {
+                $('#div_ClientDetail').html(data);
+                var modal = new bootstrap.Modal(document.getElementById('model_ClientDetail'));
+                modal.show();
+            },
+            error: function (data) {
+                toastr.error("error in loading Client details")
+            }
+        });
+    }
+
+    function DeleteClient(Id){
+            bootbox.confirm({
+                title: "Delete Client",
+                message: "Are you sure to delete Client?",
+                buttons:{
+                    confirm: {
+                        label: 'Yes',
+                        className: 'btn btnStdColor px-4 btnStdWid2'
+                    },
+                    cancel: {
+                        label: 'No',
+                        className: 'btn btn-secondary px-4 py-1 btn-sm'
+                    }
+                },
+
+                callback: function (result) {
+
+                    if (result) {
+                        $.ajax({
+                            url: '@Url.Action("DeleteClient", "Client")/' + Id,
+                            type: "DELETE",
+                            dataType: "json",
+                             success: function (data) {
+                                    toastr.success(data);
+
+                                bindClientGrid();
+                        },
+                        error: function (xhr, status, error) {
+                            toastr.error("An error occurred while deleting Client.");
+                        }
+                        });
+                    }
+
+                }
+            });
+    }
+
+</script>

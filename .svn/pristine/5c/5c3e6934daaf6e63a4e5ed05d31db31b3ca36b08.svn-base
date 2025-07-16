@@ -1,0 +1,453 @@
+﻿@using CdplATS.Entity.Models
+@model AppraisalEntity
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Appraisal</a></li>
+        <li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-scale-balanced"></i> Appraisal Details</li>
+    </ol>
+</nav>
+
+<div class="container-fluid">
+    <!-- Table Header with Add Button -->
+
+    <div class="d-flex  align-items-center mb-3 filterBar">
+        <div class="d-flex gap-2">
+            <div style="padding-top:8px;">
+                <label class="standardColor" style="width:max-content; ">Employee Name: </label>
+            </div>
+            @Html.DropDownListFor(
+                     model => model.DefaultAppraisalEmployee,
+                     new SelectList(Model.AppraisalEmployeeList, "EmployeeCode", "EmployeeName", Model.DefaultAppraisalEmployee),
+                     new { @class = "form-select h-25", id = "empDropdown" }
+            )
+
+            <div style="padding-top:8px;">
+                <label class="standardColor" style="width:max-content; ">Appraisal: </label>
+            </div>
+
+            <select class="form-select h-25" id="apprisalDropdown">
+            </select>
+        </div>
+        <div style="margin-left:auto;">
+            <button type="button" class="btn btnStdColor ml-5 trigger-submit" id="SubBtn" onclick="submitAssessment()">
+                submit
+            </button>
+        </div>
+    </div>
+</div>
+<div class="container TabSection" style="max-width: 1872px !important;">
+    <div class="d-flex">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link standardColor active" id="tab1-tab" data-bs-toggle="tab" data-bs-target="#tab1"
+                        type="button" role="tab" data-url="/Appraisal/LoadTab1">
+                    Self-Assessment
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link standardColor" id="tab2-tab" data-bs-toggle="tab" data-bs-target="#tab2"
+                        type="button" role="tab" data-url="/Appraisal/LoadTab2">
+                    feedback
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link standardColor" id="tab3-tab" data-bs-toggle="tab" data-bs-target="#tab3"
+                        type="button" role="tab" data-url="/Appraisal/LoadTab3">
+                    Objectives
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link standardColor" id="tab4-tab" data-bs-toggle="tab" data-bs-target="#tab4"
+                        type="button" role="tab" data-url="/Appraisal/LoadTab4">
+                    Milestone
+                </button>
+            </li>
+        </ul>
+        <div class="note" style="display:inline-flex;">
+            <span><strong>NOTE: </strong></span>
+            
+            <p style="padding-left:3px;"> Rating with <div class="note-box"></div>  border had been updated by Reviewer</p>
+        </div>
+    </div>
+    
+
+    <div class="tab-content p-3 border border-top-0">
+        <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+            <!-- Content will be loaded via AJAX -->
+        </div>
+        <div class="tab-pane fade" id="tab2" role="tabpanel">
+        </div>
+        <div class="tab-pane fade" id="tab3" role="tabpanel">
+        </div>
+        <div class="tab-pane fade" id="tab4" role="tabpanel">
+        </div>
+    </div>
+</div>
+
+<div id="noAppraisalMessage" class="text-center text-muted fw-bold py-4" style="display:none; font-size:25px; margin-top:200px;">
+    <i class="fa fa-info-circle me-2"></i> Appraisal Not Started
+</div>
+
+<script>
+    window.hasUnsavedChanges = window.hasUnsavedChanges || false;
+    let lastEmpDropdownValue = $('#empDropdown').val();
+    let lastAppraisalDropdownValue = $('#apprisalDropdown').val();
+
+    $(document).ready(function () {
+        bindAppraisalDropDown()
+         try {
+             $('#empDropdown').select2({
+                 width: 'auto',
+                 dropdownAutoWidth: true,
+                 minimumResultsForSearch: 5
+             });
+         } catch(e) {
+
+         }
+
+          // Save current value on focus
+         $('#empDropdown, #apprisalDropdown').on('focus', function () {
+             if (this.id === 'empDropdown') {
+                 lastEmpDropdownValue = this.value;
+             } else if (this.id === 'apprisalDropdown') {
+                 lastAppraisalDropdownValue = this.value;
+             }
+         });
+
+           // Handle change with bootbox confirmation
+         $('#empDropdown').on('change', function () {
+             const $this = $(this);
+             if (hasUnsavedChanges) {
+                 bootbox.confirm({
+                      title: '<span class="text-warning"><i class="fa fa-exclamation-triangle me-2"></i> Unsaved Changes Detected</span>',
+                      message: "You have unsaved changes in the current appraisal form. If you switch to a different employee, all unsaved data will be lost.<br><br><strong>Do you want to continue and discard the changes?</strong>",
+                     buttons: {
+                         confirm: {
+                             label: 'Yes',
+                              className: 'btn btnStdColor px-4 btnStdWid3'
+                         },
+                         cancel: {
+                             label: 'No',
+                              className: 'btn btn-secondary px-4 py-1 btn-sm'
+                         }
+                     },
+                     callback: function (result) {
+                         if (result) {
+                             hasUnsavedChanges = false;
+                             changedData?.clear?.();
+                             bindAppraisalDropDown(); // Proceed with AJAX
+                         } else {
+                             $this.val(lastEmpDropdownValue); // Revert value
+                         }
+                     }
+                 });
+             } else {
+                 bindAppraisalDropDown();
+             }
+         });
+
+         $('#apprisalDropdown').on('change', function () {
+             const $this = $(this);
+             if (hasUnsavedChanges) {
+                 bootbox.confirm({
+                     title: '<span class="text-warning"><i class="fa fa-exclamation-triangle me-2"></i> Unsaved Changes Detected</span>',
+                      message: "You have unsaved changes in the current appraisal form. If you switch to a different appraisal, all unsaved data will be lost.<br><br><strong>Do you want to continue and discard the changes?</strong>",
+                     buttons: {
+                         confirm: {
+                             label: 'Yes',
+                              className: 'btn btnStdColor px-4 btnStdWid3'
+                         },
+                         cancel: {
+                             label: 'No',
+                              className: 'btn btn-secondary px-4 py-1 btn-sm'
+                         }
+                     },
+                     callback: function (result) {
+                         if (result) {
+                             hasUnsavedChanges = false;
+                             changedData?.clear?.();
+                             LoadTab(); // Proceed with tab loading
+                         } else {
+                             $this.val(lastAppraisalDropdownValue); // Revert value
+                         }
+                     }
+                 });
+             } else {
+                 LoadTab();
+             }
+         });
+        
+    });
+
+
+    function bindAppraisalDropDown(){
+        var employeeCode = $('#empDropdown').val();
+        var apprisalDropdown = $('#apprisalDropdown');
+        const loggedEmployeeCode = '@(HttpContextAccessor?.HttpContext?.Session?.GetInt32("authCode") ?? 0)';
+        const loggedEmployeeRole = '@(HttpContextAccessor?.HttpContext?.Session?.GetInt32("authRoleId") ?? 0)';
+
+        if(employeeCode != loggedEmployeeCode && loggedEmployeeRole != 1){
+            $('#tab2-tab').closest('li').hide();
+            $('#tab3-tab').closest('li').hide();
+        }else{
+            $('#tab2-tab').closest('li').show();
+            $('#tab3-tab').closest('li').show();
+        }
+
+        $.ajax({
+            type: "GET",
+            url: '@Url.Action("BindEmployeeAppraisalList", "Appraisal")',
+            data: {EmployeeCode: employeeCode},
+            success: function (data) {
+                apprisalDropdown.empty();
+                $.each(data, function (index, item) {
+                    apprisalDropdown.append($('<option>', {
+                        value: item.employeeAssessmentId,
+                        text: item.assessmentName
+                    }));
+                });
+
+                if(apprisalDropdown.children('option').length == 0){
+                    apprisalDropdown.append($('<option>', {
+                        value: 0,
+                        text: '--No Record Found--',
+                        disabled: true
+                    }));
+                }
+
+                if (apprisalDropdown.children('option').length > 0) {
+                    apprisalDropdown.prop('selectedIndex', 0);
+                }   
+                if(data == 0 || data.length === 0){
+                    $('.TabSection').hide();
+                    $('#noAppraisalMessage').show();
+                    $('.trigger-submit').prop('disabled', true);
+                }else{
+                    $('.TabSection').show();
+                    $('#noAppraisalMessage').hide();
+                    $('.trigger-submit').prop('disabled', false);
+                }
+
+                $('#tab1-tab').tab('show');
+                LoadTab()
+            },
+            error: function(){
+
+            }
+
+        });
+    }
+
+
+    function LoadTab(){
+        
+        // Initially load content for Tab 1
+        loadTabContent('#tab1', '/Appraisal/LoadTab1');
+
+        // Listen for tab clicks and load content dynamically
+        $('button[data-bs-toggle="tab"]').on('show.bs.tab', function (e) {
+        if (window.hasUnsavedChanges) {
+            e.preventDefault(); // Cancel tab switch until user confirms
+
+            const $tabButton = $(this); // store the clicked tab for later use
+            const targetTab = $tabButton.attr('data-bs-target');
+            const url = $tabButton.attr('data-url');
+
+            bootbox.confirm({
+                title: '<span class="text-warning"><i class="fa fa-exclamation-triangle me-2"></i> Unsaved Changes Detected</span>',
+                message: "You have unsaved changes in the current appraisal form. If you switch to another tab, <strong>all unsaved data will be lost</strong>.<br><br>Do you want to continue and discard the changes?",
+                buttons: {
+                    confirm: {
+                        label: 'Yes',
+                         className: 'btn btnStdColor px-4 btnStdWid3'
+                    },
+                    cancel: {
+                        label: 'No',
+                        className: 'btn btn-secondary px-4 py-1 btn-sm'
+                    }
+                },
+                callback: function (result) {
+                    if (result) {
+                        // Clear changes
+                        window.hasUnsavedChanges = false;
+                        window.changedData?.clear?.();
+
+                        // Now allow tab switch manually
+                        const tabTrigger = new bootstrap.Tab($tabButton[0]);
+                        tabTrigger.show();
+
+                        // Manually load the content
+                        loadTabContent(targetTab, url);
+                    }
+                }
+            });
+        } else {
+            // No unsaved changes: proceed as normal
+            const targetTab = $(this).attr('data-bs-target');
+            const url = $(this).attr('data-url');
+            loadTabContent(targetTab, url);
+        }
+    });
+    }
+
+    // Function to load content dynamically using AJAX
+    function loadTabContent(tabId, url) {
+        $(tabId).html('<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>'); // Show loading spinner
+        var employeeCode = $('#empDropdown').val();
+        var assessmentId = $('#apprisalDropdown').val();
+        $.ajax({
+            url: url,
+            method: 'GET',
+            data:{EmployeeCode:employeeCode, AssessmentId: assessmentId},
+            success: function (data) {
+                $(tabId).html(data); // Inject the returned content
+            },
+            error: function (xhr, status, error) {
+                $(tabId).html('<p class="text-danger">Error loading content.</p>'); // Display error message if AJAX fails
+            }
+        });
+    }
+
+
+     // prevent page change or other operation if Unsave changes having
+
+    $(document).on('click', 'a, button', function (e) {
+        const $target = $(this);
+        const isTabButton = $target.attr('data-bs-toggle') === 'tab';
+        const isSaveButton = $target.hasClass('addEdit-Leave-btn');
+
+        if (!isTabButton && !isSaveButton && window.hasUnsavedChanges) {
+            e.preventDefault(); // Prevent the default action until user confirms
+
+            bootbox.confirm({
+                title: '<span class="text-warning"><i class="fa fa-exclamation-triangle me-2"></i> Unsaved Changes Detected</span>',
+                  message: "You have unsaved changes on this page. If you leave now, all unsaved data will be lost.<br><br><strong>Are you sure you want to proceed?</strong>",
+                buttons: {
+                    confirm: {
+                        label: 'Yes',
+                        className: 'btn btnStdColor px-4 btnStdWid3'
+                    },
+                    cancel: {
+                        label: 'No',
+                        className: 'btn btn-secondary px-4 py-1 btn-sm'
+                    }
+                },
+                callback: function (result) {
+                    if (result) {
+                        window.hasUnsavedChanges = false;
+                        window.changedData?.clear?.();
+
+                         if($target.hasClass('trigger-submit')){
+                              submitAssessment();
+                         }
+
+                        // If it's a link, follow it manually
+                        if ($target.is('a') && $target.attr('href')) {
+                            window.location.href = $target.attr('href');
+                        }
+
+                        // If it's a button with type submit, trigger it
+                        if ($target.is('button') && $target.attr('type') === 'submit') {
+                            $target.closest('form').submit();
+                        }
+                    }
+                    // else: do nothing, user canceled
+                }
+            });
+        }
+    });
+
+
+   // prevent page load if Unsave changes having
+    window.addEventListener('beforeunload', function (e) {
+        if (window.hasUnsavedChanges) {
+            e.preventDefault(); // For some older browsers
+            e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        }
+    });
+
+
+
+
+    function submitAssessment(){
+        if(hasUnsavedChanges){
+            return;
+        }
+        const data = [];
+        const loggedEmployeeCode = '@(HttpContextAccessor?.HttpContext?.Session?.GetInt32("authCode") ?? 0)';
+        var employeeCode = $('#empDropdown').val();
+        var employeeAssesmentId = $('#apprisalDropdown').val();
+
+        const result = {
+            EmployeeCode:employeeCode,
+            LoggedEmpCode: loggedEmployeeCode,
+            EmployeeAssessmentId: employeeAssesmentId,
+            IsSubmitted: 1
+        };
+        data.push(result);
+
+
+        bootbox.confirm({
+             title: "Submit Appraisal",
+              message: "Once you submit this appraisal, you will not be able to make any further changes.<br><br><strong>Are you sure you want to submit?</strong>",
+             buttons: {
+                 confirm: {
+                     label: 'Yes',
+                     className: 'btn btnStdColor px-4 btnStdWid3'
+                 },
+                 cancel: {
+                     label: 'No',
+                     className: 'btn btn-secondary px-4 py-1 btn-sm'
+                 }
+             },
+             callback: function (result) {
+                 if (result) {
+                    $.ajax({
+                        url: '/Appraisal/UpdateAssessment',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(data),
+                        success: function (response) {
+                            if(response.success){
+                                toastr.success(response.message);
+                                hasUnsavedChanges = false;
+                                LoadTab();
+                            }
+                            else {
+                                toastr.error(response.message);
+                            }
+                            changedData.clear();
+                        },
+                        error: function (xhr, status, error) {
+                            toastr.error("Something went wrong");
+                        }
+                    });
+                 }
+             }
+        });
+    }
+
+</script>
+
+<style>
+    .trigger-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .note{
+        position:absolute;
+        right:50px;
+    }
+
+    .note-box{
+        margin:0 5px;
+        height:20px;
+        width:20px;
+        background: #e9ecef;
+        border: 2px solid #bb2124;
+        border-radius:5px;
+    }
+</style>

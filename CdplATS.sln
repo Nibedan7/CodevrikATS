@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CdplATS.API", "CdplATS.API\CdplATS.API.csproj", "{9BD6FC9A-D540-47AE-AB11-A8BFAA703241}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CdplATS.UI", "CdplATS.UI\CdplATS.UI.csproj", "{95CFB14B-8F1B-40B0-BF8D-DADC91FE6C42}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CdplATS.Entity", "CdplATS.Entity\CdplATS.Entity.csproj", "{EE7C06C1-6549-4639-9ECA-601A3B7CFB2A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9BD6FC9A-D540-47AE-AB11-A8BFAA703241}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BD6FC9A-D540-47AE-AB11-A8BFAA703241}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BD6FC9A-D540-47AE-AB11-A8BFAA703241}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BD6FC9A-D540-47AE-AB11-A8BFAA703241}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95CFB14B-8F1B-40B0-BF8D-DADC91FE6C42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95CFB14B-8F1B-40B0-BF8D-DADC91FE6C42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95CFB14B-8F1B-40B0-BF8D-DADC91FE6C42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95CFB14B-8F1B-40B0-BF8D-DADC91FE6C42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE7C06C1-6549-4639-9ECA-601A3B7CFB2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE7C06C1-6549-4639-9ECA-601A3B7CFB2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE7C06C1-6549-4639-9ECA-601A3B7CFB2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE7C06C1-6549-4639-9ECA-601A3B7CFB2A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

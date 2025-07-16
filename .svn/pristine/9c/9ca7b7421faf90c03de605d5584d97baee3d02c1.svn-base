@@ -1,0 +1,299 @@
+﻿@model CdplATS.Entity.Models.DepartmentEntity
+@using CdplATS.Entity.Models
+@using static CdplATS.Entity.Models.Enum
+
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<!-- Styles -->
+<!-- Your HTML content goes here -->
+
+<div class="modal fade" id="model_DepartmentDetail" tabindex="-1" aria-labelledby="DepartmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="margin-top: 50px;">
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title standardColor" id="EmployeeModalLabel">
+                    @(Model.DepartmentId == 0 ? "Add Department" : "Edit Department")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="DepartmentForm" method="post">
+                    <input type="hidden" asp-for="DepartmentId" id="DepartmentId" />
+                    <!-- Department Name Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor">Department Name</label>
+                            <input asp-for="DepartmentName" id="DepartmentName" type="text" class="form-control" name="DepartmentName" required>
+                            <span id="DepartmentNameValidation" asp-validation-for="DepartmentName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Leader and Employees Selection Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor">Choose Leader</label>
+                            @Html.DropDownListFor(
+                                     model => model.LeadBy,
+                                     new SelectList(Model.EmployeeList, "EmployeeCode", "EmployeeName"),
+                                     "--Select Leader--",
+                                     new { @class = "form-select", id = "leader-select" }
+                                     )
+                            <span id="LeadByValidation" asp-validation-for="LeadBy" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 d-flex flex-column">
+                            <label class="form-label standardColor">Select Employees</label>
+
+                            <!-- Custom UI container -->
+                            <div class="multi-select-container">
+                                <div class="selected-tags" onclick="toggleOptions()"></div>
+                                <div class="custom-options" id="customOptions">
+                                    @foreach (var emp in Model.EmployeeList)
+                                    {
+                                        <label>
+                                            <input type="checkbox" value="@emp.EmployeeCode" onchange="toggleTag(this)">
+                                            @emp.EmployeeName
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+
+                            <span id="SelectEmployeesValidation" asp-validation-for="SelectEmployees" class="text-danger"></span>
+                        </div>
+                    </div>
+
+
+                    <hr class="mt-4 mb-3 border-dark" style="margin-left: -24px; margin-right: -24px;">
+
+                    <!-- Buttons Aligned Right -->
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btnStdColor px-4 me-2 btnStdWid2" id="submitBtn" onclick="saveDepartment()">Save</button>
+                        <button type="button" class="btn btn-secondary px-3 me-2 btnStdWid2" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .multi-select-container {
+        width: 100%;
+        position: relative;
+        font-family: Arial;
+    }
+
+    .selected-tags {
+        display: flex;
+        flex-wrap: wrap;
+        border: 1px solid #ccc;
+        padding: 8px;
+        min-height: 40px;
+        border-radius:8px;
+        cursor: pointer;
+    }
+
+        .selected-tags .tag {
+            background: #007bff;
+            color: white;
+            padding: 4px 8px;
+            margin: 3px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+        }
+
+        .selected-tags .remove-tag {
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+    .custom-options {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        background: white;
+        z-index: 999;
+    }
+
+        .custom-options label {
+            display: block;
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+
+        .custom-options input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+    .show {
+        display: block;
+    }
+</style>
+
+<script>
+     
+     $(document).ready(function () {
+         let previousLeader = null;
+         $("#leader-select").on("change", function () {
+             var selectedLeader = $(this).val();
+
+              // Uncheck the previous leader if any
+             if (previousLeader) {
+                 const prevCheckbox = document.querySelector(`input[type="checkbox"][value="${previousLeader}"]`);
+                 if (prevCheckbox && prevCheckbox.checked) {
+                     prevCheckbox.checked = false;
+                     toggleTag(prevCheckbox); // update UI
+                 }
+             }
+             const checkbox = document.querySelector(`input[type="checkbox"][value="${selectedLeader}"]`);
+             if (checkbox && !checkbox.checked) {
+                 checkbox.checked = true;
+                 // Manually call the onchange handler to update UI
+                 toggleTag(checkbox);
+             }
+             // Update tracker
+             previousLeader = selectedLeader;
+         });
+            // Close dropdown on outside click
+        document.addEventListener('click', function (e) {
+            const container = document.querySelector(".selected-tags");
+            const optionsDiv = document.getElementById("customOptions");
+            if (optionsDiv.classList.contains("show") && !container.contains(event.target)) {
+                optionsDiv.classList.remove("show");
+            }
+        });
+     });
+
+
+
+     $(function () {
+         const preselected = '@Model.SelectEmployees'.split(',').map(x => x.trim()).filter(x => x);
+         preselected.forEach(val => {
+             // Check the checkbox
+             $(`#customOptions input[value="${val}"]`).prop('checked', true);
+
+             // Add tag UI
+             const label = $(`#customOptions input[value="${val}"]`).parent().text().trim();
+             const tag = `<div class="tag" data-id="${val}">${label}<span class="remove-tag" onclick="removeTag('${val}')">&times;</span></div>`;
+             $(".selected-tags").append(tag);
+             console.log(val);
+         });
+     });
+
+
+    // JS for multiselector
+     function toggleTag(checkbox) {
+         const value = checkbox.value;
+         const label = checkbox.parentElement.innerText.trim();
+         const selectedTags = document.querySelector(".selected-tags");
+
+         // Add or remove selected tag
+         if (checkbox.checked) {
+             const tag = document.createElement("div");
+             tag.className = "tag";
+             tag.setAttribute("data-id", value);
+             tag.innerHTML = label + '<span class="remove-tag" onclick="removeTag(\'' + value + '\')">&times;</span>';
+             selectedTags.appendChild(tag);
+         } else {
+             removeTag(value);
+         }
+     }
+
+     function removeTag(value) {
+         // Prevent removal if this is the selected Leader
+        const selectedLeader = $('#leader-select').val();
+        if (value === selectedLeader) return; // don't remove leader
+
+         // Remove tag from UI
+         const tag = document.querySelector('.tag[data-id="' + value + '"]');
+         if (tag) tag.remove();
+
+         // Uncheck in options
+         const checkboxes = document.querySelectorAll('.custom-options input[type="checkbox"]');
+         checkboxes.forEach(cb => {
+             if (cb.value === value) cb.checked = false;
+         });
+     }
+
+     function toggleOptions() {
+         const optionsDiv = document.getElementById("customOptions");
+         optionsDiv.classList.toggle("show");
+     }
+
+     // save button
+      function saveDepartment() {
+            var departmentName = $('#DepartmentName').val();
+            var leaderCode = $('#leader-select').val();
+            var departmentId = $('#DepartmentId').val();
+            var selectedIds = [];
+            // Loop through each checkbox inside the #customOptions container
+            $('#customOptions input[type="checkbox"]:checked').each(function() {
+                // Push the value (EmployeeCode) of the checked checkbox to the array
+                selectedIds.push($(this).val());
+            });
+
+            if(departmentName == ""){
+                $('#DepartmentNameValidation').text("Department Name is required");
+            }
+            if(leaderCode == 0){
+                $('#LeadByValidation').text("Leader is required");
+            }
+            if(selectedIds.length == 0){
+                $('#SelectEmployeesValidation').text("Employees are required");
+            }
+
+            if(departmentName == "" || leaderCode == 0){
+                return 
+            }
+
+            var employeeCodesCsv = selectedIds.join(',');
+
+              $.ajax({
+                  url: '@Url.Action("AddEditDepartment", "Department")',
+                  type: "POST",
+                  contentType: "application/json; charset=utf-8",
+                  data: JSON.stringify({
+                      DepartmentName:departmentName,
+                      LeadBy: leaderCode,
+                      SelectEmployees: employeeCodesCsv,
+                      DepartmentId : departmentId
+                  }),
+                  success: function (data) {
+                      if (data.success) {
+                          toastr.success(data.message);
+
+                        //  Properly hide the modal using Bootstrap 5's Modal API
+                          var modalEl = document.getElementById('model_DepartmentDetail');
+                          var modal = bootstrap.Modal.getInstance(modalEl);
+                          if (modal) {
+                              modal.hide();
+                          }
+
+                          bindDepartmentGrid();
+                      } else {
+                          toastr.error(data.message);
+                      }
+                  },
+                  error: function (data) {
+
+
+
+                      toastr.error("Something went wrong.!");
+                  }
+              });
+
+      }
+
+
+
+</script>
+
+
+
+

@@ -1,0 +1,171 @@
+﻿@model CdplATS.Entity.Models.DepartmentEntity
+@using CdplATS.Entity.Models
+@using static CdplATS.Entity.Models.Enum
+
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+
+<!-- Your HTML content goes here -->
+
+<div class="modal fade" id="model_DepartmentDetail" tabindex="-1" aria-labelledby="DepartmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="margin-top: 50px;">
+        <!-- Adjusted vertical position -->
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+
+                <h5 class="modal-title  standardColor" id="EmployeeModalLabel">@(Model.DepartmentId == 0 ? "Add Department" : "Edit Department")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="DepartmentForm" method="post">
+                    <input type="hidden" asp-for="DepartmentId" id="DepartmentId" />
+
+                    <!-- Row 1 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Department Name</label>
+                            <input asp-for="DepartmentName" type="text" class="form-control" name="DepartmentName" required>
+                            <span asp-validation-for="DepartmentName" class="text-danger"></span>
+                        </div>
+
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Choose Leader</label>
+
+                            <select asp-for="LeadBy" class="form-select">
+                                <option value="" class="selectOption">Select Leader </option>
+                                @if (ViewBag.EmployeeList != null)
+                                {
+                                    @foreach (var emp in ViewBag.EmployeeList)
+                                    {
+                                        <option class="selectOption" value="@emp.EmployeeId">@emp.EmployeeName</option>
+                                    }
+                                }
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+                            <label class="form-label standardColor">Select Employees</label>
+                            <div class="dropdown">
+                                <button class="btn btn-light border dropdown-toggle w-100 text-start d-flex flex-wrap align-items-center" type="button"
+                                        id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 30px;">
+                                    <div id="selectedEmployees" class="d-flex flex-wrap gap-1">
+                                        <span class="text-muted">Select Employees</span>
+                                    </div>
+                                </button>
+
+                                <ul class="dropdown-menu w-100 p-2" aria-labelledby="dropdownMenuButton"
+                                    id="employeeDropdownList" style="max-height: 90px; overflow-y: auto; overflow-x:scroll;">
+                                    @if (ViewBag.EmployeeList != null)
+                                    {
+                                        foreach (var emp in ViewBag.EmployeeList)
+                                        {
+                                            <li>
+                                                <div class="form-check">
+                                                    <input class="form-check-input employeeCheckbox" type="checkbox"
+                                                           value="@emp.EmployeeId" id="emp_@emp.EmployeeId" data-name="@emp.EmployeeName" data-value="@emp.EmployeeId">
+                                                    <label class="form-check-label" for="emp_@emp.EmployeeId">
+                                                        @emp.EmployeeName
+                                                    </label>
+                                                </div>
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </div>
+
+                            <input type="hidden" asp-for="SelectEmployees" id="SelectEmployees" />
+                        </div>
+
+                        <hr class="mt-4 mb-3 border-dark" style="margin-left: -24px; margin-right: -24px;">
+
+                        <!-- Buttons Aligned Right -->
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btnStdColor px-4 me-2 btnStdWid2 " id="submitBtn" onclick="saveDepartment()">Save</button>
+                            <button type="button" class="btn btn-secondary px-3 me-2 btnStdWid2" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function saveDepartment() {
+        var form = $("#DepartmentForm");
+        if (form.valid()) {
+            var formData = form.serialize();
+            $.ajax({
+                url: '@Url.Action("AddEditDepartment", "Department")',
+                async: false,
+                type: "POST",
+                data: formData,
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success(data.message);
+                        $('#model_DepartmentDetail').modal('hide');
+                        bindDepartmentGrid();
+                    } else {
+                        toastr.error(data.message);
+                    }
+                },
+                error: function (data) {
+                    toastr.error("Something went wrong.!");
+                }
+            });
+        } else {
+            toastr.error('Please fill in all the required fields.');
+        }
+    }
+
+    $(document).ready(function () {
+
+        $('.employeeCheckbox').on('change', function () {
+            updateSelectedEmployees();
+        });
+
+        preselectEmployees();
+    });
+
+    function updateSelectedEmployees() {
+        let selectedNames = [];
+        let selectedValues = [];
+
+        $('.employeeCheckbox:checked').each(function () {
+            selectedNames.push($(this).data('name'));
+            selectedValues.push($(this).data('value'));
+        });
+
+        const container = $('#selectedEmployees');
+        container.empty();
+
+        if (selectedNames.length === 0) {
+            container.append('<span class="text-muted">Select Employees</span>');
+        } else {
+            selectedNames.forEach(name => {
+                container.append(`<span class="badge bg-primary rounded-pill px-2 py-1">${name}</span>`);
+            });
+        }
+
+        $('#SelectEmployees').val(selectedValues.join(','));
+    }
+
+    // Function to check checkboxes based on already selected employees
+    function preselectEmployees() {
+        var selectedEmployeeIds = $('#SelectEmployees').val(); 
+        if (selectedEmployeeIds) {
+            var ids = selectedEmployeeIds.split(',');
+            ids.forEach(function (id) {
+                $('#emp_' + id).prop('checked', true);  
+            });
+            updateSelectedEmployees();
+        }
+    }
+</script>

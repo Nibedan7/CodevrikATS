@@ -1,0 +1,54 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using static CdplATS.Entity.Models.PunchEntity;
+
+namespace CdplATS.UI.Controllers
+{
+    public class PunchController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public PunchController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            // Prevent caching
+            Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            Response.Headers["Pragma"] = "no-cache";
+            Response.Headers["Expires"] = "0";
+
+            var loggedEmpCode = HttpContext.Session.GetInt32("authCode");
+
+            if (loggedEmpCode == null)
+                return RedirectToAction("Index", "Account");
+
+
+            var empListResponse = await _webApiHelper.GetAsync<List<EmpDropDownList>>(_apiHelper.EmpDropDown + $"{loggedEmpCode}");
+
+            ViewBag.EmpList = empListResponse.Data;
+            ViewBag.SelectedEmpCode = loggedEmpCode;
+
+            return View();
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllPunch(int empCode, string StartDate, string EndDate)
+        {
+            var url = _apiHelper.GetPunchesByEmpCode + $"?EmpCode={empCode}&StartDate={StartDate}&EndDate={EndDate}";
+            var response = await _webApiHelper.GetAsync<List<PunchEntity>>(url);
+            return Json(response?.Data ?? new List<PunchEntity>());
+        }
+
+
+    }
+}

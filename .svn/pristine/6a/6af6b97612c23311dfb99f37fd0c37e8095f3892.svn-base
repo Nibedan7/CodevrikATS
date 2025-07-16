@@ -1,0 +1,27 @@
+﻿using CdplATS.API.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class DepartmentApiController : ControllerBase
+    {
+        private readonly DepartmentService _departmentService;
+        public DepartmentApiController(DepartmentService departmentService)
+        {
+            _departmentService = departmentService;
+        }
+
+        /// <summary>
+        /// Get Punch Records by Employee Code
+        /// </summary>
+
+        [HttpGet("GetDepartment")]
+        public async Task<IActionResult> GetDeparmment(int dept = 0)
+        {
+            var response = await _departmentService.GetDepartment(dept);
+            return Ok(response);
+        }
+    }
+}

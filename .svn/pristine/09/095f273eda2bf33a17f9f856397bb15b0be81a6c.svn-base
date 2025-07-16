@@ -1,0 +1,118 @@
+﻿using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using DocumentFormat.OpenXml.Bibliography;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using static CdplATS.Entity.Models.EmployeeEntity;
+
+namespace CdplATS.UI.Controllers
+{
+    public class EmployeeController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public EmployeeController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+        }
+
+        //  employee index view 
+        public async Task<IActionResult> Index()
+        {
+            // Prevent caching
+            Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            Response.Headers["Pragma"] = "no-cache";
+            Response.Headers["Expires"] = "0";
+
+            var department = await _webApiHelper.GetAsync<List<DepartmentList>>(_apiHelper.DepartmentDropdown);
+
+            EmployeeEntity employee = new EmployeeEntity
+            {
+                Departments = department.Data
+            };
+
+            return View(employee);
+        }
+
+        //get employee
+        public async Task<IActionResult> GetEmployees(int? DepartmentCode,int? ActiveStatus)
+        {
+            var employees = await _webApiHelper.GetAsync<List<EmployeeEntity>>(_apiHelper.GetEmployeeByIdApi+$"?DepartmentCode={DepartmentCode}&ActiveStatus={ActiveStatus}");
+            return Json(employees.Data);
+        }
+
+        //add edit employee method(get)
+        [HttpGet]
+        public async Task<IActionResult> AddEditEmployee(int Id)
+        {
+
+            var department = await _webApiHelper.GetAsync<List<DepartmentList>>(_apiHelper.DepartmentDropdown);
+
+            var role = await _webApiHelper.GetAsync<List<EmployeeRole>>(_apiHelper.GetRoleApi);
+            var reviewer = await _webApiHelper.GetAsync<List<Reviewer>>(_apiHelper.GetEmployeeApi);
+            
+
+            EmployeeEntity employee = new EmployeeEntity
+            {
+                RoleList = role.Data,
+                Departments = department.Data,
+                Reviewers = reviewer.Data
+            };
+            if (Id != 0)
+            {
+                var employees = await _webApiHelper.GetAsync<List<EmployeeEntity>>(_apiHelper.GetEmployeeByIdApi + $"?Id={Id}");
+                employee = employees.Data[0];
+                employee.RoleList = role.Data;
+                employee.Departments = department.Data;
+                employee.Reviewers = reviewer.Data;
+            }
+
+
+            return PartialView("/Views/Employee/AddEditEmployee.cshtml", employee);
+        }
+
+        //add edit employee method(post) 
+        [HttpPost]
+        public async Task<IActionResult> AddEditEmployee(EmployeeEntity request)
+        {
+            var LoggedEmpCode = HttpContext.Session.GetInt32("authCode");
+            request.authCode = LoggedEmpCode;
+            if (request == null)
+            {
+                return BadRequest("Invalid Data");
+            }
+
+            if (ModelState.IsValid)
+            {
+                var response = await _webApiHelper.PostAsync<EmployeeEntity>(_apiHelper.AddEditEmployeeApi, request);
+
+                if (response == null)
+                {
+                    return StatusCode(500, "Error adding/editing employee.");
+                }
+                return Json(response);
+            } 
+            return BadRequest("Model validation failed.");
+        }
+
+        //delete employee method
+        [HttpDelete("Employee/DeleteEmployee/{Id}/{status}")]
+        public async Task<IActionResult> DeleteEmployee(int Id,int status)
+        {
+         
+            var result = await _webApiHelper.DeleteAsync<bool>(_apiHelper.DeleteEmployeeApi+$"{Id}/{status}");
+
+            if (result == null || !result.Success)
+            {
+                return StatusCode(500, "Error deleting employee.");
+            }
+            return Json(result);
+        }
+    }
+}

@@ -1,0 +1,73 @@
+﻿@using CdplATS.Entity.Models
+
+@model ProjectTrackerCellAddEdit
+
+@{
+    var isColumn = Model.Type == 1;
+    var title = Model.Id == 0
+        ? (isColumn ? "Add Column" : "Add Row")
+        : (isColumn ? "Edit Column" : "Edit Row");
+}
+
+<div class="modal fade" id="model_AddEditColumnRow" tabindex="-1" aria-labelledby="modelLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">@title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form id="form_AddEditColumnRow">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <input type="hidden" name="Type" value="@Model.Type" />
+
+                    <div class="mb-3">
+                        <label for="Name" class="form-label">@((isColumn ? "Column" : "Client") + " Name")</label>
+                        <input type="text" class="form-control" name="Name" id="Name" value="@Model.Name" required />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btnStdColor px-4 me-2 btnStdWid2">@((Model.Id == 0 ? "Add" : "Update"))</button>
+                    <button type="button" class="btn btn-secondary px-3 me-2 btnStdWid2" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#form_AddEditColumnRow').on('submit', function (e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: '@Url.Action("AddEditColumnRow", "ProjectTracker")',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function (data) {
+                if(data.success){
+                         toastr.success(data.message);
+                        $('#model_AddEditColumnRow').modal('hide');
+                        bindProjectTrackerGrid()
+                }else{
+                    toastr.error(data.message)
+                    $('#model_AddEditColumnRow').modal('hide');
+                }
+                //$('#model_AddEditColumnRow').modal('hide');
+                //location.reload(); 
+                  
+            },
+            error: function () {
+                toastr.error("Error saving data");
+            }
+        });
+    });
+
+    $('#model_AddEditColumnRow').on('hidden.bs.modal', function () {
+        location.reload(); 
+        
+    });
+</script>

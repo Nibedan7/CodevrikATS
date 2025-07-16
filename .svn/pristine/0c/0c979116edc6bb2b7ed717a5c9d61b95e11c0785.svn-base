@@ -1,0 +1,53 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Net.Mail;
+using System.Net;
+using Microsoft.Extensions.Options;
+using CdplATS.Entity.Models;
+using AspNetCoreGeneratedDocument;
+
+namespace CdplATS.UI.Controllers
+{
+    public class CommonController : Controller
+    {
+        private readonly EmailConfig _emailConfig;
+
+        public CommonController(IOptions<EmailConfig> emailConfig)
+        {
+            _emailConfig = emailConfig.Value;
+        }
+
+        [NonAction]
+        public JsonResult SendEmail()
+        {
+            try
+            {
+                string smtpServer = "smtp.gmail.com";
+                int smtpPort = 587;
+                string fromEmail = _emailConfig.HostEmail;
+                string emailPassword = _emailConfig.HostEmailAppPassword;
+
+                string subject = "test by chetan";
+                string body = "CDPL ATS Report<p>This email was sent by the Cement Digital team. If you believe this message is in error, please contact support.</p>";
+
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress(fromEmail, _emailConfig.SenderName);
+                mail.Bcc.Add("chetanjoshi703@gmail.com");
+                mail.Subject = subject;
+                mail.Body = body;
+                mail.IsBodyHtml = true;
+
+                SmtpClient smtp = new SmtpClient(smtpServer, smtpPort);
+                smtp.Credentials = new NetworkCredential(fromEmail, emailPassword);
+                smtp.EnableSsl = true;
+
+                smtp.Send(mail);
+
+                return Json(new { success = true, message = "Email sent successfuly."});
+            }
+            catch (Exception ex)
+            {
+                return Json(new{success = false,message = ex.Message});
+            }
+        }
+    }
+}

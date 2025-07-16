@@ -1,0 +1,100 @@
+﻿using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace CdplATS.UI.Controllers
+{
+    public class DashboardController : AuthController
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public DashboardController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+        }
+
+        public async Task<IActionResult> Index(int? year, int? month)
+        {
+            var Years = await _webApiHelper.GetAsync<List<int>>(_apiHelper.BindYearListApi);
+
+            DashboardEntity ChartYear = new DashboardEntity
+            {
+                Year = Years.Data,
+                CurrentYear = DateTime.Now.Year
+            };
+
+            ViewBag.SelectedYear = year ?? DateTime.Now.Year;
+            ViewBag.SelectedMonth = month ?? DateTime.Now.Month;
+            return View(ChartYear);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTotalWorkHourPerEmployee(int year, int month)
+        {
+            var response = await _webApiHelper.GetAsync<List<GetTotalWorkHourPerEmployeeEntity>>(
+                _apiHelper.TotalWorkHourPerEmployeeApi + $"?year={year}&month={month}"
+            );
+
+            if (response?.Data == null || !response.Data.Any())
+                return Json(new List<GetTotalWorkHourPerEmployeeEntity>());
+
+            return Json(response.Data);
+
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetMonthlyAvgWorkHoursPerDay(int year, int month)
+        {
+            var response = await _webApiHelper.GetAsync<List<GetMonthlyAvgWorkHoursPerDayEntity>>(
+                _apiHelper.GetMonthlyAvgWorkHoursPerDayApi + $"?year={year}&month={month}"
+            );
+
+            if (response?.Data == null || !response.Data.Any())
+                return Json(new List<GetMonthlyAvgWorkHoursPerDayEntity>());
+
+            return Json(response.Data);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeePunctuality(int year, int month)
+        {
+            var response = await _webApiHelper.GetAsync<List<GetEmployeePunctualityEntity>>(
+                _apiHelper.GetEmployeePunctualityApi + $"?year={year}&month={month}"
+            );
+
+            if (response?.Data == null || !response.Data.Any())
+                return Json(new List<GetEmployeePunctualityEntity>());
+
+            return Json(response.Data);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAnnualLeaveSummaryByYear(int year)
+        {
+            var response = await _webApiHelper.GetAsync<List<GetAnnualLeaveSummaryByYearEntity>>(
+                _apiHelper.GetAnnualLeaveSummaryByYearApi + $"?year={year}"
+            );
+
+            if (response?.Data == null || !response.Data.Any())
+                return Json(new List<GetAnnualLeaveSummaryByYearEntity>());
+
+            return Json(response.Data);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MonitorHybridWorkBalance(int year, int month)
+        {
+            var response = await _webApiHelper.GetAsync<List<MonitorHybridWorkBalanceEntity>>(
+                _apiHelper.MonitorHybridWorkBalanceApi + $"?year={year}&month={month}"
+            );
+
+            if (response?.Data == null || !response.Data.Any())
+                return Json(new List<MonitorHybridWorkBalanceEntity>());
+
+            return Json(response.Data);
+        }
+    }
+}

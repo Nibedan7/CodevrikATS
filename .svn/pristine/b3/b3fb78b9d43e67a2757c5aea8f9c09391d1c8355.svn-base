@@ -1,0 +1,37 @@
+﻿using System.Data;
+using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+
+namespace CdplATS.API.Services
+{
+    public class AppraisalService
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public AppraisalService(GenericRepository genericRepository)
+        {
+            this._genericRepository = genericRepository;
+        }
+
+
+        public async Task<ApiResponse<IEnumerable<AppraisalEntity>>> GetaAppraisalAsync(int TabId, int EmployeeCode)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@TabId", SqlDbType.Int) { Value = TabId },
+                    new SqlParameter("@EmployeeCode", SqlDbType.Int) { Value = EmployeeCode }
+                };
+
+                var Appraisals = await _genericRepository.GetAllAsync<AppraisalEntity>("GetSelfAssessment", parameters);
+                return new ApiResponse<IEnumerable<AppraisalEntity>>(Appraisals, "Appraisal retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<AppraisalEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+    }
+}

@@ -1,0 +1,36 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
+using System.Data;
+using System.Reflection.Emit;
+using System.Threading.Tasks;
+using static CdplATS.Entity.Models.DepartmentEntity;
+namespace CdplATS.API.Services
+{
+    public class DepartmentService
+    {
+        private readonly GenericRepository _genericRepository;
+        public DepartmentService(GenericRepository genericRepository)
+        {
+            _genericRepository = genericRepository;
+        }
+        public async Task<ApiResponse<IEnumerable<DepartmentEntity>>> GetDepartment(int? dept)
+        {
+            try
+            {
+                var parameter = new SqlParameter[]
+                {
+                    new SqlParameter("@DeptCode", SqlDbType.Int){Value = dept}
+                };
+                var departments = await _genericRepository.GetAllAsync<DepartmentEntity>("GetEmployeeByDeptCode", parameter);
+                return new ApiResponse<IEnumerable<DepartmentEntity>>(departments, "Employee retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<DepartmentEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+    }
+}

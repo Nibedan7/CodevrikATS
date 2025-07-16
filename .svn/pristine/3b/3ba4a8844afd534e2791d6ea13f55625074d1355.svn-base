@@ -1,0 +1,51 @@
+﻿using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System.Net.Mail;
+using System.Net;
+
+namespace CdplATS.UI.Helpers
+{
+    public class CommonService
+    {
+        private readonly EmailConfig _emailConfig;
+        public CommonService(IOptions<EmailConfig> emailConfig)
+        {
+            _emailConfig = emailConfig.Value;
+        }
+
+        [NonAction]
+        public bool SendEmail(EmailEntity emailEntity)
+        {
+            try
+            {
+                string smtpServer = _emailConfig.SmtpServer;
+                int smtpPort = _emailConfig.SmtpPort;
+                string fromEmail = _emailConfig.HostEmail;
+                string emailPassword = _emailConfig.HostEmailAppPassword;
+
+                string subject = emailEntity.Subject;
+                string body = emailEntity.Body;
+
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress(fromEmail, _emailConfig.SenderName);
+                mail.Bcc.Add(emailEntity.Email);
+                mail.Subject = subject;
+                mail.Body = body;
+                mail.IsBodyHtml = true;
+
+                SmtpClient smtp = new SmtpClient(smtpServer, smtpPort);
+                smtp.Credentials = new NetworkCredential(fromEmail, emailPassword);
+                smtp.EnableSsl = true;
+
+                smtp.Send(mail);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+    }
+}

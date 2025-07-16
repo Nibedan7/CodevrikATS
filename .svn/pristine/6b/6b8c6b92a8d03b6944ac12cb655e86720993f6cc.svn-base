@@ -1,0 +1,69 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using static CdplATS.Entity.Models.Enum;
+
+namespace CdplATS.Entity.Models
+{
+    public class EmployeeEntity
+    {
+
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "FirstName is required")]
+        public string FirstName { get; set; }
+
+
+        [Required(ErrorMessage = "LastName is required")]
+        public string LastName { get; set; }
+
+        public string? EmployeeName { get; set; }
+
+        [Required(ErrorMessage = "EmployeeId is required")]
+        public string EmployeeId { get; set; }
+
+        [Required(ErrorMessage = "EmployeeCode is required")]
+        public int EmployeeCode { get; set; }
+
+
+        [Required]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
+        public string Email { get; set; }
+
+
+        public string? AccessCardNumber { get; set; }
+
+        public string Department { get; set; }
+
+        public int? Status { get; set; }
+
+        [Required(ErrorMessage = "Contact number is required.")]
+        [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Contact number must be a valid 10-digit number starting with 6-9.")]
+        public string ContactNumber1 { get; set; }
+
+        [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Contact number must be a valid 10-digit number starting with 6-9.")]
+        public string? ContactNumber2 { get; set; }
+
+
+        [Required]
+        public string Gender { get; set; } // This holds "M" or "F" from DB
+
+  
+        public string GenderText => Gender switch
+        {
+            "M" => "Male",
+            "F" => "Female",
+            _ => "Other"
+        };
+
+
+        [Required]
+        public DateTime? BirthDate { get; set; }
+
+        [Required]
+        public DateTime? HireDate { get; set; }
+
+        public int? authCode { get; set; }
+
+    }
+
+}

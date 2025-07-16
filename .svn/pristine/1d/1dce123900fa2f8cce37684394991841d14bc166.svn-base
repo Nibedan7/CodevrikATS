@@ -1,0 +1,85 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
+using CdplATS.Entity.Models;
+using System.CodeDom;
+using System.Text.Json;
+using CdplATS.UI.Helpers;
+using static CdplATS.Entity.Models.LeaveEntity;
+using System.Reflection.Emit;
+
+namespace CdplATS.UI.Controllers
+{
+    public class LeaveController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public LeaveController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var LoggedEmpCode = HttpContext.Session.GetInt32("authCode");
+            var ParentWithChildEmp = await _webApiHelper.GetAsync<List<EmpList>>(_apiHelper.ParentWithChildApi +$"{LoggedEmpCode}");
+            ViewBag.EmpList = ParentWithChildEmp.Data;
+            ViewBag.SelectedEmpCode = LoggedEmpCode;
+            return View();
+        }
+
+        // Get All leave of a Employee
+        [HttpGet]
+        public async Task<IActionResult> GetAllLeave(int empCode, int Status)
+        {
+            var leaves = await _webApiHelper.GetAsync<List<LeaveEntity>>(_apiHelper.GetLeaveByEmpCodeApi + $"{empCode}/{Status}");
+            return Json(leaves.Data);
+        }
+
+        //Add or Edit Leave
+        [HttpGet]
+        public async Task<IActionResult> AddEditLeave(string GroupId)
+        {
+            LeaveEntity leaveEntity= new LeaveEntity();
+            if (GroupId != "0")
+            {
+                var leave = await _webApiHelper.GetAsync<LeaveEntity>(_apiHelper.GetLeaveByGroupIdApi + $"{GroupId}");
+                leaveEntity = leave.Data;
+            }
+
+            return PartialView("/Views/Leave/AddEditLeave.cshtml", leaveEntity);
+
+        }
+
+        // Save Leave
+        [HttpPost]
+        public async Task<IActionResult> SaveLeave(LeaveEntity leave)
+        {
+            if (ModelState.IsValid)
+            {
+                var empCode = HttpContext.Session.GetInt32("authCode");
+                leave.EmpCode = empCode;
+                var result = await _webApiHelper.PostAsync<dynamic>(_apiHelper.AddEditLeaveApi, leave);
+                return Json(result);
+            }
+            return View("Index");
+        }
+
+        //Delete Leave
+        [HttpPost]
+        public async Task<IActionResult> DeleteLeave(string groupId)
+        {
+            var result = await _webApiHelper.DeleteAsync<dynamic>(_apiHelper.DeleteLeaveApi + $"{groupId}");
+            return Json(result);
+        }
+
+        // Approve or Reject Leave
+        [HttpPost]
+        public async Task<IActionResult> ApproveRejectLeave(string groupId, int Status)
+           {
+            var empCode = HttpContext.Session.GetInt32("authCode");
+            var result = await _webApiHelper.DeleteAsync<dynamic>(_apiHelper.ApproveRejectLeaveApi + $"{groupId}/{Status}/{empCode}");
+            return Json(result);
+        }
+    }
+}

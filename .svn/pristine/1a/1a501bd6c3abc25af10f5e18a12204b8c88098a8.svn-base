@@ -1,0 +1,183 @@
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@using CdplATS.Entity.Models
+@model LeaveReportEntity
+
+@{
+    Layout = "_Layout";
+    var CurrYear = DateTime.Now.Year;
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Leave Report</a></li>
+        <li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-fingerprint"></i> Leave Report Details</li>
+    </ol>
+</nav>
+
+<div class="container-fluid">
+    <!-- Table Header with Add Button -->
+
+    <div class="d-flex align-items-center mb-3 filterBar">
+        <div class="d-flex gap-2">
+            <div style="padding-top:8px;">
+                <label class="standardColor" style="width:max-content;">Year: </label>
+            </div>
+             @Html.DropDownList(
+							"LeaveYear",
+                     new SelectList(Model.Years, CurrYear),
+                     new { @class = "form-select h-25", id = "yearDropdown", onchange = "BindYearChange()" }
+                     )
+            <!-- Date Inputs for Start Date and End Date -->
+            <div style="padding-top:8px; margin-left:20px;">
+                <label class="standardColor" style="width:max-content;">Start Date: </label>
+            </div>
+            <input type="date" id="startDate" class="form-control" style="font-size: 12px !important;" />
+            <div style="padding-top:8px; margin-left:20px;">
+                <label class="standardColor" style="width:max-content;">End Date: </label>
+            </div>
+            <input type="date" id="endDate" class="form-control" style="font-size: 12px !important;" />
+
+            <!-- Search Button -->
+
+            <div style="margin-right:auto;">
+                <button type="button" class="btn btnStdColor addEdit-Leave-btn" style="gap: .6rem !important; font-size: 12px !important;" onclick="bindLeaveReportGrid()">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
+            </div>
+        </div>
+        <span id="errmessage" class="text-danger ms-3"></span>
+
+    </div>
+
+    <div class="table-container">
+        <table id="LeaveReportTable" class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr>
+                    <th> EmployeeCode</th>
+                    <th>Employee Name</th>
+                    <th>Total Leave</th>
+                    <th>Used Leave</th>
+                    <th>All Leaves</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        bindLeaveReportGrid();
+
+        $("#startDate").change(function () {
+            var startDate = $(this).val();
+
+            $("#endDate").attr("min", startDate);
+
+            var endDate = $("#endDate").val();
+            if (endDate && endDate < startDate) {
+                $("#endDate").val(""); 
+
+            }
+        });
+
+    });
+
+    function BindYearChange(){
+         $("#endDate").val("");
+         $("#startDate").val("");
+         bindLeaveReportGrid();
+    }
+
+    function bindLeaveReportGrid() {
+        let year = $("#yearDropdown").val();
+        let startDate = $('#startDate').val() || `${year}-01-01`;
+        let endDate = $('#endDate').val() || `${year}-12-31`;
+
+        let errMessageDiv = document.getElementById('errmessage');
+        if (endDate && !startDate) {
+            errMessageDiv.textContent = 'Start date is required';
+        }else {
+                errMessageDiv.textContent = '';
+        }
+
+        $.ajax({
+            type: "GET",
+            url: '@Url.Action("GetLeaveReportList", "LeaveReport")',
+            dataType: "json",
+            data: {StartDate: startDate, EndDate:  endDate},
+            success: function (data) {
+                LeaveReportSuccHandler(data);
+            },
+
+            error: function (xhr, status, error,data) {
+
+                LeaveReportErrHandler(xhr, status, error);
+
+            }
+        });
+    }
+
+
+    function LeaveReportErrHandler(){
+
+    }
+
+    function LeaveReportSuccHandler(data){
+        try {
+            var dataTableExample = $('#LeaveReportTable').DataTable();
+
+            if (typeof dataTableExample !== 'undefined') {
+                dataTableExample.destroy();
+            }
+
+            $('#LeaveReportTable').DataTable({
+                scrollY: false,
+                "order": [],
+                "lengthMenu": [50],
+                "dom": 'frtlip',
+                "bFilter": true,
+                "aaData": data,
+                "language": {
+                   "lengthMenu": "Show _MENU_ entries,"
+                },
+                "aoColumns": [
+                    {
+                        "sWidth":"5%",
+                        "mData": "employeeCode",
+                        "className": "dt-left"
+                    },
+                    {
+                        "sWidth":"10%",
+                        "mData": "employeeName",
+                        "className": "dt-left"
+                    },
+                    {
+                        "sWidth":"7%",
+                        "mData": "totalLeave",
+                        "className": "dt-left"
+                    },
+                    {
+                        "sWidth":"7%",
+                        "mData": "usedLeave",
+                        "className": "dt-left",
+                        "render": function (data) {
+                            return data == null ? 0 : data;
+                        }
+                    },
+                    {
+                        "mData": "leaveDates",
+                        "className": "dt-left"
+                    }
+                ]
+            });
+
+            $(".dataTables_length").css('clear', 'none');
+            $(".dataTables_length").css('margin-right', '20px');
+            $(".dataTables_info").css('clear', 'none');
+            $(".dataTables_info").css('padding', '0');
+
+        } catch (err) {
+            alert(err.message)
+        }
+    }
+</script>

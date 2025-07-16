@@ -1,0 +1,146 @@
+﻿using System;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Http;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace CdplATS.UI.Helpers
+{
+    public class WebApiHelper
+    {
+        private readonly HttpClient _httpClient;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
+
+        public WebApiHelper(HttpClient httpClient, IHttpContextAccessor httpContextAccessor,IConfiguration configuration)
+        {
+            _httpClient = httpClient;
+            _httpContextAccessor = httpContextAccessor;
+            _configuration = configuration;
+
+            // Set Base API URL (Modify as per your API URL)
+            _httpClient.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]);
+            _httpClient.DefaultRequestHeaders.Accept.Clear();
+            _httpClient.Timeout = TimeSpan.FromSeconds(600);
+
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        }
+
+        private void AttachToken()
+        {
+            var token = _httpContextAccessor.HttpContext?.Session?.GetString("authToken");
+            Console.WriteLine(token);
+            if (!string.IsNullOrEmpty(token))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+        }
+
+        public async Task<ApiResponse<T>> GetAsync<T>(string endpoint)
+        {
+            AttachToken();
+            var response = await _httpClient.GetAsync(_httpClient.BaseAddress + endpoint);
+
+            return await HandleResponse<T>(response);
+        }
+
+        public async Task<ApiResponse<T>> GetUnAuthorizedAsync<T>(string endpoint, LoginEntity loginEntity)
+        {
+
+            var response = await _httpClient.GetAsync(_httpClient.BaseAddress + endpoint);
+
+            return await HandleResponse<T>(response);
+        }
+
+        public async Task<ApiResponse<LoggerEntity>> PostUnAuthorizedAsync<T>(string endpoint, LoginEntity loginEntity)
+        {
+            var content = new StringContent(JsonSerializer.Serialize(loginEntity), Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync(_httpClient.BaseAddress + endpoint, content);
+            var apiResponse = new ApiResponse<LoggerEntity>();
+            var jsonString = await response.Content.ReadAsStringAsync();
+            apiResponse = JsonSerializer.Deserialize<ApiResponse<LoggerEntity>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (apiResponse != null && apiResponse.Success && apiResponse.Data.UserToken != null)
+            {
+                var user = apiResponse.Data;
+
+                // **Store the full User object in session**
+                _httpContextAccessor.HttpContext.Session.SetString("authUser", JsonSerializer.Serialize(user));
+                _httpContextAccessor.HttpContext.Session.SetString("authToken", user.UserToken);
+                _httpContextAccessor.HttpContext.Session.SetInt32("authCode", user.UserCode);
+                _httpContextAccessor.HttpContext.Session.SetString("authName", user.UserName);
+                _httpContextAccessor.HttpContext.Session.SetString("RoleRights", string.IsNullOrEmpty(user.RoleRights)?"": user.RoleRights);
+                _httpContextAccessor.HttpContext.Session.SetInt32("authRoleId",  user.RoleId);
+                _httpContextAccessor.HttpContext.Session.SetString("BirthDayEmployee",string.IsNullOrEmpty(user.BirthdayEmployee) ? "" : user.BirthdayEmployee);
+            }
+            return apiResponse;
+        }
+
+        public async Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data)
+        {
+            AttachToken();
+            var content = new StringContent(JsonSerializer.Serialize(data), Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync(_httpClient.BaseAddress + endpoint, content);
+
+            return await HandleResponse<T>(response);
+        }
+
+        public async Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data)
+        {
+            AttachToken();
+            var content = new StringContent(JsonSerializer.Serialize(data), Encoding.UTF8, "application/json");
+            var response = await _httpClient.PutAsync(endpoint, content);
+
+            return await HandleResponse<T>(response);
+        }
+
+        public async Task<ApiResponse<T>> DeleteAsync<T>(string endpoint)
+        {
+            AttachToken();
+            var response = await _httpClient.DeleteAsync(_httpClient.BaseAddress + endpoint);
+
+            return await HandleResponse<T>(response);
+        }
+
+        private async Task<ApiResponse<T>> HandleResponse<T>(HttpResponseMessage response)
+        {
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var statusCode = response.StatusCode;
+
+
+            Console.WriteLine($"API Response: {statusCode} - {jsonString}");
+
+            //  Check status code and handle accordingly
+            switch (statusCode)
+            {
+                case HttpStatusCode.OK: // 200
+                case HttpStatusCode.Created: // 201
+                    return JsonSerializer.Deserialize<ApiResponse<T>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                case HttpStatusCode.BadRequest: // 400
+                    throw new Exception($"Bad Request (400): {jsonString}");
+
+                case HttpStatusCode.Unauthorized: // 401
+                    throw new Exception($"Unauthorized (401): Please login again.");
+
+                case HttpStatusCode.Forbidden: // 403
+                    throw new Exception($"Forbidden (403): You do not have permission.");
+
+                case HttpStatusCode.NotFound: // 404
+                    throw new Exception($"Not Found (404): The requested resource was not found.");
+
+                case HttpStatusCode.InternalServerError: // 500
+                    throw new Exception($"Server Error (500): An error occurred on the server.");
+
+                default:
+                    throw new Exception($"Unexpected Status Code ({(int)statusCode}): {jsonString}");
+            }
+        }
+    }
+}

@@ -1,0 +1,150 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+using static CdplATS.Entity.Models.LeaveEntity;
+using System.Data;
+using static CdplATS.Entity.Models.EmployeeEntity;
+using System.Reflection.Emit;
+using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Presentation;
+using DocumentFormat.OpenXml.Office2010.Excel;
+
+namespace CdplATS.API.Services
+{
+    public class CommonServices
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public CommonServices(GenericRepository genericRepository)
+        {
+            this._genericRepository = genericRepository;
+        }
+
+        public async Task<ApiResponse<IEnumerable<EmpDropDownList>>> BindEmployeeHierarchy(int empCode)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@empCode", SqlDbType.Int) { Value = empCode }
+                };
+
+                var emps = await _genericRepository.GetAllAsync<EmpDropDownList>("BindEmployeeHierarchy", parameters);
+                return new ApiResponse<IEnumerable<EmpDropDownList>>(emps, "Employee Hierarchy retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<EmpDropDownList>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        //get department service
+        public async Task<ApiResponse<IEnumerable<DepartmentList>>> BindDepartmentList()
+        {
+            try
+            {
+               
+                var departments = await _genericRepository.GetAllAsync<DepartmentList>("BindDepartmentList");
+                return new ApiResponse<IEnumerable<DepartmentList>>(departments, "Department retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<DepartmentList>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<int>>> BindYearList()
+        {
+            try {
+
+
+                var festivalYear = await _genericRepository.GetAllAsync<int>("BindYearList");
+                return new ApiResponse<IEnumerable<int>>(festivalYear, "Year retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<int>>(null, $"Error: {ex.Message}", false);
+            }
+           
+        }
+
+
+        // email service
+        public async Task<ApiResponse<IEnumerable<EmailEntity>>> GetEmailByEmployeeCodeAsync(int EmployeeCode,string EncUserCode)
+        {
+            var parameters = new SqlParameter[]
+            {
+                new SqlParameter("@EmployeeCode", EmployeeCode),
+                new SqlParameter("@EncUserCode", EncUserCode),
+            };
+
+            var result = await _genericRepository.GetAllAsync<EmailEntity>("GetUserEmailByEmployeCode", parameters);
+
+            return new ApiResponse<IEnumerable<EmailEntity>>(result, "Email retrieved successfully.");
+
+        }
+
+
+        public async Task<ApiResponse<IEnumerable<ChildWithParentList>>> GetChildWithParentAsync(int empCode)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@EmpCode", SqlDbType.Int) { Value = empCode }
+                };
+
+                var emps = await _genericRepository.GetAllAsync<ChildWithParentList>("GetEmployeeWithParentDeptHead", parameters);
+                return new ApiResponse<IEnumerable<ChildWithParentList>>(emps, "Child with Parents data retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<ChildWithParentList>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+
+        public async Task<ApiResponse<string>> ResetPasswordAsync(ResetPasswordEntity model)
+        {
+            try
+            {
+               
+                var parameters = new SqlParameter[]
+                {
+                 new SqlParameter("@EmployeeCode", SqlDbType.Int) { Value = model.EmployeeCode },
+                 new SqlParameter("@NewPassword", SqlDbType.NVarChar, 100) { Value = model.NewPassword }
+                };
+
+                
+                await _genericRepository.ExecuteAsync("ResetPassword", parameters);
+
+                return new ApiResponse<string>("Password reset successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string>(null, $"Error resetting password: {ex.Message}", false);
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<EmployeeRole>>> BindRoleList()
+        {
+            var role = await _genericRepository.GetAllAsync<EmployeeRole>("BindRoleList");
+            return new ApiResponse<IEnumerable<EmployeeRole>>(role, "Role retrive successfully");
+
+        }
+
+        public async Task<ApiResponse<IEnumerable<Reviewer>>> BindEmployeeList()
+        {
+            try
+            {
+                var employees = await _genericRepository.GetAllAsync<Reviewer>("BindEmployeeList");
+                return new ApiResponse<IEnumerable<Reviewer>>(employees, "Employee retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<Reviewer>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+    }
+}

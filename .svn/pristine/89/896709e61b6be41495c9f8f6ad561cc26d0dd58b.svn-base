@@ -1,0 +1,69 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+using static CdplATS.Entity.Models.LeaveEntity;
+using System.Data;
+using static CdplATS.Entity.Models.EmployeeEntity;
+using System.Reflection.Emit;
+using DocumentFormat.OpenXml.Bibliography;
+
+namespace CdplATS.API.Services
+{
+    public class CommonServices
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public CommonServices(GenericRepository genericRepository)
+        {
+            this._genericRepository = genericRepository;
+        }
+
+        public async Task<ApiResponse<IEnumerable<EmpDropDownList>>> GetAllFillDropDownForEmployeeList(int empCode)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@empCode", SqlDbType.Int) { Value = empCode }
+                };
+
+                var emps = await _genericRepository.GetAllAsync<EmpDropDownList>("GetEmpByDept", parameters);
+                return new ApiResponse<IEnumerable<EmpDropDownList>>(emps, "Leave retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<EmpDropDownList>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        //get department service
+        public async Task<ApiResponse<IEnumerable<DepartmentList>>> GetDepartmentAsync()
+        {
+            try
+            {
+               
+                var departments = await _genericRepository.GetAllAsync<DepartmentList>("GetDepartment");
+                return new ApiResponse<IEnumerable<DepartmentList>>(departments, "Department retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<DepartmentList>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<int>>> GetFestivalYearAsync()
+        {
+            try {
+
+
+                var festivalYear = await _genericRepository.GetAllAsync<int>("GetFestivalYearsOnly");
+                return new ApiResponse<IEnumerable<int>>(festivalYear, "Year retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<int>>(null, $"Error: {ex.Message}", false);
+            }
+           
+        }
+    }
+}

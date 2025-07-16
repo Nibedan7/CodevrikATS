@@ -1,0 +1,42 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
+using System.Data;
+using System.Reflection.Emit;
+using System.Threading.Tasks;
+using static CdplATS.Entity.Models.PunchEntity;
+
+namespace CdplATS.API.Services
+{
+    public class PunchService
+    {
+        private readonly GenericRepository _genericRepository;
+       
+        public PunchService(GenericRepository genericRepository)
+        {
+            _genericRepository = genericRepository;
+        }
+
+        public async Task<ApiResponse<IEnumerable<PunchEntity>>> GetPunchByEmpCode(int EmpCode, DateTime? StartDate, DateTime? EndDate)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@EmpCode", SqlDbType.Int) { Value = EmpCode },
+                    new SqlParameter("@StartDate", SqlDbType.Date) { Value = (object?)StartDate ?? DBNull.Value },
+                    new SqlParameter("@EndDate", SqlDbType.Date) { Value = (object?)EndDate ?? DBNull.Value }
+                };
+
+                var punches = await _genericRepository.GetAllAsync<PunchEntity>("GetPunchByEmpCode", parameters);
+                return new ApiResponse<IEnumerable<PunchEntity>>(punches, "Punch retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<PunchEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+    }
+}

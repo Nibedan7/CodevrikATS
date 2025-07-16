@@ -1,0 +1,28 @@
+﻿using CdplATS.API.Repositories;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Services
+{
+    public class EmployeeFileServices : Controller
+    {
+        private readonly GenericRepository _genericRepository;
+        public EmployeeFileServices(GenericRepository genericRepository)
+        {
+            _genericRepository = genericRepository;
+        }
+
+        public async Task<ApiResponse<IEnumerable<EmployeeFileEntity>>> GetEmployeeInfo()
+        {
+            try
+            {
+                var Employees = await _genericRepository.GetAllAsync<EmployeeFileEntity>("GetEmployeeInfo");
+                return new ApiResponse<IEnumerable<EmployeeFileEntity>>(Employees, "Employee Details retrieved successfully.");
+            }
+            catch
+            {
+                return new ApiResponse<IEnumerable<EmployeeFileEntity>>(null, "Error retrieving employee information.", false);
+            }
+        }
+    }
+}

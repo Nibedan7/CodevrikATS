@@ -1,0 +1,72 @@
+﻿using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.UI.Controllers
+{
+    public class ProjectTrackerController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public ProjectTrackerController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var PtList = await _webApiHelper.GetAsync<List<ProjectTrackerCellViewModel>>(_apiHelper.GetProjectTrackerListApi);
+
+            return View(PtList.Data);
+        }
+
+        [HttpGet]
+        public IActionResult AddEditColumnRow(int Id,int Type)
+        {
+
+            ProjectTrackerCellAddEdit obj = new ProjectTrackerCellAddEdit
+            {
+                Id = Id,
+                Type = Type
+            };
+            return PartialView("/Views/ProjectTracker/AddEditColumnRow.cshtml", obj);
+
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddEditColumnRow(ProjectTrackerCellAddEdit request)
+        {
+
+            if (ModelState.IsValid)
+            {
+                var response = await _webApiHelper.PostAsync<ProjectTrackerCellAddEdit>(_apiHelper.AddEditColumnRowApi, request);
+
+                if (response == null)
+                {
+                    return StatusCode(500, "Error adding/editing.");
+                }
+                return Json(response);
+            }
+            return BadRequest("Model validation failed.");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddEditPtvalue(ProjectTrackerCellAddEdit request)
+        {
+
+            if (ModelState.IsValid)
+            {
+                var response = await _webApiHelper.PostAsync<ProjectTrackerCellAddEdit>(_apiHelper.AddEditPtValueApi, request);
+
+                if (response == null)
+                {
+                    return StatusCode(500, "Error adding/editing.");
+                }
+                return Json(response);
+            }
+            return BadRequest("Model validation failed.");
+        }
+    }
+}

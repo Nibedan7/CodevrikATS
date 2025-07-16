@@ -1,0 +1,85 @@
+﻿@model CdplATS.Entity.Models.ResetPasswordEntity
+
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    var Authcode = HttpContextAccessor.HttpContext.Session.GetInt32("authCode");
+}
+
+<div class="modal fade" id="model_ResetPassword" tabindex="-1" aria-labelledby="ResetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md" style="margin-top: 50px;">
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title standardColor" id="ResetPasswordModalLabel">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <form id="ResetPasswordForm">
+                    <input type="hidden" asp-for="EmployeeCode" value="@Authcode" />
+
+                    <div class="mb-3">
+                        <label asp-for="CurrentPassword" class="form-label standardColor fw-bold">Current Password</label>
+                        <input type="password" asp-for="CurrentPassword" class="form-control" required />
+                        <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewPassword" class="form-label standardColor fw-bold">New Password</label>
+                        <input type="password" asp-for="NewPassword" class="form-control" required />
+                        <span asp-validation-for="NewPassword" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ConfirmPassword" class="form-label standardColor fw-bold">Confirm Password</label>
+                        <input type="password" asp-for="ConfirmPassword" class="form-control" required />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btnStdColor px-4 me-2" onclick="submitResetPassword()">Change Password</button>
+                        <button type="button" class="btn btn-secondary px-3 me-2 btnStdWid2" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<partial name="_ValidationScriptsPartial" />
+
+<script>
+    function submitResetPassword() {
+        var form = $("#ResetPasswordForm");
+        form.find(".text-danger").text("");
+
+        if (form.valid()) {
+            var formData = form.serialize();
+
+            $.ajax({
+                url: '@Url.Action("ChangePassword", "Account")',
+                type: "POST",
+                data: formData,
+                success: function (response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        $('#model_ResetPassword').modal('hide');
+                    } else {
+                        if (response.field) {
+                            var errorSpan = $('[data-valmsg-for="' + response.field + '"]');
+                            errorSpan.text(response.message);
+                        } else {
+                            
+                            alert(response.message);
+                        }
+                    }
+                },
+                error: function () {
+                    alert("Something went wrong. Please try again.");
+                }
+            });
+        }
+    }
+</script>
+
+
+

@@ -1,0 +1,129 @@
+﻿<!-- jQuery Validation -->
+
+
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+@model CdplATS.Entity.Models.ClientEntity
+
+<div class="modal fade" id="model_ClientDetail" tabindex="-1" aria-labelledby="ClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="margin-top: 50px;">
+        <!-- Adjusted vertical position -->
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title standardColor" id="ClientModalLabel">@(Model.Id == 0 ? "Add Client" : "Edit Client")</h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="Clientform">
+                    <div class="row-border mb-3">
+                        <div class="col-md-6">
+                            <label hidden class="form-label standardColor fw-bold">Id</label>
+                            <input hidden id="clientId" type="text" class="form-control" asp-for="Id" name="Id" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">Client</label>
+                            <input id="client" type="text" class="form-control" asp-for="Client" required />
+                            <span asp-validation-for="Client" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">Project Name</label>
+                            <input id="ProjectName" type="text" class="form-control" asp-for="Project" name="Project" required />
+                            <span asp-validation-for="Project" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">Client Contact</label>
+                            <input id="clientcontact" type="text" class="form-control" asp-for="Client_Contact" required />
+                            <span asp-validation-for="Client_Contact" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">Dev Team</label>
+                            <input id="DevTeam" type="text" class="form-control" asp-for="Dev_Team" name="Dev_Team" required />
+                            <span asp-validation-for="Dev_Team" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">Status</label>
+                            <input id="status" type="text" class="form-control" asp-for="Status" required />
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">Issues</label>
+                            <input id="Issues" type="text" class="form-control" asp-for="Issues" name="Issues" required />
+                            <span asp-validation-for="Issues" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">Date schedule</label>
+                            <input id="Date_schedule" type="text" class="form-control" asp-for="Date_schedule" required />
+                            <span asp-validation-for="Date_schedule" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor fw-bold">Hour Status</label>
+                            <input id="Hour_Status" type="text" class="form-control" asp-for="Hour_status" name="Hour_status" required />
+                            <span asp-validation-for="Hour_status" class="text-danger"></span>
+                        </div>
+                    </div>
+
+
+                    <!-- Full-Width Separator Line -->
+                    <hr class="mt-4 mb-3 border-dark" style="margin-left: -24px; margin-right: -24px;">
+
+                    <!-- Buttons Aligned Right -->
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btnStdColor px-4 me-2 btnStdWid2 " onclick="saveClient()" id="submitbtn">Save</button>
+                        <button type="button" class="btn btn-secondary px-3 me-2 btnStdWid2" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script>
+        function saveClient() {
+        var form = $("#Clientform");
+
+        // Trigger validation
+        if (form.valid()) {
+            var formData = form.serialize();
+
+            $.ajax({
+                url: '@Url.Action("AddEditClient", "Client")',
+                type: "POST",
+                data: formData,
+                success: function (data) {
+                    if(data.success){
+                         toastr.success(data.message);
+
+                    $('#model_ClientDetail').modal('hide');
+                    bindClientGrid();
+                    }else{
+                        toastr.error(data.message)
+                    }
+
+                },
+                error: function (data) {
+                    toastr.error('Error in saving Client. Please try again.');
+                }
+            });
+        }
+    }
+</script>
+

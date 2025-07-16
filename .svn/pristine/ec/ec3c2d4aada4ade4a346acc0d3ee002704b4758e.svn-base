@@ -1,0 +1,181 @@
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@using CdplATS.Entity.Models
+@using Newtonsoft.Json
+
+@{
+	Layout = "_Layout";
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Role</a></li>
+		<li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-gears"></i> Role Details</li>
+	</ol>
+</nav>
+
+<div class="container-fluid">
+	<!-- Table Header with Add Button -->
+	<div class="d-flex  align-items-center mb-3 filterBar">
+		<div class="d-flex gap-2">
+
+		</div>
+		<div style="margin-left:auto;">
+			<button type="button" class="btn btnStdColor addEdit-Leave-btn" onclick="AddEditRoles(0)">
+				<i class="fa-solid fa-plus"></i> Add Role
+			</button>
+		</div>
+	</div>
+
+	<div class="table-container">
+		<table id="roleTable" class="table table-bordered table-striped table-hover">
+			<thead>
+				<tr>
+					<th hidden>Role Id</th>
+					<th>Role Name</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+		</table>
+	</div>
+
+</div>
+
+
+
+<div id="div_RoleDetail"></div>
+
+
+
+<script>
+	$(document).ready(function () {
+		bindRoleGrid();
+	});
+
+	 function bindRoleGrid() {
+		 $.ajax({
+			 type: "GET",
+			 url: encodeURI('@Url.Action("GetRoleList", "Role")'),
+			 dataType: "json",
+			 success: function(data){
+				 RoleSuccHandler(data);
+			 },
+			 error: RoleErrHandler
+		 });
+	 }
+	 
+	 function RoleErrHandler(){
+
+	 }
+
+	 function RoleSuccHandler(data){
+		 try {
+			 var dataTableExample = $('#roleTable').DataTable();
+			 if (dataTableExample != 'undefined') {
+				 dataTableExample.destroy();
+			 }
+			dataTableExample = $('#roleTable').DataTable({
+				 scrollY: false,
+				 "order": [],
+				 "lengthMenu": [10, 30, 40, 50, 60],
+				 "dom": 'frtlip',
+				 "bFilter": true,
+				 "aaData": data,
+				 "language": {
+					  "lengthMenu": "Show _MENU_ entries,"
+				  },
+				  "aoColumns": [
+					 {
+						 "mData": "roleId",
+						 "visible": false
+					 },
+					 {
+						 "mData": "roleName",
+						 "className": "dt-left"
+					 },
+					 {
+					 "sWidth": "10%",
+					 "mData": null,
+					 "sortable": false,
+					 "className": "dt-center",
+					 "render": function (data, type, row, meta) {
+							 var ActionbuttonEdit = '<button type="button" onclick="AddEditRoles(\''+row.roleId+'\')" class="btn btn-sm borderNone action-btn edit-btn" title="Edit Role"><i class="fa-solid fa-pen-to-square"></i></button>';
+
+								var ActionButtonDelete = '<button onclick="DeleteRole(\'' + row.roleId + '\')" class="btn btn-sm borderNone action-btn delete-btn" title="Delete Role"><i class="fa-solid fa-trash"></i></button>';
+
+							return ActionbuttonEdit + ActionButtonDelete;
+						 }
+					 }
+
+				  ]
+			 });
+			 $(".dataTables_length").css('clear', 'none');
+			 $(".dataTables_length").css('margin-right', '20px');
+			 $(".dataTables_info").css('clear', 'none');
+			 $(".dataTables_info").css('padding', '0');
+		 } catch (e) {
+			 alert(e.message);
+		 }
+	 }
+
+
+	function AddEditRoles(id) {
+			$('.modal-backdrop').remove();
+			$('body').removeClass('modal-open');
+			$('#model_LeaveDetail').remove();
+
+			$.ajax({
+				url: encodeURI('@Url.Action("GetRoleDetails", "Role")'),
+				type: "GET",
+				data: {RoleId: id },
+				success: function (data) {
+				$('#div_RoleDetail').html(data);
+				var modal = new bootstrap.Modal(document.getElementById('model_RoleDetail'));
+				modal.show();
+				},
+				error: function (data) {
+					console.log("error loading partial view");
+				}
+			});
+	}
+
+
+	function DeleteRole(id){
+		 bootbox.confirm({
+			 title: "Remove Role",
+			 message: "Are you sure to remove this Role?",
+			 buttons: {
+				 confirm: {
+					 label: 'Yes',
+					 className: 'btn btnStdColor px-4 btnStdWid3'
+				 },
+				 cancel: {
+					 label: 'No',
+					 className: 'btn btn-secondary px-4 py-1 btn-sm'
+				 }
+			 },
+			 callback: function (result) {
+				 if (result) {
+					 $.ajax({
+						 url: encodeURI('@Url.Action("DeleteRole", "Role")'),
+						 type: "POST",
+						 dataType: "json",
+						 data: { RoleId: id },
+						 success: function (data) {
+							 if (data.success) {
+								 toastr.success(data.message);
+								 bindRoleGrid();
+							 }
+							 else {
+								 toastr.error(data.message);
+							 }
+						 },
+						 error: function () {
+
+						 }
+					 });
+				 }
+			 }
+		 });
+	 }
+</script>

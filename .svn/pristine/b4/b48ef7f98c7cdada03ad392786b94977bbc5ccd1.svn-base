@@ -1,0 +1,82 @@
+﻿using CdplATS.API.Services;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
+    public class CommonApiController : ControllerBase
+    {
+        private readonly CommonServices _commonServices;
+
+        public CommonApiController(CommonServices commonServices)
+        {
+            this._commonServices = commonServices;
+        }
+
+        [HttpGet("BindEmployeeHierarchy/{empCode}")]
+        public async Task<IActionResult> BindEmployeeHierarchy(int empCode)
+        {
+            var response = await _commonServices.BindEmployeeHierarchy(empCode);
+            return Ok(response);
+        }
+
+        // get department list 
+        [HttpGet("BindDepartmentList")]
+        public async Task<IActionResult> BindDepartmentList()
+        {
+            var response = await _commonServices.BindDepartmentList();
+            return Ok(response);
+        }
+
+        [HttpGet("BindYearList")]
+        public async Task<IActionResult> BindYearList()
+        {
+            var response = await _commonServices.BindYearList();
+            return Ok(response);
+        }
+
+        [HttpGet("GetChildWithParent/{empCode}")]
+        public async Task<IActionResult> GetChildWithParent(int empCode)
+        {
+            var response = await _commonServices.GetChildWithParent(empCode);
+            return Ok(response);
+        }
+
+
+
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordEntity model)
+        {
+            var result = await _commonServices.ResetPassword(model);
+
+             return Ok(result);
+        }
+
+        [HttpGet("BindRoleList")]
+        public async Task<IActionResult> BindRoleList()
+        {
+            var result = await _commonServices.BindRoleList();
+            return Ok(result);
+        }
+
+        [HttpGet("BindEmployeeList")]
+        public async Task<IActionResult> BindEmployeeList()
+        {
+            var result = await _commonServices.BindEmployeeList();
+            return Ok(result);
+
+        }
+
+        [HttpGet("BindReviewerList")]
+        public async Task<IActionResult> BindReviewerList()
+        {
+            var result = await _commonServices.BindReviewerList();
+            return Ok(result);
+        }
+
+    }
+}

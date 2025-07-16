@@ -1,0 +1,75 @@
+﻿using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+
+namespace CdplATS.UI.Controllers
+{
+    public class AccountController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+        private readonly HttpClient _httpClient;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly CommonService _common;
+
+        public AccountController(WebApiHelper webApiHelper, IHttpContextAccessor httpContextAccessor, CommonService common)
+        {
+            _webApiHelper = webApiHelper;
+            _httpContextAccessor = httpContextAccessor;
+            _common = common;
+        }
+        public IActionResult Index()
+        {
+            return View("Login");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Login(LoginEntity model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            var response = await _webApiHelper.PostUnAuthorizedAsync<dynamic>(_apiHelper.LoginApi, model);
+            EmailEntity emailEntity = new EmailEntity();
+            emailEntity.Body = "Your login was successful";
+            emailEntity.Subject = "Login Success";
+            emailEntity.Email = "cjoshi@succeedpartners.com,chetanjoshi703@gmail.com";
+            _common.SendEmail(emailEntity);
+            if (response.Success)
+            {
+                return RedirectToAction("Index", "Leave");
+            }
+            else
+            {
+                ViewBag.ErrorMessage = response.Message;
+            }
+            return View();
+
+        }
+        public IActionResult Logout()
+        {
+            _httpContextAccessor.HttpContext.Session.Clear();
+
+            return RedirectToAction("Index", "Account");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendMail(int Usercode)
+        {
+            var apiResponse = await _webApiHelper.GetAsync<List<EmailEntity>>(_apiHelper.SendEmailApi + $"?EmployeeCode={Usercode}");
+
+            //if (apiResponse == null || apiResponse.Data == null)
+            //    return Json(new { success = false, message = "Email not found for this employee code." });
+
+            bool emailResult = await _common.SendEmail(apiResponse.Data[0]);
+
+            if (emailResult)
+                return Json(new { success = true, message = "Email sent successfully." });
+            else
+                return Json(new { success = false, message = "Failed to send email." });
+
+        }
+    }
+ }

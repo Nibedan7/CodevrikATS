@@ -1,0 +1,240 @@
+﻿@using CdplATS.Entity.Models
+@model HoliDayEntity
+
+@using CdplATS.Entity.Models
+@using CdplATS.UI.Helpers
+
+@using Newtonsoft.Json
+@{
+	Layout = "_Layout";
+	var years = ViewBag.year;
+
+	var roleRightsJson = Context.Session.GetString("RoleRights");
+	List<RoleRightEntity> roleRights = new List<RoleRightEntity>();
+
+	if (!string.IsNullOrEmpty(roleRightsJson))
+	{
+		roleRights = JsonConvert.DeserializeObject<List<RoleRightEntity>>(roleRightsJson);
+	}
+
+	bool canAddEmployee = CommonMethods.HasRight(roleRights, "Employee", "CanAdd");
+	bool canEditEmployee = CommonMethods.HasRight(roleRights, "Employee", "CanEdit");
+	bool canDeleteEmployee = CommonMethods.HasRight(roleRights, "Employee", "CanDelete");
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Holiday</a></li>
+		<li class="breadcrumb-item active standardColor" aria-current="page"><i class="fas fa-umbrella-beach"></i> Holiday Details</li>
+	</ol>
+</nav>
+
+<div class="container-fluid">
+
+	<div class="d-flex  align-items-center mb-3 filterBar">
+		<div class="d-flex gap-2">
+			<div style="padding-top:8px;">
+				<label class="standardColor" style="width:max-content; ">Year: </label>
+			</div>
+			@Html.DropDownListFor(
+							Model => Model.CurrentYear,
+							new SelectList(Model.HolidayYears, Model.CurrentYear),
+							new { @class = "form-select h-25", id = "yearDropdown", onchange = "bindHolidayGrid()" }
+							)
+		</div>
+
+		@if (canAddEmployee){
+			<div style="margin-left:auto;">
+
+				<button type="button" class="btn btnStdColor" data-bs-toggle="modal" id="AddHoliday" data-bs-target="#AddEditHoliday" onclick="AddEditHoliday(0)">
+					<i class="fa-solid fa-plus"></i> Add Holiday
+				</button>
+
+			</div>
+		}
+	</div>
+
+
+
+	<div class="table-container">
+		<table id="HolidayTable" class="table table-bordered table-striped table-hover">
+			<thead>
+				<tr>
+					<th hidden>Id</th>
+					<th>Festival Name</th>
+					<th>Date</th>
+					<th>Day</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+		</table>
+	</div>
+</div>
+
+<div id="div_HolidayDetail"></div>
+
+
+<script>
+	
+
+	$(document).ready(function(){
+		bindHolidayGrid();
+	});
+		function bindHolidayGrid() {
+		var Year = $('#yearDropdown').val();
+		$.ajax({
+			type: "GET",
+			url: encodeURI('@Url.Action("GetHolidayList", "Holiday")'),
+			dataType: "json",
+			data : {Year:Year},
+			success: function (data) {
+				HolidaySuccHandler(data);
+			},
+			error: HolidayErrHandler
+		});
+	}
+
+	function HolidayErrHandler(xhr, status, error) {
+	}
+
+	function HolidaySuccHandler(data) {
+
+			var editable = @canEditEmployee.ToString().ToLower();
+			var deletable = @canDeleteEmployee.ToString().ToLower();
+
+		try {
+
+			var dataTableExample = $('#HolidayTable').DataTable();
+
+			if (dataTableExample != 'undefined') {
+				dataTableExample.destroy();
+			}
+
+			dataTableExample = $('#HolidayTable').DataTable({
+				scrollY: false,
+				"order": [],
+				"lengthMenu": [30, 40, 50,60],
+				"dom": 'frtlip',
+				"bFilter": true,
+				"aaData": data,
+				"language": {
+					"lengthMenu": "Show _MENU_ entries"
+				},
+				"aoColumns": [
+					{
+						"mData":"id",
+						"visible":false
+					},
+					{
+						"mData": "festivalName",
+						"classname": "dt-left"
+					},
+					{
+						"mData": "date",
+						 "render":function(data,type,row,meta){
+
+						return new Date(data).toLocaleDateString('en-GB');
+
+						}
+					},
+					{
+						"mData": "weekDay",
+						"className": "dt-left",
+					},
+					{
+						"sWidth": "5%",
+						"mData": null,
+						"sortable": false,
+						"className": "dt-center",
+						"render": function (data, type, row, meta) {
+								var year = new Date(row.date).getFullYear();
+									var actionButtons = '';
+								if(!editable && !deletable){
+									return 'N/A';
+								}
+							if(editable){
+							 actionButtons += '<button onclick="AddEditHoliday(\'' + row.id + '\',\'' + year + '\')" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-pen-to-square"></i></button>';
+							}else{
+								actionButtons+= ''
+							}
+							if(deletable){
+							  actionButtons += '<button onclick="DeleteHoliday(' + row.id + ', \'' + row.festivalName.replace(/'/g, "\\'") + '\')" class="btn btn-sm borderNone action-btn edit-btn"><i class="fa-solid fa-trash"></i></button>';
+							}else{
+								actionButtons+= ''
+							}
+						
+							return actionButtons;
+							
+						}
+					}
+
+				]
+
+			});
+
+			// Custom CSS fixes to prevent layout issues
+			$(".dataTables_length").css('clear', 'none');
+			$(".dataTables_length").css('margin-right', '20px');
+			$(".dataTables_info").css('clear', 'none');
+			$(".dataTables_info").css('padding', '0');
+
+		} catch (err) {
+
+		}
+	}
+
+	function AddEditHoliday(Id,year) {
+		$.ajax({
+			url: '@Url.Action("GetHolidayDetails", "Holiday")',
+			type: "GET",
+			data: { Id: Id,year:year },
+			success: function (data) {
+				$('#div_HolidayDetail').html(data);
+				var modal = new bootstrap.Modal(document.getElementById('model_HolidayDetail'));
+				modal.show();
+			},
+			error: function (data) {
+				toastr.error("error in loading holiday details")
+			}
+		});
+	}
+
+	function DeleteHoliday(Id,festivalName){
+			bootbox.confirm({
+				title: "Delete Holiday",
+				message: "Are you sure to delete Holiday: <strong>"+ festivalName + "</strong>?",
+				buttons:{
+					confirm: {
+						label: 'Yes',
+						className: 'btn btnStdColor px-4 btnStdWid2'
+					},
+					cancel: {
+						label: 'No',
+						className: 'btn btn-secondary px-4 py-1 btn-sm'
+					}
+				},
+
+				callback: function (result) {
+
+					if (result) {
+						$.ajax({
+							url: '@Url.Action("DeleteHoliday", "Holiday")/' + Id,
+							type: "DELETE",
+							dataType: "json",
+							 success: function (data) {
+									toastr.success(data);
+
+								bindHolidayGrid();
+						},
+						error: function (xhr, status, error) {
+							toastr.error("An error occurred while deleting  Holiday.");
+						}
+						});
+					}
+
+				}
+			});
+	}
+
+</script>

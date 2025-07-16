@@ -1,0 +1,39 @@
+﻿using CdplATS.API.Services;
+using CdplATS.Entity.Models;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+
+namespace CdplATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class PunchApiController : ControllerBase
+    {
+        private readonly PunchService _punchService;
+
+        public PunchApiController(PunchService punchService)
+        {
+            _punchService = punchService;
+        }
+
+        /// <summary>
+        /// Get Punch Records by Employee Code
+        /// </summary>
+  
+        [HttpGet("getPunchByEmpCode")]
+        public async Task<IActionResult> GetPunchByEmpCode([FromQuery] int EmpCode, [FromQuery] DateTime? StartDate, [FromQuery] DateTime? EndDate)
+        {
+            var response = await _punchService.GetPunchByEmpId(EmpCode, StartDate, EndDate);
+            return Ok(response);
+        }
+
+
+
+        [HttpGet("GetEmpByDept/{empCode}")]
+        public async Task<IActionResult> GetEmpByDept(int empCode)
+        {
+            var result = await _punchService.GetEmpByDeptAsync(empCode);
+            return Ok(result);
+        }
+    }
+}

@@ -1,0 +1,42 @@
+﻿using System.Reflection.Emit;
+using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CdplATS.UI.Controllers
+{
+    public class DepartmentController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public DepartmentController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            // Prevent caching
+            Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            Response.Headers["Pragma"] = "no-cache";
+            Response.Headers["Expires"] = "0";
+
+            var loggedEmpCode = HttpContext.Session.GetInt32("authCode");
+
+            if (loggedEmpCode == null)
+                return RedirectToAction("Index", "Account");
+
+            
+            return View();
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetDepartment()
+        {
+            var url = _apiHelper.GetDepartment;
+            var response = await _webApiHelper.GetAsync<List<DepartmentEntity>>(url);
+            return Json(response?.Data ?? new List<DepartmentEntity>());
+        }
+
+    }
+}

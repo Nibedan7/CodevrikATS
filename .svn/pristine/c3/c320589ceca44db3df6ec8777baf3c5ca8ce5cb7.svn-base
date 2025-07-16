@@ -1,0 +1,79 @@
+﻿using CdplATS.Entity.Models;
+using CdplATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.RegularExpressions;
+using static CdplATS.Entity.Models.LeaveEntity;
+
+namespace CdplATS.UI.Controllers
+{
+    public class ManualLogController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public ManualLogController(WebApiHelper webApiHelper)
+        {
+            this._webApiHelper = webApiHelper;
+        }
+        public async Task<IActionResult> Index()
+        {
+            var LoggedEmpCode = HttpContext.Session.GetInt32("authCode");
+            var ParentWithChildEmp = await _webApiHelper.GetAsync<List<EmpList>>(_apiHelper.ParentWithChildApi + $"{LoggedEmpCode}");
+            ViewBag.EmpList = ParentWithChildEmp.Data;
+            ViewBag.SelectedEmpCode = LoggedEmpCode;
+            return View();
+        }
+
+        // Get All manual logs of Employee
+        [HttpGet]
+        public async Task<IActionResult> GetAllManualLog(int empCode, int Status)
+        {
+            var leaves = await _webApiHelper.GetAsync<List<ManualLogEntity>>(_apiHelper.GetManualLogByEmpCodeApi + $"{empCode}/{Status}");
+            return Json(leaves.Data);
+        }
+
+        //Add or Edit Manual Log
+        [HttpGet]
+        public async Task<IActionResult> AddEditManualLog(int LogId)
+        {
+            if (LogId != 0)
+            {
+                var manualLog = await _webApiHelper.GetAsync<ManualLogEntity>(_apiHelper.GetManualLogByLogIdApi + $"{LogId}");
+                return PartialView(manualLog.Data);
+            }
+
+            return PartialView("/Views/ManualLog/AddEditManualLog.cshtml", new ManualLogEntity());
+        }
+
+        // Save Manual Log
+        [HttpPost]
+        public async Task<IActionResult> SaveManualLog(ManualLogEntity manualLog)
+        {
+            if (ModelState.IsValid)
+            {
+                var empCode = HttpContext.Session.GetInt32("authCode");
+                manualLog.EmpCode = empCode.Value;
+                var result = await _webApiHelper.PostAsync<dynamic>(_apiHelper.AddEditManualLogApi, manualLog);
+                return Json(result);
+            }
+            return View("Index");
+        }
+
+        //Delete Manual Log
+        [HttpPost]
+        public async Task<IActionResult> DeleteManualLog(int LogId)
+        {
+            var result = await _webApiHelper.DeleteAsync<dynamic>(_apiHelper.DeleteManualLogApi + $"{LogId}");
+            return Json(result);
+        }
+
+        // Approve or Reject Manual Log
+        [HttpPost]
+        public async Task<IActionResult> ApproveRejectManualLog(int LogId, int Status)
+        {
+            var empCode = HttpContext.Session.GetInt32("authCode");
+            var result = await _webApiHelper.DeleteAsync<dynamic>(_apiHelper.ApproveRejectManualLogApi + $"{LogId}/{Status}/{empCode}");
+            return Json(result);
+        }
+    }
+}
