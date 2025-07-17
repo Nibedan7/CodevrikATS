@@ -1,4 +1,4 @@
-﻿@model CodeVrikATS.Entity.Models.LoginEntity
+@model CodeVrikATS.Entity.Models.LoginEntity
 @{
     Layout = null;
 }
@@ -54,6 +54,7 @@
 
             .logo img {
                 width: 200px;
+
                 height: auto;
             }
 
@@ -104,7 +105,9 @@
 
     <div class="login-container">
         <div class="logo">
+
             <img src="@Url.Content("~/image/CodeVrik_logo_new.png")" alt="Company Logo">
+
         </div>
         <h2 class="login-header">Employee Management</h2>
         <form method="post" asp-action="Login">
