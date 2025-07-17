@@ -6,11 +6,11 @@ WORKDIR /src
 COPY . .
 
 # Publish the UI project
-RUN dotnet publish CdplATS.UI/CdplATS.UI.csproj -c Release -o /app/publish
+RUN dotnet publish CodeVrikATS.UI/CodeVrikATS.UI.csproj -c Release -o /app/publish
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/publish .
 
-ENTRYPOINT ["dotnet", "CdplATS.UI.dll"]
+ENTRYPOINT ["dotnet", "CodeVrikATS.UI.dll"]
