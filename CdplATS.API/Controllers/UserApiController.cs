@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using CdplATS.Entity.Models;
-using CdplATS.API.Services;
+using CodeVrikATS.Entity.Models;
+using CodeVrikATS.API.Services;
 
-namespace CdplATS.API.Controllers
+namespace CodeVrikATS.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

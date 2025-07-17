@@ -1,11 +1,11 @@
-﻿using CdplATS.Entity.Models;
-using CdplATS.UI.Helpers;
+﻿using CodeVrikATS.Entity.Models;
+using CodeVrikATS.UI.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace CdplATS.UI.Controllers
+namespace CodeVrikATS.UI.Controllers
 {
     public class DashboardController : AuthController
     {

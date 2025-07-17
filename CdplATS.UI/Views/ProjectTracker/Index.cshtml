@@ -1,5 +1,5 @@
 ﻿
-@using CdplATS.Entity.Models
+@using CodeVrikATS.Entity.Models
 @model List<ProjectTrackerCellViewModel>
 @{
     var rows = Model.GroupBy(x => new { x.RowId, x.RowName, x.RowSortOrder }).OrderBy(x => x.Key.RowSortOrder);

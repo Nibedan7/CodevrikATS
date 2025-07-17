@@ -1,9 +1,9 @@
 ﻿using System.Data;
-using CdplATS.API.Repositories;
-using CdplATS.Entity.Models;
+using CodeVrikATS.API.Repositories;
+using CodeVrikATS.Entity.Models;
 using Microsoft.Data.SqlClient;
 
-namespace CdplATS.API.Services
+namespace CodeVrikATS.API.Services
 {
     public class ProjectTrackerService
     {

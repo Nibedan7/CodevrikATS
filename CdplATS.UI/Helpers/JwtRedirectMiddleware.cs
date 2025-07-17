@@ -1,4 +1,4 @@
-﻿namespace CdplATS.UI.Helpers
+﻿namespace CodeVrikATS.UI.Helpers
 {
     public class JwtRedirectMiddleware
     {

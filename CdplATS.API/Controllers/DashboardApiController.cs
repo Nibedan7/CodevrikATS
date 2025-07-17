@@ -1,7 +1,7 @@
-﻿using CdplATS.API.Services;
+﻿using CodeVrikATS.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CdplATS.API.Controllers
+namespace CodeVrikATS.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

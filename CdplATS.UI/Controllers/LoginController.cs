@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace CdplATS.UI.Controllers
+namespace CodeVrikATS.UI.Controllers
 {
     public class LoginController : Controller
     {

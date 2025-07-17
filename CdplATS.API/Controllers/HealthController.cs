@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CdplATS.API.Controllers
+namespace CodeVrikATS.API.Controllers
 {
     [ApiController]
     [Route("/")]

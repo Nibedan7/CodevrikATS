@@ -1,10 +1,10 @@
-﻿using CdplATS.Entity.Models;
+﻿using CodeVrikATS.Entity.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Net.Mail;
 using System.Net;
 
-namespace CdplATS.API.Services
+namespace CodeVrikATS.API.Services
 {
     public class SendEmailCommonAPIService
     {

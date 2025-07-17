@@ -8,7 +8,7 @@ using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
-namespace CdplATS.API.Repositories
+namespace CodeVrikATS.API.Repositories
 {
     public class GenericRepository
     {

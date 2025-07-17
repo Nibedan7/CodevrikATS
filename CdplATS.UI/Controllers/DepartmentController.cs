@@ -1,11 +1,11 @@
 ﻿using System.Reflection.Emit;
-using CdplATS.Entity.Models;
-using CdplATS.UI.Helpers;
+using CodeVrikATS.Entity.Models;
+using CodeVrikATS.UI.Helpers;
 using DocumentFormat.OpenXml.Bibliography;
 using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework.Interfaces;
 
-namespace CdplATS.UI.Controllers
+namespace CodeVrikATS.UI.Controllers
 {
     public class DepartmentController : AuthController
     {

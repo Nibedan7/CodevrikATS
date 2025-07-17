@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CdplATS.Entity\CdplATS.Entity.csproj" />
+    <ProjectReference Include="..\CdplATS.Entity\CodeVrikATS.Entity.csproj" />
   </ItemGroup>
 
 </Project>

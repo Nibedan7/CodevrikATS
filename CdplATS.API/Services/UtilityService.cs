@@ -1,9 +1,9 @@
 ﻿
 
-using CdplATS.API.Repositories;
-using CdplATS.Entity.Models;
+using CodeVrikATS.API.Repositories;
+using CodeVrikATS.Entity.Models;
 
-namespace CdplATS.API.Services
+namespace CodeVrikATS.API.Services
 {
     public class UtilityService
     {

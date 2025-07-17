@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using CdplATS.Entity.Models;
+using CodeVrikATS.Entity.Models;
 
-namespace CdplATS.UI.Helpers
+namespace CodeVrikATS.UI.Helpers
 {
     public class AuthController : Controller
     {

@@ -1,4 +1,4 @@
-namespace CdplATS.API.Configuration
+namespace CodeVrikATS.API.Configuration
 {
     public class JwtSettings
     {

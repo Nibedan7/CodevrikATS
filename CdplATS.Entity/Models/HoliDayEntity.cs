@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using static CdplATS.Entity.Models.Enum;
-namespace CdplATS.Entity.Models
+using static CodeVrikATS.Entity.Models.Enum;
+namespace CodeVrikATS.Entity.Models
 {
     public class HoliDayEntity
     {

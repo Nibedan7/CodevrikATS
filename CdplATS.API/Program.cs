@@ -8,13 +8,13 @@ using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using CdplATS.API.Repositories;
-using CdplATS.API.Services;
-using CdplATS.API.Configuration;
+using CodeVrikATS.API.Repositories;
+using CodeVrikATS.API.Services;
+using CodeVrikATS.API.Configuration;
 using Hangfire;
 using Hangfire.SqlServer;
 using Azure.Core.Pipeline;
-using CdplATS.Entity.Models;
+using CodeVrikATS.Entity.Models;
 
 public class Program
 {

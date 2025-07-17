@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CdplATS.Entity.Models
+namespace CodeVrikATS.Entity.Models
 {
     public class EmployeeEntity
     {

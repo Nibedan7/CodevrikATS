@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using Microsoft.Data.SqlClient;
-using CdplATS.Entity.Models;
-using CdplATS.API.Repositories;
+using CodeVrikATS.Entity.Models;
+using CodeVrikATS.API.Repositories;
 using DocumentFormat.OpenXml.Bibliography;
 
 public class DashboardService

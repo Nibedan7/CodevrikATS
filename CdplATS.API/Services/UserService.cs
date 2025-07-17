@@ -1,12 +1,12 @@
-using CdplATS.Entity.Models;
-using CdplATS.API.Repositories;
+using CodeVrikATS.Entity.Models;
+using CodeVrikATS.API.Repositories;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 
-namespace CdplATS.API.Services
+namespace CodeVrikATS.API.Services
 {
     public class UserService
     {

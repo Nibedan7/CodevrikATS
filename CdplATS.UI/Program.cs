@@ -1,7 +1,7 @@
 using System.Drawing.Text;
 using System.Text.Json;
-using CdplATS.Entity.Models;
-using CdplATS.UI.Helpers;
+using CodeVrikATS.Entity.Models;
+using CodeVrikATS.UI.Helpers;
 var builder = WebApplication.CreateBuilder(args);
 
 

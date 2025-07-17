@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace CdplATS.Entity.Models
+namespace CodeVrikATS.Entity.Models
 {
     public class LoggerEntity
     {
