@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeVrikATS.API", "CdplATS.API\CodeVrikATS.API.csproj", "{9BD6FC9A-D540-47AE-AB11-A8BFAA703241}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeVrikATS.API", "CodeVrikATS.API\CodeVrikATS.API.csproj", "{9BD6FC9A-D540-47AE-AB11-A8BFAA703241}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeVrikATS.UI", "CdplATS.UI\CodeVrikATS.UI.csproj", "{95CFB14B-8F1B-40B0-BF8D-DADC91FE6C42}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeVrikATS.UI", "CodeVrikATS.UI\CodeVrikATS.UI.csproj", "{95CFB14B-8F1B-40B0-BF8D-DADC91FE6C42}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeVrikATS.Entity", "CdplATS.Entity\CodeVrikATS.Entity.csproj", "{EE7C06C1-6549-4639-9ECA-601A3B7CFB2A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeVrikATS.Entity", "CodeVrikATS.Entity\CodeVrikATS.Entity.csproj", "{EE7C06C1-6549-4639-9ECA-601A3B7CFB2A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
