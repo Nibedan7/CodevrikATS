@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CdplATS.Entity\CodeVrikATS.Entity.csproj" />
+    <ProjectReference Include="..\CodeVrikATS.Entity\CodeVrikATS.Entity.csproj" />
   </ItemGroup>
 
 </Project>
