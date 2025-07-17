@@ -6,11 +6,11 @@ WORKDIR /src
 COPY . .
 
 # Publish the API project specifically
-RUN dotnet publish CdplATS.API/CdplATS.API.csproj -c Release -o /app/publish
+RUN dotnet publish CodeVrikATS.API/CodeVrikATS.API.csproj -c Release -o /app/publish
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/publish .
 
-ENTRYPOINT ["dotnet", "CdplATS.API.dll"]
+ENTRYPOINT ["dotnet", "CodeVrikATS.API.dll"]

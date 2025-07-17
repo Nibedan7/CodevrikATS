@@ -1,0 +1,1136 @@
+﻿@using CodeVrikATS.Entity.Models
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@model EmployeeChartEntity
+
+@{
+    Layout = "_Layout";
+    int selectedYear = ViewBag.SelectedYear ?? DateTime.Now.Year;
+    int selectedMonth = ViewBag.SelectedMonth ?? DateTime.Now.Month;
+}
+
+<style>
+
+    .shadow {
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        background-color: white;
+    }
+</style>
+
+<div id="legend-tooltip"
+     style="display:none; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 4px; pointer-events:none; font-size:12px; position:absolute; z-index:1000;">
+</div>
+
+<div class="container-fluid position-fixed" style="padding-right:30px">
+    <div class="d-flex align-items-center mr-3 filterBar">
+        <div class="d-flex gap-2">
+            <div style="padding-top:8px;">
+                <label class="standardColor" style="width:max-content;">Employee Name: </label>
+            </div>
+            @Html.DropDownListFor(
+                     model => model.SelectedEmployeeCode,
+                     new SelectList(Model.EmployeeHierarchyList, "EmpCode", "EmpName", Model.SelectedEmployeeCode),
+                     new { @class = "form-select-lg h-25 select2", id = "empDropdown", onchange = "onEmployeeChange()" }
+                     )
+        </div>
+        <div class="d-flex gap-2 mx-2">
+            <div style="padding-top:8px;">
+                <label class="standardColor" style="width:max-content;">Year: </label>
+            </div>
+            @Html.DropDownListFor(
+                     Model => Model.Year,
+                     new SelectList(Model.bindYear, Model.Year),
+                     new { @class = "form-select h-25", id = "yearDropdown", onchange = "onYearChange()" }
+                     )
+        </div>
+
+
+        <div class="d-flex gap-2 mx-2">
+            <div style="padding-top:8px;">
+                <label class="standardColor" style="width:max-content;">Month: </label>
+            </div>
+            <select id="month" name="month" class="form-select" onchange="onMonthChange()">
+
+            </select>
+        </div>
+    </div>
+
+    @* chart HTML *@
+    
+
+
+</div>
+
+<div class="d-flex gap-3" style="margin-top:100px">
+    <div style="height: 600px; width:50%; border-radius:15px" class="shadow">
+        <canvas id="workHoursChart" style="width: 50%; height: 100%; border-radius:15px; background-color: white;"
+                class="shadow"></canvas>
+    </div>
+    <div style="height: 600px; width:50%; border-radius:15px" class="shadow">
+        <canvas id="averageWorkHourChart" style="width: 100%; height: 100%; border-radius:15px; background-color: white;"
+                class="shadow"></canvas>
+    </div>
+</div>
+
+<div class="d-flex gap-3 my-5">
+    <!-- Use inline gap -->
+    <div style="height: 600px; width:50%; border-radius:15px" class="shadow">
+        <canvas id="punctualRateChart" style="width: 100%; height: 100%; border-radius:15px; background-color: white;"
+                class="shadow"></canvas>
+    </div>
+    <div style="height: 600px; width:50%; border-radius:15px" class="shadow">
+        <canvas id="workhour" style="width: 100%; height: 100%; border-radius:15px; background-color: white;"
+                class="shadow"></canvas>
+    </div>
+
+</div>
+
+<div class=" mb-5">
+    <!-- Use inline gap -->
+    <div style="height: 600px">
+        <canvas id="wfhVswfo" style="width: 50%; padding:20px;height: 90%; border-radius:15px; background-color: white;"
+                class="shadow"></canvas>
+    </div>
+</div>
+
+
+ <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function () {
+
+        try {
+            $('.select2').select2({
+                width: 'auto',
+                dropdownAutoWidth: true,
+                minimumResultsForSearch: 5
+            });
+        } catch (e) {
+        }
+
+
+          bindMonthDropDown();
+          fetchAndRenderTotalWorkHourChartByEmp();
+          fetchAndRenderAverageWorkHourChart();
+          fetchAndRenderPunctualRateChart();
+          fetchAndRenderWFHvsWFOChart()
+          fetchAndRenderWorkHour()
+            
+    })
+
+    
+
+    function bindMonthDropDown(){
+        const selectedYear = parseInt($('#yearDropdown').val());
+        const $month = $('#month');
+
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth() + 1;
+        const selectedMonth = @selectedMonth;
+        $month.empty();
+
+        $month.append('<option value="0">--All Month--</option>');
+
+        const maxMonth = (selectedYear === currentYear) ? currentMonth : 12;
+
+        for (let m = 1; m <= maxMonth; m++) {
+            const monthName = new Date(0, m - 1).toLocaleString('default', { month: 'long' });
+
+
+            const isSelected = (selectedYear === currentYear && m === currentMonth) ? 'selected' : '';
+            $month.append(`<option value="${m}" ${isSelected}>${monthName}</option>`);
+        }
+    }
+
+    function onEmployeeChange(){
+        fetchAndRenderTotalWorkHourChartByEmp();
+        fetchAndRenderAverageWorkHourChart();
+         fetchAndRenderPunctualRateChart();
+          fetchAndRenderWFHvsWFOChart();
+            fetchAndRenderWorkHour();
+    }
+
+    function onYearChange(){
+        fetchAndRenderTotalWorkHourChartByEmp();
+        fetchAndRenderAverageWorkHourChart();
+         fetchAndRenderPunctualRateChart();
+          fetchAndRenderWFHvsWFOChart();
+          fetchAndRenderWorkHour();
+    }
+
+    function onMonthChange(){
+        fetchAndRenderTotalWorkHourChartByEmp();
+         fetchAndRenderWFHvsWFOChart();
+         
+
+    }
+
+    // chart 1------------------------------------------------Total Work hours count By employee chat section -----------------------------------------------------------
+
+    function fetchAndRenderTotalWorkHourChartByEmp(){
+        const Year = $('#yearDropdown').val();
+        const Month = $('#month').val();
+        const EmployeeCode = $('#empDropdown').val();
+
+
+       $.ajax({
+          url: `/EmployeeChart/GetEmployeeWorkHourLineChart`,
+        method: "GET",
+        data: { employeeCode: EmployeeCode, year: Year, month: Month },
+        success: function (data) {
+            if (!data || data.length === 0) {
+                alert("No data found for selected year and month.");
+                return;
+            }
+
+            renderTotalWorkHourChartByEmpChart(data, Month == 0);
+        },
+        error: function (xhr, status, error) {
+            if (xhr.status !== 404) {
+                alert("Failed to load chart data.");
+            } else {
+              
+            }
+        }
+    });
+
+
+    }
+
+    let TotalWorkHourChartContainer = null;
+
+    function renderTotalWorkHourChartByEmpChart(data, isYearlyView){
+        const ctx = document.getElementById('workHoursChart').getContext('2d');
+
+        if (TotalWorkHourChartContainer) {
+            TotalWorkHourChartContainer.destroy();
+            TotalWorkHourChartContainer = null;
+        }
+
+
+        const labels = [];
+        const expectedData = [];
+        const workedData = [];
+
+        data.forEach(item => {
+            if (isYearlyView) {
+
+                labels.push(item.monthName?.substring(0, 3) || 'N/A');
+            } else {
+
+                labels.push(item.date?.split('-')[0] || 'N/A');
+            }
+            expectedData.push(item.expectedHours || 0);
+            workedData.push(item.workedHours || 0);
+        });
+
+
+        const chartConfig = {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Expected Hours',
+                        data: expectedData,
+                        backgroundColor: 'transparent',
+                        borderColor: '#3e95cd',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: false,
+                        pointBackgroundColor: '#3e95cd',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Worked Hours',
+                        data: workedData,
+                        backgroundColor: 'transparent',
+                        borderColor: '#8e5ea2',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: false,
+                        pointBackgroundColor: '#8e5ea2',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                         tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: isYearlyView ? 'Monthly Work Hours ' : 'Daily Work Hours ',
+                        font: {
+                            size: 20,
+                            weight: 'bold'
+                        }
+                      
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw.toFixed(2)} hrs`;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                       
+                         display: true,
+                          labels: {
+                              usePointStyle: true,
+                              generateLabels: function (chart) {
+                                  return [
+                                      {
+                                           text: 'Expected Hours',
+                                           fillStyle: '#3e95cd',
+                                           strokeStyle: '#3e95cd',
+                                          lineWidth: 1,
+                                          hidden: false,
+                                          index: 0,
+                                          
+                                          pointStyle: 'circle',
+                                      },
+                                      {
+                                           text: 'Worked Hours',
+                                           fillStyle: '#8e5ea2',
+                                           strokeStyle: '#8e5ea2',
+                                          lineWidth: 1,
+                                          hidden: false,
+                                          index: 1,
+                                          
+                                           pointStyle: 'cicrcle',
+                                      }
+                                  ];
+                              }
+                          },
+
+                    }
+                },
+                  
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Hours',
+                            font: {
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            stepSize: 2
+                         },
+                         grid: {
+                             display: false
+                         }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: isYearlyView ? 'Month' : 'Date',
+                            font: {
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'nearest'
+                }
+            }
+        };
+
+        // Create chart
+        try {
+            TotalWorkHourChartContainer = new Chart(ctx, chartConfig);
+        } catch (error) {
+            // showErrorMessage("Failed to display chart. Please try again.");
+        }
+
+    }
+
+    // ----------------------------------xxxx--------------------------------------------------
+    // chart 2------------------------------   Average Work Hours Bar Chart    -------------------------------------------------------
+
+
+    let AverageWorkHourChartContainer = null;
+
+
+    function fetchAndRenderAverageWorkHourChart() {
+       
+        const EmployeeCode = $('#empDropdown').val();
+        const Year = $('#yearDropdown').val();
+
+            $.ajax({
+                   url: `/EmployeeChart/GetEmployeeAverageWorkHourBarChart`,
+                method: "GET",
+                data: { employeeCode: EmployeeCode, year: Year},
+                success: function (data) {
+                    if (!data || data.length === 0) {
+                        alert("No data found for selected year and month.");
+                        return;
+                    }
+
+                      renderAverageWorkHourBarChart(data);
+                },
+                error: function (xhr, status, error) {
+                    if (xhr.status !== 404) {
+                        alert("Failed to load chart data.");
+                    } else {
+
+                    }
+                }
+            });
+    }
+
+    function renderAverageWorkHourBarChart(data) {
+        
+
+        const ctx = document.getElementById('averageWorkHourChart');
+        if (!ctx) {
+            return;
+        }
+
+        // Destroy previous chart
+        if (AverageWorkHourChartContainer) {
+            AverageWorkHourChartContainer.destroy();
+        }
+
+        try {
+            // Process data
+            const sortedData = [...data].sort((a, b) => a.monthNumber - b.monthNumber);
+            const labels = sortedData.map(item => item.monthName.substring(0, 3));
+            const averages = sortedData.map(item => item.averageWorkHours);
+            // console.log(averages);
+
+         const ActualAvgWorkHour = 8;
+
+         const backgroundColor = data.map(item => {
+             const diff = ActualAvgWorkHour - item.averageWorkHours;
+             if (diff <= 0.5) return 'rgba(46, 202, 87, 0.60)';   // green
+             if (diff <= 1.0) return 'rgba(255, 159, 64, 0.60)';   // orange
+             return 'rgba(238, 49, 36, 0.60)';                    // red
+         });
+
+         const borderColor = backgroundColor.map(c => c.replace('0.6', '1'));
+
+            // Create chart
+            AverageWorkHourChartContainer = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Average Work Hours',
+                        data: averages,
+                         backgroundColor: backgroundColor,
+                         hoverBackgroundColor:borderColor,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1000,
+                        onComplete: () => {
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Average Work Hours',
+                            font: { size: 20, weight: 'bold' }
+                        },
+                           legend: {
+                         display: true,
+                         labels: {
+                             usePointStyle: true,
+                             generateLabels: function (chart) {
+                                 return [
+                                     {
+                                         text: 'Efficient',
+                                         fillStyle: 'rgba(46, 202, 87, 0.60)',
+                                         strokeStyle: 'rgba(46, 202, 87, 0.80)',
+                                         lineWidth: 1,
+                                         hidden: false,
+                                         index: 0,
+                                         description: 'High efficiency: Average working hours exceed 7.5',
+                                         pointStyle: 'rectRounded',
+                                     },
+                                     {
+                                         text: 'Moderate',
+                                         fillStyle: 'rgba(255, 159, 64, 0.60)',
+                                         strokeStyle: 'rgba(255, 159, 64, 0.80)',
+                                         lineWidth: 1,
+                                         hidden: false,
+                                         index: 1,
+                                         description: 'Moderate efficiency: Average working hours between 7 and 7.5',
+                                          pointStyle: 'rectRounded',
+                                     },
+                                     {
+                                         text: 'Critical',
+                                         fillStyle: 'rgba(238, 49, 36, 0.60)',
+                                         strokeStyle: 'rgba(238, 49, 36, 0.80)',
+                                         lineWidth: 1,
+                                         hidden: false,
+                                         index: 2,
+                                         description: 'Low efficiency: Average working hours below 7',
+                                          pointStyle: 'rectRounded',
+                                     },
+                                 ];
+                             }
+                         },
+                         onClick: null,
+                             onHover: function (event, legendItem, legend) {
+                             const tooltipEl = document.getElementById('legend-tooltip');
+                             if (tooltipEl && legendItem) {
+                                 const canvasRect = legend.chart.canvas.getBoundingClientRect();
+
+                                 tooltipEl.innerText = legendItem.description || legendItem.text;
+                                 tooltipEl.style.display = 'block';
+
+                                 // Calculate correct position: canvas position on page + mouse offset in canvas
+                                 const x = canvasRect.left + event.native.offsetX + window.scrollX;
+                                 const y = canvasRect.top + event.native.offsetY + window.scrollY;
+
+                                 tooltipEl.style.left = x + 10 + 'px';
+                                 tooltipEl.style.top = y + 10 + 'px';
+                             }
+                         },
+
+                         onLeave: function (event, legendItem, legend) {
+                             const tooltipEl = document.getElementById('legend-tooltip');
+                             if (tooltipEl) {
+                                 tooltipEl.style.display = 'none';
+                             }
+                         }
+
+                     },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const month = sortedData[context.dataIndex];
+                                    return [
+                                        `Avg: ${context.raw.toFixed(2)} hrs`,
+                                        `Total: ${month.totalHoursWorked.toFixed(2)} hrs`,
+                                         `Total Days Worked: ${month.weightedWorkingDays}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x:{
+                            grid:{
+
+                                 display:false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Month',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+
+                        },
+
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Hours' }
+                        }
+                    }
+                }
+            });
+
+        } catch (error) {
+            // showErrorMessage(error);
+        }
+    }
+
+
+   // chart 3----------------------------------------------------------------------punctualrate-----------------------------------------
+
+
+
+
+     function fetchAndRenderPunctualRateChart(){
+         const Year = $('#yearDropdown').val();
+
+         const EmployeeCode = $('#empDropdown').val();
+
+
+             $.ajax({
+                   url: `/EmployeeChart/GetPunctualityRateLineChart`,
+                 method: "GET",
+                 data: { employeeCode: EmployeeCode, year: Year},
+                 success: function (data) {
+                     if (!data || data.length === 0) {
+                         alert("No data found for selected year and month.");
+                         return;
+                     }
+
+                      renderPunctualRateChart(data);
+                 },
+                 error: function (xhr, status, error) {
+                     if (xhr.status !== 404) {
+                         alert("Failed to load chart data.");
+                     } else {
+
+                     }
+                 }
+             });
+
+
+     }
+
+     let PunctualRateChartContainer = null;
+
+    function renderPunctualRateChart(data) {
+
+        const ctx = document.getElementById('punctualRateChart');
+        if (!ctx) {
+            return;
+        }
+
+        // Destroy previous chart if exists
+        if (PunctualRateChartContainer) {
+            PunctualRateChartContainer.destroy();
+            PunctualRateChartContainer = null;
+        }
+
+        try {
+             const labels =[]
+             const earlyPercent = [];
+            const onTimePercent = [];
+            const latePercent = [];
+
+            const sortedData = [...data].sort((a, b) => {
+                return (a.monthNumber ?? a.date) > (b.monthNumber ?? b.date) ? 1 : -1;
+            });
+
+            sortedData.forEach(item => {
+
+                labels.push(item.monthName || '');
+                earlyPercent.push(item.earlyPercent || 0);
+                onTimePercent.push(item.onTimePercent || 0);
+                latePercent.push(item.latePercent || 0);
+            });
+
+            // Create the chart
+            PunctualRateChartContainer = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Early Rate (%)',
+                            data: earlyPercent,
+                             borderColor: 'rgba(46, 202, 87, 1)',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false,
+                             pointBackgroundColor: 'rgba(46, 202, 87, 1)',
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'OnTime Rate (%)',
+                            data: onTimePercent,
+                             borderColor: 'rgba(255, 159, 64, 1)',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false,
+                             pointBackgroundColor: 'rgba(255, 159, 64, 1)',
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Late Rate (%)',
+                            data: latePercent,
+                             borderColor: 'rgba(238, 49, 36, 1)',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false,
+                             pointBackgroundColor: 'rgba(238, 49, 36, 1)',
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Punctuality',
+                            font: { size: 20, weight: 'bold' },
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw.toFixed(2)}%`;
+                                }
+                            }
+                        },
+                       legend: {
+                         display: true,
+                         labels: {
+                             usePointStyle: true,
+                             generateLabels: function (chart) {
+                                 return [
+                                     {
+                                         text: 'Early Login (%)',
+                                           fillStyle: 'rgba(46, 202, 87, 0.60)',
+                                           strokeStyle: 'rgba(46, 202, 87, 0.60)',
+                                         lineWidth: 1,
+                                         hidden: false,
+                                         index: 0,
+                                           description: 'Excellent punctuality: Logged in early, before 10:00 AM.',
+                                         pointStyle: 'circle',
+                                     },
+                                     {
+                                          text: ' On Time Login (%)',
+                                          fillStyle: 'rgba(255, 159, 64, 0.60)',
+                                         strokeStyle: 'rgba(255, 159, 64, 0.80)',
+                                         lineWidth: 1,
+                                         hidden: false,
+                                         index: 1,
+                                           description: 'Acceptable punctuality: Logged in on time, between 10:00 AM and 10:30 AM.',
+                                         pointStyle: 'circle',
+                                     },
+                                     {
+                                          text: 'Late Login (%)',
+                                         fillStyle: 'rgba(238, 49, 36, 0.60)',
+                                         strokeStyle: 'rgba(238, 49, 36, 0.80)',
+                                         lineWidth: 1,
+                                         hidden: false,
+                                         index: 2,
+                                          description: 'Low punctuality: Logged in late, after 10:30 AM.',
+                                         pointStyle: 'circle',
+                                     },
+                                 ];
+                             }
+
+                         },
+                         onClick: null,
+                             onHover: function (event, legendItem, legend) {
+                             const tooltipEl = document.getElementById('legend-tooltip');
+                             if (tooltipEl && legendItem) {
+                                 const canvasRect = legend.chart.canvas.getBoundingClientRect();
+
+                                 tooltipEl.innerText = legendItem.description || legendItem.text;
+                                 tooltipEl.style.display = 'block';
+
+                                 // Calculate correct position: canvas position on page + mouse offset in canvas
+                                 const x = canvasRect.left + event.native.offsetX + window.scrollX;
+                                 const y = canvasRect.top + event.native.offsetY + window.scrollY;
+
+                                 tooltipEl.style.left = x + 10 + 'px';
+                                 tooltipEl.style.top = y + 10 + 'px';
+                             }
+                         },
+
+                         onLeave: function (event, legendItem, legend) {
+                             const tooltipEl = document.getElementById('legend-tooltip');
+                             if (tooltipEl) {
+                                 tooltipEl.style.display = 'none';
+                             }
+                         }
+                     },
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Percentage (%)',
+                                font: { weight: 'bold' }
+                            },
+                            ticks: {
+                                stepSize: 10
+                            },
+                             grid: { display: false }
+
+                        },
+                        x:{
+                             title: {
+                                 display: true,
+                                 text: 'Month',
+                                 font: {
+                                     weight: 'bold'
+                                 }
+                             }
+                        }
+                        
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'nearest'
+                    }
+                }
+            });
+
+        } catch (error) {
+        }
+    }
+
+
+
+     // chart 5 ----------------------------------xxxx--------------------------------------------------
+     // ------------------------------   WFH VS WFO pie Chart    -------------------------------------------------------
+
+
+    function fetchAndRenderWFHvsWFOChart(){
+
+        const Year = $('#yearDropdown').val();
+        const EmployeeCode = $('#empDropdown').val();
+        const Month = $('#month').val();
+
+            $.ajax({
+                    url: `/EmployeeChart/GetWFHvsOfficeReport`,
+                method: "GET",
+                data: { employeeCode: EmployeeCode, year: Year, month:Month},
+                success: function (data) {
+                    if (!data || data.length === 0) {
+                        alert("No data found for selected year and month.");
+                        return;
+                    }
+
+                    renderWFHvsWFOChart(data);
+                },
+                error: function (xhr, status, error) {
+                    if (xhr.status !== 404) {
+                        alert("Failed to load chart data.");
+                    } else {
+
+                    }
+                }
+            });
+    }
+
+
+    let WFHvsWFOChartContainer = null;
+
+     function renderWFHvsWFOChart(data) {
+
+        const ctx = document.getElementById('wfhVswfo');
+        if (!ctx) return;
+
+        if (WFHvsWFOChartContainer) {
+            WFHvsWFOChartContainer.destroy();
+            WFHvsWFOChartContainer = null;
+        }
+
+        try {
+            const record = data[0];
+            const TotalWorkingDays = parseInt(record.totalDays)
+            const WFH_Days = parseInt(record.wfH_Days)
+            const WFO_Days = parseInt(record.wfO_Days)
+            const wfoPercent = parseFloat(record.wfO_Percent);
+            const wfhPercent = parseFloat(record.wfH_Percent);
+
+
+            WFHvsWFOChartContainer = new Chart(ctx, {
+                 type: 'doughnut',
+                data: {
+                     labels: ['WFO', 'WFH'],
+                    datasets: [{
+                         data: [wfoPercent, wfhPercent],
+                        backgroundColor: [
+                            'rgba(91, 194, 231, 0.6)',
+                            'rgba(255, 99, 132, 0.6)'
+                        ],
+                        hoverBackgroundColor:[
+                             'rgba(91, 194, 231, 0.8)',
+                             'rgba(255, 99, 132, 0.8)'
+
+                         ],
+                        borderWidth: 1
+                    }]
+                },
+
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        
+                        onClick: false,
+                        display: true,
+                          labels: {
+                              usePointStyle: true,
+                              generateLabels: function (chart) {
+                                  return [
+                                      {
+                                          text: 'Work From Home',
+                                             fillStyle: 'rgba(255, 99, 132, 1)',
+                                             strokeStyle: 'rgba(255, 99, 132, 1)',
+                                          lineWidth: 1,
+                                          hidden: false,
+                                          index: 0,
+                                          pointStyle: 'circle',
+                                      },
+                                      {
+                                           text: 'Work From Office',
+                                            fillStyle: 'rgba(91, 194, 231, 0.6)',
+                                           strokeStyle: 'rgba(91, 194, 231, 0.6)',
+                                          lineWidth: 1,
+                                          hidden: false,
+                                          index: 1,
+                                          pointStyle: 'circle',
+                                      }
+                                  ];
+                              }
+
+                          }
+                    },
+
+                    title: {
+                        display: true,
+                         text: `WFH vs WFO for ${record.monthName}`,
+                        font: {
+                            size: 20,
+                            weight: 'bold'
+                        }
+                    },
+
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function (context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const dataset = context.chart.data.datasets[0];
+                                const index = context.dataIndex;
+
+                                // Access original data
+                                const totalDays = parseInt(record.totalDays);
+                                const wfhDays = parseInt(record.wfH_Days);
+                                const wfoDays = parseInt(record.wfO_Days);
+                                const wfhPercent = parseFloat(record.wfH_Percent);
+                                const wfoPercent = parseFloat(record.wfO_Percent);
+
+                                const lines = [];
+
+                                //lines.push(`${label} Rate: ${value.toFixed(2)}%`);
+
+                                // Show corresponding days based on label
+                                if (label === 'WFH') {
+                                    lines.push(`WFH Days: ${wfhDays}`);
+                                    lines.push(`WFH Percent: ${wfhPercent.toFixed(2)}%`);
+                                 }else if (label === 'WFO') {
+                                     lines.push(`WFO Days: ${wfoDays}`);
+                                     lines.push(`WFO Percent: ${wfoPercent.toFixed(2)}%`);
+                                }
+
+                                // Always show total working days
+                                lines.push(`Total Worked Days: ${totalDays}`);
+
+                                return lines;
+                            }
+                        }
+                    }
+
+
+
+                }
+            }
+
+            });
+
+        } catch (error) {
+            console.error("Chart rendering error:", error);
+        }
+    }
+
+
+
+    //chart 4 =========================================================================
+
+      function fetchAndRenderWorkHour(){
+          
+          const Year = $('#yearDropdown').val();
+          const EmployeeCode = $('#empDropdown').val();
+
+           console.log('fetchAndRenderWorkHour');
+
+             $.ajax({
+               url: `/EmployeeChart/GetMonthlyWorkHour`,
+             method: "GET",
+                data: { Year: Year, EmployeeCode: EmployeeCode },
+             success: function (data) {
+                 if (!data || data.length === 0) {
+                     return;
+                 }
+
+                  renderTotalworkHourEmployee(data);
+             },
+             error: function (xhr, status, error) {
+                 console.error("Error fetching chart data:", error);
+                 alert("Failed to load chart data.");
+             }
+         });
+
+
+
+      }
+
+      let TotalWorkHourContainer = null;
+
+      function renderTotalworkHourEmployee(data){
+           console.log('renderTotalworkHourEmployee')
+          const ctx = document.getElementById('workhour').getContext('2d');
+        
+
+         // Destroy previous chart if exists
+          if (TotalWorkHourContainer) {
+              TotalWorkHourContainer.destroy();
+         }
+
+             const sortedData = [...data].sort((a, b) => {
+                 return (a.monthNumber ?? a.date) - (b.monthNumber ?? b.date);
+             });
+
+             const labels = sortedData.map(item => item.monthName || '');
+             const ActualWorkingHour = sortedData.map(item => item.actualWorkingHour || 0);
+             const WorkDone = sortedData.map(item => item.workDone || 0);
+
+              TotalWorkHourContainer = new Chart(ctx, {
+                 type: 'line',
+                 data: {
+                     labels: labels,
+                     datasets: [
+                         {
+                             label: 'Actual Working Hour',
+                             data: ActualWorkingHour,
+                             borderColor: '#3e95cd',
+                             backgroundColor: 'transparent',
+                             borderWidth: 2,
+                             tension: 0.3,
+                             fill: false,
+                             pointBackgroundColor: '#3e95cd',
+                             pointRadius: 4,
+                             pointHoverRadius: 6
+                         },
+                         {
+                              label: 'Total Working Hour',
+                               data: WorkDone,
+                             borderColor: '#8e5ea2',
+                             backgroundColor: 'transparent',
+                             borderWidth: 2,
+                             tension: 0.3,
+                             fill: false,
+                             pointBackgroundColor: '#8e5ea2',
+                             pointRadius: 4,
+                             pointHoverRadius: 6
+                         },
+                     ]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         title: {
+                             display: true,
+                             text: 'Monthly Total Working Hours V/S Actual Working Hours',
+                             font: { size: 20, weight: 'bold' },
+                         },
+                         tooltip: {
+                             mode: 'index',
+                             intersect: false,
+                             callbacks: {
+                                 label: function(context) {
+                                     return `${context.dataset.label}: ${context.raw.toFixed(2)}`;
+                                 }
+                             }
+                         },
+                        legend: {
+                         position: 'top',
+
+                          display: true,
+                           labels: {
+                               usePointStyle: true,
+                               generateLabels: function (chart) {
+                                   return [
+                                       {
+                                            text: 'Actual Working Hour',
+                                            fillStyle: '#3e95cd',
+                                            strokeStyle: '#3e95cd',
+                                           lineWidth: 1,
+                                           hidden: false,
+                                           index: 0,
+
+                                           pointStyle: 'circle',
+                                       },
+                                       {
+                                             text: 'Total Working Hour',
+                                            fillStyle: '#8e5ea2',
+                                            strokeStyle: '#8e5ea2',
+                                           lineWidth: 1,
+                                           hidden: false,
+                                           index: 1,
+
+                                            pointStyle: 'cicrcle',
+                                       }
+                                   ];
+                               }
+                           },
+
+                     }
+                     },
+                     scales: {
+                         y: {
+                             beginAtZero: true,
+                             title: {
+                                 display: true,
+                                 text: 'Work Hour',
+                                 font: { weight: 'bold' }
+                             },
+                             ticks: {
+                                 stepSize: 10
+                             },
+                              grid: { display: false }
+                         },
+                         x:{
+                              title: {
+                                 display: true,
+                                 text: 'Month',
+                                 font: {
+                                     weight: 'bold'
+                                 }
+                             }
+                         }
+                     },
+                     interaction: {
+                         intersect: false,
+                         mode: 'nearest'
+                     }
+                 }
+             });
+
+     
+
+      }
+
+    
+</script>

@@ -1,0 +1,139 @@
+﻿using CodeVrikATS.Entity.Models;
+using CodeVrikATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CodeVrikATS.UI.Controllers
+{
+    public class ProjectTrackerController : Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public ProjectTrackerController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index(int Status = 1)
+        {
+            ViewBag.Status = Status;
+
+            var url = _apiHelper.GetProjectTrackerListApi + $"?status={Status}";
+            var PtList = await _webApiHelper.GetAsync<List<ProjectTrackerCellViewModel>>(url);
+            var LoggedEmpCode = HttpContext.Session.GetInt32("authCode");
+            if (LoggedEmpCode == 2)
+            {
+                return View(PtList.Data);
+            }
+            return RedirectToAction("AccessDenied", "Account");
+        }
+
+        [HttpGet]
+        public IActionResult AddEditColumnRow(int Id,int Type)
+        {
+
+            ProjectTrackerCellAddEdit obj = new ProjectTrackerCellAddEdit
+            {
+                Id = Id,
+                Type = Type
+            };
+            return PartialView("/Views/ProjectTracker/AddEditColumnRow.cshtml", obj);
+
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddEditColumnRow(ProjectTrackerCellAddEdit request)
+        {
+
+            var TrimedName = request?.Name?.Trim();
+
+            ProjectTrackerCellAddEdit obj = new ProjectTrackerCellAddEdit
+            {
+                Name = TrimedName,
+                Id = request.Id,
+                Type = request.Type
+            };
+
+            if (ModelState.IsValid)
+            {
+                var response = await _webApiHelper.PostAsync<ProjectTrackerCellAddEdit>(_apiHelper.AddEditColumnRowApi, obj);
+
+                if (response == null)
+                {
+                    return StatusCode(500, "Error adding/editing.");
+                }
+                return Json(response);
+            }
+            return BadRequest("Model validation failed.");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddEditPtvalue(ProjectTrackerCellAddEdit request)
+        {
+
+            if (ModelState.IsValid)
+            {
+                var response = await _webApiHelper.PostAsync<ProjectTrackerCellAddEdit>(_apiHelper.AddEditPtValueApi, request);
+
+                if (response == null)
+                {
+                    return StatusCode(500, "Error adding/editing.");
+                }
+                return Json(response);
+            }
+            return BadRequest("Model validation failed.");
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeletePtColumnRow(int Id, int Type, int Status)
+        {
+
+            var response = await _webApiHelper.DeleteAsync<bool>(_apiHelper.DeletePtColumnRowApi + $"{Id}/{Type}/{Status}");
+
+            if (response == null || !response.Success)
+            {
+                return Json(response?.Message);
+            }
+            return Json(response.Message);
+        }
+
+
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> ReorderProjectTracker(ProjectTrackerCellAddEdit request)
+        {
+
+            if (ModelState.IsValid)
+            {
+                var response = await _webApiHelper.PostAsync<ProjectTrackerCellAddEdit>(_apiHelper.ReorderProjectTrackerApi, request);
+
+                if (response == null)
+                {
+                    return StatusCode(500, "Error adding/editing.");
+                }
+                return Json(response);
+            }
+            return BadRequest("Model validation failed.");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdatePtColor(ProjectTrackerCellAddEdit request)
+        {
+
+            if (ModelState.IsValid)
+            {
+                var response = await _webApiHelper.PostAsync<ProjectTrackerCellAddEdit>(_apiHelper.UpdatePtColorApi, request);
+
+                if (response == null)
+                {
+                    return StatusCode(500, "Error adding/editing.");
+                }
+                return Json(response);
+            }
+            return BadRequest("Model validation failed.");
+        }
+    }
+}

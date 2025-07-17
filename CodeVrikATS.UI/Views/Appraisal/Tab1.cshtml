@@ -1,0 +1,438 @@
+﻿@using CodeVrikATS.Entity.Models
+@model List<AppraisalEntity>
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+	var LoggedEmpName = HttpContextAccessor.HttpContext.Session.GetString("authName");
+	var LoggedEmpCode = HttpContextAccessor.HttpContext.Session.GetInt32("authCode");
+	var LoggedEmpRole = HttpContextAccessor.HttpContext.Session.GetInt32("authRoleId");
+	var firstItem = Model?.FirstOrDefault();
+}
+
+<div>
+	<div class="d-flex  align-items-center mb-3 filterBar">
+		<div class="d-flex gap-2">
+			<div style="padding-top:8px;">
+				<label class="standardColor" style="width:max-content; ">Self-Average Rating: </label>
+			</div>
+			<span style="padding-top:8px;" id="avgSelfRating">00</span>
+
+			<div class="review1Avg" style="padding-top:8px; margin-left:20px;">
+				<label class="standardColor" style="width:max-content; ">Reviewer 1 Average Rating: </label>
+			</div>
+			<span class="review1Avg" style="padding-top:8px;" id="avgReviewer1Rating">00</span>
+
+			<div class="review2Avg" style="padding-top:8px; margin-left:20px;">
+				<label class="standardColor" style="width:max-content; ">Reviewer 2 Average Rating: </label>
+			</div>
+			<span class="review2Avg" style="padding-top:8px;" id="avgReviewer2Rating">00</span>
+		</div>
+		<div style="margin-left:auto;">
+			<button type="button" class="btn btnStdColor addEdit-Leave-btn" onclick="saveAssessment()">
+				<i class="bi bi-save"></i> Save
+			</button>
+		</div>
+	</div>
+
+	<div id="assessment-table">
+		@foreach (var AssessmentCategoryGroup in Model.GroupBy(x => new {x.AssessmentCategoryId, 
+																		x.AssessmentCategoryName, 
+																		x.IsRating, x.Reviewer1Name, 
+																		x.Reviewer2Name, x.Reviewer1Id, 
+																		x.Reviewer2Id, x.SelfRatingAVG, 
+																		x.Reviewer1RatingAVG, x.Reviewer2RatingAVG, x.EmployeeCode}))
+		{
+			<div class="d-flex">
+				<p class="btnStdColor addEdit-Leave-btn AssessmentCategory" style="margin-bottom:0;"><b>@AssessmentCategoryGroup.Key.AssessmentCategoryName</b></p>
+				<div class="d-flex Avg-Div">
+					<p class="standardColor self-avg">
+						@if (AssessmentCategoryGroup.Key.IsRating == 1)
+						{
+							<span>Avg:</span>
+							 @AssessmentCategoryGroup.Key.SelfRatingAVG
+						}
+					</p>
+					<p class="standardColor reviewer1-avg">
+						@if (AssessmentCategoryGroup.Key.IsRating == 1 
+								&& (LoggedEmpCode == AssessmentCategoryGroup.Key.EmployeeCode 
+										|| LoggedEmpRole == 1 || LoggedEmpCode == AssessmentCategoryGroup.Key.Reviewer1Id))
+						{
+							<span>Avg:</span>
+							@AssessmentCategoryGroup.Key.Reviewer1RatingAVG
+						}
+					</p>
+					<p class="standardColor reviewer2-avg">
+						@if (AssessmentCategoryGroup.Key.IsRating == 1 
+								&& (LoggedEmpCode == AssessmentCategoryGroup.Key.EmployeeCode 
+										|| LoggedEmpRole == 1 || LoggedEmpCode == AssessmentCategoryGroup.Key.Reviewer2Id))
+						{
+							<span>Avg:</span>
+							@AssessmentCategoryGroup.Key.Reviewer2RatingAVG
+						}
+					</p>
+				</div>
+			</div>
+			
+			<div>
+				<table class="table table-bordered AssessmentTable">
+					<thead>
+						<tr>
+							<th width="20%">Assessment</th>
+							<th width="27%">Self</th>
+							<th width="27%">Reviewer 1
+								@if (LoggedEmpCode == AssessmentCategoryGroup.Key.EmployeeCode 
+										|| LoggedEmpRole == 1 || LoggedEmpCode == AssessmentCategoryGroup.Key.Reviewer1Id)
+								{
+									@("(" + AssessmentCategoryGroup.Key.Reviewer1Name + ")")
+								}
+							</th>
+							<th>Reviewer 2
+								@if (LoggedEmpCode == AssessmentCategoryGroup.Key.EmployeeCode
+													|| LoggedEmpRole == 1 || LoggedEmpCode == AssessmentCategoryGroup.Key.Reviewer2Id)
+								{
+									@("(" + AssessmentCategoryGroup.Key.Reviewer2Name + ")")
+								}
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var Assessment in AssessmentCategoryGroup)
+						{
+							<tr>
+								<td>
+									<input type="hidden" class="AssessmentCategory-id" value="@Assessment.AssessmentCategoryId" />
+									<input type="hidden" class="Assessment-id" value="@Assessment.AssessmentId" />
+									<input type="hidden" class="Employee-code" value="@Assessment.EmployeeCode" />
+									<input type="hidden" class="Employee-AssesmentId" value="@Assessment.EmployeeAssessmentId" />
+									<input type="hidden" class="is-rating" value="@Assessment.IsRating" />
+									@Assessment.Assessment
+								</td>
+								<td>
+									<div class="d-flex gap-4">
+										@if (Assessment.IsRating == 1)
+										{
+											<select class=" self-rating-input form-select apprisal-Select @(Assessment.SelfRating != Assessment.CorrectedSelfRating ? "highlight-select" : "")" 
+													style="margin-left:10px;"
+													title="@(Assessment.SelfRating != Assessment.CorrectedSelfRating ? "Rating updated by reviewer" : null)"
+													disabled="@(Assessment.IsSelfAssSubmitted == 1 || LoggedEmpCode != Assessment.EmployeeCode ? "disabled" : null)">
+												<option disabled selected="@(Assessment.CorrectedSelfRating == null ? "selected" : null)">--Select Rating--</option>
+												<option value="1" selected="@(Assessment.CorrectedSelfRating == 1 ? "selected" : null)">1</option>
+												<option value="2" selected="@(Assessment.CorrectedSelfRating == 2 ? "selected" : null)">2</option>
+												<option value="3" selected="@(Assessment.CorrectedSelfRating == 3 ? "selected" : null)">3</option>
+												<option value="4" selected="@(Assessment.CorrectedSelfRating == 4 ? "selected" : null)">4</option>
+												<option value="5" selected="@(Assessment.CorrectedSelfRating == 5 ? "selected" : null)">5</option>
+												<option value="-1" selected="@(Assessment.CorrectedSelfRating == -1 ? "selected" : null)">N/A</option>
+											</select>
+										}
+										<textarea class=" self-comment comment-input" placeholder="@Assessment.PlaceHolder" disabled="@(Assessment.IsSelfAssSubmitted == 1 || LoggedEmpCode != Assessment.EmployeeCode ? "disabled" : null)">@Assessment.SelfComment</textarea>
+
+									</div>
+								</td>
+								<td>
+									<div class="d-flex gap-4">
+										@if (LoggedEmpCode == AssessmentCategoryGroup.Key.Reviewer1Id || LoggedEmpCode == Assessment.EmployeeCode || LoggedEmpRole == 1)
+										{
+											@if (Assessment.IsRating == 1)
+											{
+												<select class=" reviewer1-rating-input form-select apprisal-Select" 
+														style="margin-left:10px;"
+														disabled="@(Assessment.IsReviewer1_Submitted == 1 || LoggedEmpCode == Assessment.EmployeeCode || LoggedEmpRole == 1 && LoggedEmpCode != AssessmentCategoryGroup.Key.Reviewer1Id || Assessment.IsSelfAssSubmitted != 1 ? "disabled" : null)">
+													<option disabled selected="@(Assessment.Reviewer1_Rating == null ? "selected" : null)">--Select Rating--</option>
+													<option value="1" selected="@(Assessment.Reviewer1_Rating == 1 ? "selected" : null)">1</option>
+													<option value="2" selected="@(Assessment.Reviewer1_Rating == 2 ? "selected" : null)">2</option>
+													<option value="3" selected="@(Assessment.Reviewer1_Rating == 3 ? "selected" : null)">3</option>
+													<option value="4" selected="@(Assessment.Reviewer1_Rating == 4 ? "selected" : null)">4</option>
+													<option value="5" selected="@(Assessment.Reviewer1_Rating == 5 ? "selected" : null)">5</option>
+													<option value="-1" selected="@(Assessment.Reviewer1_Rating == -1 ? "selected" : null)">N/A</option>
+												</select>
+											}
+
+											<textarea class=" reviewer1-comment comment-input" placeholder="@Assessment.PlaceHolder" disabled="@(Assessment.IsReviewer1_Submitted == 1 || LoggedEmpCode == Assessment.EmployeeCode || LoggedEmpRole == 1 && LoggedEmpCode != AssessmentCategoryGroup.Key.Reviewer1Id || Assessment.IsSelfAssSubmitted != 1 ? "disabled" : null)">@Assessment.Reviewer1_Comment</textarea>
+										}
+
+									</div>
+								</td>
+								<td>
+									<div class="d-flex gap-4">
+										@if (LoggedEmpCode == AssessmentCategoryGroup.Key.Reviewer2Id || LoggedEmpCode == Assessment.EmployeeCode || LoggedEmpRole == 1)
+										{
+											@if (Assessment.IsRating == 1)
+											{
+												<select class=" reviewer2-rating-input form-select apprisal-Select" style="margin-left:10px;" disabled="@(Assessment.IsReviewer2_Submitted == 1 || LoggedEmpCode == Assessment.EmployeeCode || LoggedEmpRole == 1 && LoggedEmpCode != AssessmentCategoryGroup.Key.Reviewer2Id || Assessment.IsSelfAssSubmitted != 1 ? "disabled" : null)">
+													<option disabled selected="@(Assessment.Reviewer2_Rating == null ? "selected" : null)">--Select Rating--</option>
+													<option value="1" selected="@(Assessment.Reviewer2_Rating == 1 ? "selected" : null)">1</option>
+													<option value="2" selected="@(Assessment.Reviewer2_Rating == 2 ? "selected" : null)">2</option>
+													<option value="3" selected="@(Assessment.Reviewer2_Rating == 3 ? "selected" : null)">3</option>
+													<option value="4" selected="@(Assessment.Reviewer2_Rating == 4 ? "selected" : null)">4</option>
+													<option value="5" selected="@(Assessment.Reviewer2_Rating == 5 ? "selected" : null)">5</option>
+													<option value="-1" selected="@(Assessment.Reviewer2_Rating == -1 ? "selected" : null)">N/A</option>
+												</select>
+											}
+
+											<textarea class=" reviewer2-comment comment-input" placeholder="@Assessment.PlaceHolder" disabled="@(Assessment.IsReviewer2_Submitted == 1 || LoggedEmpCode == Assessment.EmployeeCode || LoggedEmpRole == 1 && LoggedEmpCode != AssessmentCategoryGroup.Key.Reviewer2Id || Assessment.IsSelfAssSubmitted != 1 ? "disabled" : null)">@Assessment.Reviewer2_Comment</textarea>
+										}
+										
+									</div>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	</div>
+     
+    
+</div>
+<script>
+
+	$(document).ready(function () {
+		LoadTabAvarage()
+		const loggedEmployeeCode = '@(HttpContextAccessor?.HttpContext?.Session?.GetInt32("authCode") ?? 0)';
+		const review1Code = '@firstItem?.Reviewer1Id';
+		const review2Code = '@firstItem?.Reviewer2Id';
+		const employeeCode = '@firstItem?.EmployeeCode';
+		if(loggedEmployeeCode !== review1Code && loggedEmployeeCode !== review2Code && loggedEmployeeCode !== employeeCode){
+			$('.trigger-submit').prop('disabled', true);
+		}
+	});
+
+	function LoadTabAvarage(){
+		const empCode = $('#empDropdown').val();
+		const assessmentId = $('#apprisalDropdown').val();
+
+		$.ajax({
+			type: "GET",
+			url: '@Url.Action("GetTabAvarageByEmployee", "Appraisal")',
+			data: {EmployeeCode: empCode, TabId: 1, EmpAssessementId:assessmentId},
+			success: function (data) {
+				const loggedEmployeeCode = '@(HttpContextAccessor?.HttpContext?.Session?.GetInt32("authCode") ?? 0)';
+				const loggedEmployeeRole = '@(HttpContextAccessor?.HttpContext?.Session?.GetInt32("authRoleId") ?? 0)';
+
+				if(data){
+					$('#avgSelfRating').text(data.selfRatingAVG ?? 0);
+					$('#avgReviewer1Rating').text(data.reviewer1RatingAVG ?? 0);
+					$('#avgReviewer2Rating').text(data.reviewer2RatingAVG ?? 0);
+					if(data.reviewer1Id == loggedEmployeeCode && loggedEmployeeRole != 1){
+						$('.review2Avg').css('display', 'none');
+					}
+
+					if(data.reviewer2Id == loggedEmployeeCode && loggedEmployeeRole != 1){
+						$('.review1Avg').css('display', 'none');
+					}
+				}
+			},
+			error: function(){
+
+			}
+
+		});
+	}
+
+	window.changedData = window.changedData || new Map();
+
+
+	$(document).on('change', '#assessment-table select, #assessment-table textarea', function () {
+		const row = $(this).closest('tr')[0]; 
+		if (!changedData.has(row)) {
+			changedData.set(row, {});
+		}
+
+		const rowData = changedData.get(row);
+		let value = $(this).val();
+		
+		if ($(this).prop("tagName") === "SELECT" && value === "--Select Rating--") return;
+		if ($(this).hasClass("self-rating-input")) {
+			rowData["SelfRating"] = parseInt(value);
+		}
+ 		if ($(this).hasClass("self-comment")) {
+			rowData["SelfComment"] = value;
+		}
+		if ($(this).hasClass("reviewer1-rating-input")) {
+			rowData["Reviewer1_Rating"] = parseInt(value);
+		}
+		if ($(this).hasClass("reviewer1-comment")) {
+			rowData["Reviewer1_Comment"] = value;
+		}
+		if ($(this).hasClass("reviewer2-rating-input")) {
+			rowData["Reviewer2_Rating"] = parseInt(value);
+		}
+		if ($(this).hasClass("reviewer2-comment")) {
+			rowData["Reviewer2_Comment"] = value;
+		}
+
+		hasUnsavedChanges = true;
+	});
+
+	function saveAssessment() {
+		const changedRows = Array.from(changedData.entries());
+		let validationPassed = true;
+
+		if (changedRows.length === 0) {
+			return;
+		}
+
+		const data = [];
+		const loggedEmployeeCode = '@(HttpContextAccessor?.HttpContext?.Session?.GetInt32("authCode") ?? 0)';
+
+		// Clear all previous error indicators
+		$(".invalid-input").removeClass("invalid-input");
+
+		changedRows.forEach(([row, changes]) => {
+			const categoryId = parseInt(row.querySelector(".AssessmentCategory-id").value);
+			const assessmentId = parseInt(row.querySelector(".Assessment-id").value);
+			const employeeCode = parseInt(row.querySelector(".Employee-code").value);
+			const employeeAssesmentId = parseInt(row.querySelector(".Employee-AssesmentId").value);
+			const isRating = parseInt(row.querySelector(".is-rating").value);
+
+			let rowValid = true;
+
+			const selfRatingEl = row.querySelector(".self-rating-input");
+			const selfCommentEl = row.querySelector(".self-comment");
+			const reviewer1RatingEl = row.querySelector(".reviewer1-rating-input");
+			const reviewer1CommentEl = row.querySelector(".reviewer1-comment");
+			const reviewer2RatingEl = row.querySelector(".reviewer2-rating-input");
+			const reviewer2CommentEl = row.querySelector(".reviewer2-comment");
+
+			// Self Validation
+			const selfRating = selfRatingEl ? selfRatingEl.value : null;
+			const selfComment = selfCommentEl ? selfCommentEl.value.trim() : "";
+
+			if ("SelfRating" in changes || "SelfComment" in changes && isRating == 1) {
+				if ((selfRating && selfRating !== "--Select Rating--" && !selfComment) ||
+					(selfComment && (!selfRating || selfRating === "--Select Rating--"))) {
+					rowValid = false;
+					if (!selfRating || selfRating === "--Select Rating--") selfRatingEl?.classList.add("invalid-input");
+					if (!selfComment) selfCommentEl?.classList.add("invalid-input");
+				}
+			}
+
+			// Reviewer1 Validation
+			const rev1Rating = reviewer1RatingEl ? reviewer1RatingEl.value : null;
+			const rev1Comment = reviewer1CommentEl ? reviewer1CommentEl.value.trim() : "";
+
+			if ("Reviewer1_Rating" in changes || "Reviewer1_Comment" in changes && isRating == 1) {
+				if ((rev1Rating && rev1Rating !== "--Select Rating--" && !rev1Comment) ||
+					(rev1Comment && (!rev1Rating || rev1Rating === "--Select Rating--"))) {
+					rowValid = false;
+					if (!rev1Rating || rev1Rating === "--Select Rating--") reviewer1RatingEl?.classList.add("invalid-input");
+					if (!rev1Comment) reviewer1CommentEl?.classList.add("invalid-input");
+				}
+			}
+
+			// Reviewer2 Validation
+			const rev2Rating = reviewer2RatingEl ? reviewer2RatingEl.value : null;
+			const rev2Comment = reviewer2CommentEl ? reviewer2CommentEl.value.trim() : "";
+
+			if ("Reviewer2_Rating" in changes || "Reviewer2_Comment" in changes && isRating == 1) {
+				if ((rev2Rating && rev2Rating !== "--Select Rating--" && !rev2Comment) ||
+					(rev2Comment && (!rev2Rating || rev2Rating === "--Select Rating--"))) {
+					rowValid = false;
+					if (!rev2Rating || rev2Rating === "--Select Rating--") reviewer2RatingEl?.classList.add("invalid-input");
+					if (!rev2Comment) reviewer2CommentEl?.classList.add("invalid-input");
+				}
+			}
+
+			if (!rowValid) {
+				validationPassed = false;
+				return; // skip pushing invalid row
+			}
+
+			const result = {
+				EmployeeCode:employeeCode,
+				LoggedEmpCode: loggedEmployeeCode,
+				EmployeeAssessmentId: employeeAssesmentId,
+				TabId: 1,
+				AssessmentCategoryId: categoryId,
+				AssessmentId: assessmentId,
+				SelfRating: changes.SelfRating || null,
+				SelfComment: changes.SelfComment || null,
+				Reviewer1_Rating: changes.Reviewer1_Rating || null,
+				Reviewer1_Comment: changes.Reviewer1_Comment || null,
+				Reviewer2_Rating: changes.Reviewer2_Rating || null,
+				Reviewer2_Comment: changes.Reviewer2_Comment || null
+			};
+
+			data.push(result);
+		});
+		
+		if (!validationPassed) {
+			toastr.error("Please ensure rating and comment are both filled where changed.");
+			return;
+		}
+
+		$.ajax({
+			url: '/Appraisal/UpdateAssessment', 
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(data),  
+			success: function (response) {
+				if(response.success){
+					toastr.success(response.message);
+					LoadTabAvarage()
+					loadTabContent('#tab1', '/Appraisal/LoadTab1');
+				} 
+				else {
+					toastr.error(response.message);
+				}
+				changedData.clear();
+				hasUnsavedChanges = false;
+			},
+			error: function (xhr, status, error) {
+				toastr.error("Something went wrong");
+			}
+		});
+	}
+
+
+
+</script>
+
+
+<style>
+	.AssessmentCategory {
+		padding: 10px !important;
+		margin-left: 1px;
+		border-radius: 12px 12px 0 0;
+		width: 20% !important;
+	}
+
+	.AssessmentTable {
+		margin-bottom: 50px;
+		border-radius: 12px 12px 12px 12px !important;
+	}
+
+	.apprisal-Select {
+		width: 100px;
+		height: 35px;
+		margin-left: 0 !important;
+	}
+
+	.comment-input {
+		width: 100%;
+		min-height: 30px;
+	}
+
+	.self-avg{
+		padding-left: 200px;
+	}
+
+	.reviewer1-avg{
+		padding-left: 400px;
+	}
+
+	.reviewer2-avg {
+		position:absolute;
+		right:15%;
+
+	}
+
+	.invalid-input {
+		border: 2px solid red !important;
+		/* background-color: #fff0f0 !important; */
+	}
+
+	.highlight-select {
+		border: 2px solid #bb2124;
+		background-color: #ffe6e6;
+	}
+</style>

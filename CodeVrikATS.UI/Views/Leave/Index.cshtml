@@ -1,0 +1,490 @@
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@using CodeVrikATS.Entity.Models
+@using Newtonsoft.Json
+@using static CodeVrikATS.Entity.Models.Enum
+@model LeaveEntity
+
+@{
+	Layout = "_Layout";
+	var statusEnumValue = System.Enum.GetValues(typeof(statusEnum)).Cast<statusEnum>();
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item standardColor"><a href="#" class="standardColor">Leave</a></li>
+		<li class="breadcrumb-item active standardColor" aria-current="page"><i class="fa-solid fa-person-walking-arrow-right"></i> Leave Details</li>
+	</ol>
+</nav>
+
+<div class="container-fluid">
+	<!-- Table Header with Add Button -->
+	<div class="d-flex  align-items-center mb-3 filterBar">		
+		<div class="d-flex gap-2" >
+			<div style="padding-top:8px;">
+				<label class="standardColor" style="width:max-content; ">Employee Name: </label>
+			</div>
+			<div>
+				@Html.DropDownListFor(
+									model => model.LogEmpCode,
+									new SelectList(Model.EmployeeDropDownList, "EmpCode", "EmpName", Model.LogEmpCode),
+									new { @class = "form-select-lg h-25 select2", id = "empDropdown", onchange = "bindLeaveCount()"}
+				)
+			</div>
+			<div style="padding-top:8px; margin-left:20px;">
+				<label class="standardColor" style="width:max-content; ">Leave Status: </label>
+			</div>
+			@Html.DropDownList(
+							"statusDropdown", // name and id
+							new SelectList(
+							new[] { new { Value = 0, Text = "--All status--" } }
+							.Concat(statusEnumValue.Select(x => new { Value = (int)x, Text = x.ToString() })),
+							"Value",
+							"Text"
+							),
+							new { @class = "form-select h-25", id = "statusDropdown", onchange = "bindLeaveGrid()" }
+			)
+
+			<div style="padding-top:8px; margin-left:20px;">
+				<label class="standardColor" style="width:max-content; ">Year: </label>
+			</div>
+
+			 @Html.DropDownListFor(
+							Model => Model.CurrentYear,
+							new SelectList(Model.LeaveYears, Model.CurrentYear), 
+			 				new { @class = "form-select h-25", id = "yearDropdown", onchange = "bindLeaveCount()" } 
+			 ) 
+			<div class="leaveSummary" style="padding-top:8px; margin-left:20px;">
+				<label class="standardColor" style="width:max-content; ">Total Annual Leave: </label>
+			</div>
+			<span class="leaveSummary" style="padding-top:8px;" id="totalAnnualLeave">00</span>
+
+			<div class="leaveSummary" style="padding-top:8px; margin-left:20px;">
+				<label class="standardColor" style="width:max-content; ">Used Leave: </label>
+			</div>
+			<span class="leaveSummary" style="padding-top:8px;" id="usedLeave">00</span>
+
+			<div class="leaveSummary" style="padding-top:8px; margin-left:20px;">
+				<label class="standardColor" style="width:max-content; ">Remaining Leave: </label>
+			</div>
+			<span class="leaveSummary" style="padding-top:8px;" id="remainingLeave">00</span>
+		</div>
+		<div style="margin-left:auto;">
+			<button type="button" class="btn btnStdColor addEdit-Leave-btn" onclick="AddEditLeave('0')">
+				<i class="fa-solid fa-plus"></i> Add Leave
+			</button>
+		</div>
+	</div>
+
+	<div class="table-container">
+		<table id="leaveTable" class="table table-bordered table-striped table-hover">
+			<thead>
+				<tr>
+					<th hidden>Group Id</th>
+					<th>Name</th>
+					<th>Start Date</th>
+					<th>End Date</th>
+					<th>Duration Days</th>
+					<th>Leave Type</th>
+					<th>Reason</th>
+					<th>Approved By</th>
+					<th>Approve Time</th>
+					<th>Approval Status</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+		</table>
+	</div>
+</div>
+
+<div id="div_LeaveDetail"></div>
+
+<script>
+	
+	let loginEmployeeCode = '@(HttpContextAccessor?.HttpContext?.Session?.GetInt32("authCode") ?? 0)';
+
+	$(document).ready(function () {
+		bindLeaveCount();
+		try {
+			$('.select2').select2({
+				width: 'auto',
+				dropdownAutoWidth: true,
+				minimumResultsForSearch: 5
+			});
+		} catch(e) {
+			
+		}
+
+		const $dropdown = $('#empDropdown');
+
+		if ($dropdown.length && $dropdown.find('option').length > 1) {
+			// Check if default option already exists
+			if ($dropdown.find('option[value="0"]').length === 0) {
+				$dropdown.prepend($('<option>', {
+					value: 0,
+					text: '--All Employee--'
+				}));
+			}
+		}
+	});
+
+	function bindLeaveCount(){
+		empCode = $('#empDropdown').val();
+		var year = $('#yearDropdown').val();
+		$.ajax({
+			 type: "GET",
+			 url: encodeURI('@Url.Action("GetLeaveCount", "Leave")'),
+			 dataType: "json",
+			 data : {EmpCode : empCode, Year : year},
+			 success: function(data){
+				if (data) {
+					$('#totalAnnualLeave').text(data.totalAnnualLeave ?? 0);
+					$('#usedLeave').text(data.usedLeave ?? 0);
+
+					remainingLeave = data.totalAnnualLeave - data.usedLeave
+					$('#remainingLeave').text(remainingLeave < 0 ? 0 : remainingLeave);
+				}
+
+				if(empCode == 0){
+					$('.leaveSummary').hide();
+				}else{
+					$('.leaveSummary').show();
+				}
+
+				bindLeaveGrid();
+			 },
+			 error: LeaveErrHandler
+		 });
+	}
+
+	 function bindLeaveGrid() {
+		 empCode = $('#empDropdown').val();   // Get the selected value
+		 var status = $('#statusDropdown').val();
+		 var year = $('#yearDropdown').val();
+
+		 $.ajax({
+			 type: "GET",
+			 url: encodeURI('@Url.Action("GetLeaveList", "Leave")'),
+			 dataType: "json",
+			 data : {empCode:empCode, Status:status, LeaveYear:year},
+			 success: function(data){
+				 LeaveSuccHandler(data);
+			 },
+			 error: LeaveErrHandler
+		 });
+	 }
+
+	 function LeaveErrHandler(xhr, status, error) {
+	 }
+
+	 function LeaveSuccHandler(data) {
+	 try {
+		 var dataTableExample = $('#leaveTable').DataTable();
+		 if (dataTableExample != 'undefined') {
+			 dataTableExample.destroy();
+		 }
+		 dataTableExample = $('#leaveTable').DataTable({
+
+			 scrollY: false,
+			 "order": [],
+			 "lengthMenu": [50,75,100,150],
+			 "dom": 'frtlip',
+			 "bFilter": true,
+			 "aaData": data,
+			 "language": {
+				  "lengthMenu": "Show _MENU_ entries,"
+			  },
+			 "aoColumns": [
+				 {
+					 "mData": "groupId",
+					 "visible": false
+				 },
+				 {
+					 "sWidth":"10%",
+					 "mData": "employeeName",
+					 "className": "dt-left"
+
+				 },
+				 {
+					 "sWidth":"8%",
+					 "mData": "startDate",
+					 "className": "dt-left",
+					 "render":function(data,type,row,meta){
+						if (!data) return '';
+						const date = new Date(data);
+						if (type === 'display' || type === 'filter') {
+							if (!data) return '';
+							const date = new Date(data);
+							if (type === 'display' || type === 'filter') {
+								return date.toLocaleDateString('en-GB');
+							}
+							return date.getTime();
+						}
+						return date.getTime();
+					 }
+				 },
+				 {
+					 "sWidth":"8%",
+					 "mData": "endDate",
+					 "className": "dt-left",
+					 "render":function(data,type,row,meta){
+
+						if (!data) return '';
+						const date = new Date(data);
+						if (type === 'display' || type === 'filter') {
+							if (!data) return '';
+							const date = new Date(data);
+							if (type === 'display' || type === 'filter') {
+								return date.toLocaleDateString('en-GB');
+							}
+							return date.getTime();
+						}
+						return date.getTime();
+
+					 }
+				 },
+				 {
+					 "sWidth":"8%",
+					 "mData": "noOfDays",
+					 "className": "dt-left",
+					  "render":function(data,type,row,meta){
+
+						return data;
+
+					  }
+				 },
+				 {
+					 "sWidth":"10%",
+					 "mData": "leaveType",
+					 "className": "dt-left",
+					 "render" : function(data,type,row,meta){	
+						 if(data == 1){
+							 return "Full Day";
+						 }
+						 else if(data == 2){
+							 return "First Half";
+						 }else if(data == 3){
+							 return "Second Half";
+						 }else if(data == 4){
+							 return "(FL) by System!";
+						 }else{
+							 return " ";
+						 }
+					 }
+
+				 },
+				 {
+					 "sWidth":"20%",
+					 "mData": "reason",
+					 "className": "dt-left"
+
+				 },
+				 {
+					 "sWidth":"10%",
+					 "mData": "approvedBy",
+					 "className": "dt-left",
+					 "render" : function(data,type,row,meta){
+						 if(row.leaveType == 4){
+							 return "System";
+						 }else{
+							 return data;
+						 }
+					 }
+
+				 },
+				 {
+					 "sWidth":"8%",
+					"mData": "approveTime",
+					"className": "dt-left",
+					"render":function(data,type,row,meta){
+						if(row.approvalStatus == 3){
+							if (!data) return '';
+							const date = new Date(data);
+							if (type === 'display' || type === 'filter') {
+								return date.toLocaleDateString('en-GB');
+							}
+							return date.getTime();
+						}else{
+							return " ";
+						}
+					}
+				 },
+				 {
+					 "sWidth": "8%",
+					 "mData": null,
+					 "className": "dt-center",
+					 "render": function (data, type, row, meta) {
+						 var renderBtn = '';
+						 if (row.approvalStatus == 3) {
+							 renderBtn = '<button type="button" class="btn btn-success statusBtn">Approved</button>';
+						 } else if(row.approvalStatus == 2){
+							 renderBtn = '<button type="button" style="background-color: #A9A9A9; color: #fff;" class="btn statusBtn">Deleted</button>';
+						 }else if(row.approvalStatus == 4){
+							 renderBtn = '<button type="button" style="background-color: #E63946; color: #fff;" class="btn statusBtn">Rejected</button>';
+						 }else if(row.approvalStatus == 5){
+							 renderBtn = '<button type="button" style="background-color:#7044db; color: #fff;" class="btn statusBtn">Cancelled</button>';
+						 }
+						 else {
+							 renderBtn = '<button type="button" class="btn btn-warning statusBtn">Pending</button>';
+						 }
+						 return renderBtn;
+					 }
+				 },
+				 {
+					 "sWidth": "5%",
+					 "mData": null,
+					 "sortable": false,
+					 "className": "dt-center",
+					 "render": function (data, type, row, meta) {
+						 if(row.empCode == loginEmployeeCode ){
+							 if(row.approvalStatus != 1){
+								 var ActionbuttonEdit = '';
+
+								var ActionButtonDelete = '';
+							 }else{
+								 var ActionbuttonEdit = '<button type="button" onclick="AddEditLeave(\''+row.groupId+'\')" class="btn btn-sm borderNone action-btn edit-btn" title="Edit Leave"><i class="fa-solid fa-pen-to-square"></i></button>';
+
+								var ActionButtonDelete = '<button onclick="DeleteLeave(\'' + row.groupId + '\')" class="btn btn-sm borderNone action-btn delete-btn" title="Delete Leave"><i class="fa-solid fa-trash"></i></button>';
+							 }
+
+							 return ActionbuttonEdit + ActionButtonDelete;
+
+						 }else{
+							 if(row.approvalStatus == 1){
+								var ApproveButton = '<button type="button" onclick="ApproveRejectLeave(\''+row.groupId+'\',3)" class="btn btn-sm borderNone action-btn edit-btn" style="padding:0;" title="Approve Leave"><i class="fa-solid fa-square-check" style="font-size: 20px;"></i></button>';
+								var RejectButton = '<button type="button" onclick="ApproveRejectLeave(\''+row.groupId+'\',4)" class="btn btn-sm borderNone action-btn edit-btn" title="Reject Leave" ><i class="fa-solid fa-square-xmark" style="font-size: 20px;"></i></button>';
+							 }
+							 else if(row.approvalStatus == 3){
+								var ApproveButton = '<button type="button" class="btn btn-sm borderNone action-btn edit-btn " style="padding:0;"><i class="fa-solid fa-square-check" style="font-size: 20px; visibility: hidden;"></i></button>';
+								var RejectButton = '<button type="button" onclick="ApproveRejectLeave(\''+row.groupId+'\',5)" class="btn btn-sm borderNone action-btn edit-btn" style="padding:0;" title="Cancel Leave"><i class="fa-solid fa-undo square-icon"></i></button>';
+							 }
+							 else{
+								var ApproveButton = '';
+								var RejectButton = '';
+							 }
+
+							 return ApproveButton + RejectButton;
+						 }
+					 }
+
+				 }
+			 ]
+		 });
+		 $(".dataTables_length").css('clear', 'none');
+		 $(".dataTables_length").css('margin-right', '20px');
+		 $(".dataTables_info").css('clear', 'none');
+		 $(".dataTables_info").css('padding', '0');
+
+		 } catch (e) {
+			 alert(e.message);
+		 }
+	 }
+
+
+
+
+	 function AddEditLeave(id) {
+		 $('.modal-backdrop').remove();
+		 $('body').removeClass('modal-open');        
+		 $('#model_LeaveDetail').remove();
+
+		 $.ajax({
+			 url: encodeURI('@Url.Action("GetLeaveDetails", "Leave")'),
+			 type: "GET",
+			 data: {GroupId: id },
+			 success: function (data) {
+				$('#div_LeaveDetail').html(data);
+				var modal = new bootstrap.Modal(document.getElementById('model_LeaveDetail'));
+				modal.show();
+			 },
+			 error: function (data) {
+				 
+			 }
+		 });
+	 }
+
+
+	 function DeleteLeave(id){
+		 bootbox.confirm({
+			 title: "Remove Leave",
+			 message: "Are you sure to remove Leave?",
+			 buttons: {
+				 confirm: {
+					 label: 'Yes',
+					 className: 'btn btnStdColor px-4 btnStdWid3'
+				 },
+				 cancel: {
+					 label: 'No',
+					 className: 'btn btn-secondary px-4 py-1 btn-sm'
+				 }
+			 },
+			 callback: function (result) {
+				 if (result) {
+					 $.ajax({
+						 url: encodeURI('@Url.Action("DeleteLeave", "Leave")'),
+						 type: "POST",
+						 dataType: "json",
+						 data: { groupId: id },
+						 success: function (data) {
+							 if (data.success) {
+								 var sStatus = localStorage.getItem("status");
+								 toastr.success(data.data);
+								 bindLeaveCount();
+							 }
+							 else {
+								 toastr.error(data.data);
+							 }
+						 },
+						 error: function () {
+
+						 }
+					 });
+				 }
+			 }
+		 });
+	 }
+
+
+	 function ApproveRejectLeave(groupId, status){
+		 
+		 bootbox.confirm({
+			 title: status == 3 ? "Approve Leave": status == 4 ? "Reject Leave" : "Cancel Leave",
+			 message: status == 3 ? "Are you sure to approve this Leave?" : status == 4 ? "Are you sure to reject this Leave?" : "Are you sure to cancel this Leave?",
+			 buttons: {
+				 confirm: {
+					 label: 'Yes',
+					 className: 'btn btnStdColor px-4 btnStdWid3'
+				 },
+				 cancel: {
+					 label: 'No',
+					 className: 'btn btn-secondary px-4 py-1 btn-sm'
+				 }
+			 },
+			 callback: function (result) {
+				 if (result) {
+					 $.ajax({
+						 url: encodeURI('@Url.Action("ApproveRejectLeave", "Leave")'),
+						 type: "POST",
+						 dataType: "json",
+						 data: { groupId: groupId, Status: status},
+						 success: function (data) {
+							 if (data.success) {
+								 var sStatus = localStorage.getItem("status");
+								 toastr.success(data.data);
+								 bindLeaveCount();
+							 }
+							 else {
+								 toastr.error(data.data);
+							 }
+						 },
+						 error: function () {
+
+						 }
+					 });
+				 }
+			 }
+		 });
+	 }
+</script>
+
+

@@ -1,0 +1,60 @@
+﻿using CodeVrikATS.Entity.Models;
+using CodeVrikATS.UI.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Text;
+
+namespace CodeVrikATS.UI.Controllers
+{
+    [AllowAnonymous]
+    public class ResetPasswordController :Controller
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public ResetPasswordController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+      
+        }
+
+        [HttpGet]
+        public IActionResult Index(string code)
+        {
+            string decodedUsercode = Encoding.UTF8.GetString(Convert.FromBase64String(code));
+
+            int employeeCode = int.Parse(decodedUsercode);
+
+            var model = new ResetPasswordEntity
+            {
+                EmployeeCode = employeeCode
+            };
+            return View(model);
+        }
+
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> Index(ResetPasswordEntity model)
+        {
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            if (model.NewPassword != model.ConfirmPassword)
+            {
+                ModelState.AddModelError(string.Empty, "Passwords do not match.");
+                return View(model);
+            }
+
+            var apiResponse = await _webApiHelper.PostAsync<string>(_apiHelper.ResetPasswordApi, model, includeAuth: false);
+
+            ViewBag.Message = apiResponse.Data;
+
+            return RedirectToAction("Index","Account");
+
+        }
+    }
+
+}

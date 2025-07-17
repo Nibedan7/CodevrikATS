@@ -1,0 +1,312 @@
+﻿@model CodeVrikATS.Entity.Models.EmployeeEntity
+@using CodeVrikATS.Entity.Models
+@using static CodeVrikATS.Entity.Models.Enum
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+<style>
+
+    .select2-container--bootstrap-5 {
+    z-index: 9999 !important;
+    }
+    /* / Main Select2 container / */
+    .select2-container--bootstrap-5 .select2-selection--multiple {
+    border-radius: 8px !important;
+    min-height: 42px;
+    width: 365px !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-dropdown {
+    min-width: 365px !important;
+    }
+
+    /* / Individual selected items (tags) / */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+    border-radius: 12px !important;
+    color: white !important;
+    padding: 2px 8px !important;
+    margin-right: 6px !important;
+    background-color: #007bff !important;
+    border: 1px solid #ced4da !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__placeholder {
+    width: 300px !important;
+    }
+
+    /* / Hover effect on tags / */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice:hover {
+    background-color: #007bfa !important;
+    }
+
+    /* / Remove button (x) inside tags / */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+    color: #6c757d !important;
+    margin-right: 4px !important;
+    border-right: none !important;
+    }
+
+    /* / Change hover background color for dropdown options / */
+    .select2-container--bootstrap-5 .select2-results__option--selectable:hover {
+    background-color: #007bff !important;
+    color: #212529 !important;
+    }
+
+    /* / Selected option in dropdown / */
+    .select2-container--bootstrap-5 .select2-results__option--selected {
+    background-color: #007bff !important;
+    color: white !important;
+    }
+</style>
+
+<!-- Your HTML content goes here -->
+
+<div class="modal fade" id="model_EmployeeDetail" tabindex="-1" aria-labelledby="EmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="margin-top: 50px;">
+        <!-- Adjusted vertical position -->
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+
+                <h5 class="modal-title  standardColor" id="EmployeeModalLabel">@(Model.Id == 0 ? "Add Employee" : "Edit Employee")</h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="EmployeeForm" method="post" asp-action="AddEditEmployee">
+                    <label class="form-label standardColor " hidden>Id</label>
+                    <input id="empId" asp-for="Id" type="text" class="form-control" hidden />
+
+                    <!-- Row 1 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">First Name</label>
+                            <input asp-for="FirstName" type="text" class="form-control" name="FirstName" required>
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Last Name</label>
+                            <input asp-for="LastName" type="text" class="form-control" required>
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="row mb-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Employee Code</label>
+                            <input asp-for="EmployeeCode" type="text" class="form-control" disabled="@(Model.Id != 0 ? "disabled" : null)">
+                            <input asp-for="EmployeeCode" type="hidden" />
+                            <span asp-validation-for="EmployeeCode" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Contact Number</label>
+                            <input asp-for="ContactNumber1" type="text" class="form-control" name="ContactNumber1" required>
+                            <span asp-validation-for="ContactNumber1" class="text-danger"></span>
+                        </div>
+
+                    </div>
+
+                    <!-- Row 3 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Email</label>
+                            <input asp-for="Email" type="text" class="form-control">
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Department Name</label>
+                            <select  class="form-select" id="multiSelect-department" multiple>
+                                <option disabled>--Select Departments--</option>
+
+                                    @foreach (var dept in Model.Departments)
+                                    {
+                                        <option value="@dept.DepartmentId">@dept.DepartmentName</option>
+                                    }
+                                
+                            </select>
+                           
+                        </div>
+
+                    </div>
+                    <!-- Row 4 -->
+                    <!-- Row 5 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">AccessCard Number</label>
+                            <input asp-for="AccessCardNumber" type="text" class="form-control" disabled="@(Model.Id != 0 ? "disabled" : null)">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Gender</label>
+                            <select asp-for="Gender" class="form-select" required>
+                                <option value="" class="selectOption"> Select Gender </option>
+                                <option value="M" class="selectOption">Male</option>
+                                <option value="F" class="selectOption">Female</option>
+                            </select>
+                            <span asp-validation-for="Gender" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Row 6 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Birth Date</label>
+                            <input asp-for="BirthDate" type="date" class="form-control" name="BirthDate" required>
+                            <span asp-validation-for="BirthDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Hire Date</label>
+                            <input asp-for="HireDate" type="date" class="form-control" required>
+                            <span asp-validation-for="HireDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Row  -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Reviewer 1</label>
+
+                            @Html.DropDownListFor(
+                                              Model => Model.Reviewer1,
+                                              new SelectList(Model.Reviewers, "EmployeeCode", "EmployeeName", null),
+                                              "Select Reviewer 1",
+                                     new { @class = "form-select", id = "Reviewer1" }
+                                              )
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Reviewer 2</label>
+
+                            @Html.DropDownListFor(
+                                              Model => Model.Reviewer2,
+                                              new SelectList(Model.Reviewers, "EmployeeCode", "EmployeeName", null),
+                                              "Select Reviewer 2",
+                                     new { @class = "form-select", id = "Reviewer2" }
+                                              )
+                            <span id="ReviewerVal" class="text-danger"></span>
+                        </div>
+
+                    </div>
+                    <!-- Row 7 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Employee Role</label>
+
+                            @Html.DropDownListFor(
+                                              Model => Model.RoleId,
+                                              new SelectList(Model.RoleList, "RoleId", "RoleName", null),
+                                              "Select Role",
+                                              new { @class = "form-select", id = "empDropdown" }
+                                              )
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Annual Leave</label>
+                            <input asp-for="AnnualLeave" type="int" class="form-control" required>
+                            <span asp-validation-for="AnnualLeave" class="text-danger"></span>
+                        </div>
+                       
+                    </div>
+                    
+                    <!-- Full-Width Separator Line -->
+                    <hr class="mt-4 mb-3 border-dark" style="margin-left: -24px; margin-right: -24px;">
+
+                    <!-- Buttons Aligned Right -->
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btnStdColor px-4 me-2 btnStdWid2 " id="submitBtn" onclick="checkValidation()">Save</button>
+                        <button type="button" class="btn btn-secondary px-3 me-2 btnStdWid2" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+        
+    function initializeEmployeeModal(){
+        $(document).ready(function () {
+            $( '#multiSelect-department' ).select2( {
+                theme: "bootstrap-5",
+                width: '100%',
+                placeholder: "Choose Departments",
+                closeOnSelect: false,
+                dropdownAutoWidth: true,
+                dropdownCssClass: "wider-select2-dropdown"
+            } );
+
+            
+        });
+        bindDepartmentsWhileEditing();
+    }
+
+    function bindDepartmentsWhileEditing(){
+        const preselectedDepartments = '@Model.DepartmentName'.split(',').map(x => x.trim()).filter(x => x);
+        var employeeId = $('#empId').val();
+
+        if(employeeId > 0){
+            $('#multiSelect-department option').each(function () {
+                if (preselectedDepartments.includes($(this).text().trim())) {
+                    $(this).prop('selected', true);
+                }
+            });
+        }
+
+        // Refresh the multiselect UI if you're using a plugin (like Bootstrap Select)
+        $('#multiSelect-department').trigger('change');
+    }
+
+    function checkValidation(){
+        var validate = true;
+        var Reviewer1 = $('#Reviewer1').val();
+        var Reviewer2 = $('#Reviewer2').val();
+        var ReviewerVal = $('#ReviewerVal');
+        ReviewerVal.text("");
+        if(Reviewer1 == Reviewer2 && Reviewer1 != "" && Reviewer2 != ""){
+            validate = false
+            ReviewerVal.text("Reviewer1 and Reviewer2 must be different");
+        }
+        if(validate){
+            saveEmployee();
+        }
+
+    }
+    
+
+    function saveEmployee() {
+        var form = $("#EmployeeForm");
+        if (form.valid()) {
+            var formData = form.serialize();
+         var selectedDepartments = $('#multiSelect-department').val(); // returns an array
+          var commaSeparated = selectedDepartments ? selectedDepartments.join(',') : '';
+          formData += '&DepartmentIds=' + encodeURIComponent(commaSeparated);
+            $.ajax({
+                url: '@Url.Action("AddEditEmployee", "Employee")',
+                async: false,
+                type: "POST",
+                data: formData,
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success(data.message);
+                        $('#model_EmployeeDetail').modal('hide');
+                        bindEmployeeGrid();
+                    } else{
+                        toastr.error(data.message);
+                    }
+                },
+                error: function (data) {
+                    toastr.error( "Something wents to wrong.!");
+                }
+            });
+        } else {
+            
+        }
+    }
+
+</script>

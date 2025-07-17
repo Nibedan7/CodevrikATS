@@ -1,0 +1,352 @@
+﻿@model CodeVrikATS.Entity.Models.EmployeeAssessmentEntity
+@using CodeVrikATS.Entity.Models
+@using static CodeVrikATS.Entity.Models.Enum
+
+@{
+    var today = DateTime.Today.ToString("yyyy-MM-dd");
+    var lastDateOfYear = new DateTime(DateTime.Now.Year, 12, 31).ToString("yyyy-MM-dd");
+}
+
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+<link href="~/css/toastr.css" rel="stylesheet" />
+
+<script src="~/lib/jquery-validation/dist/additional-methods.min.js"></script>
+<script src="~/lib/jquery-validation/dist/additional-methods.js"></script>
+<script src="~/js/toaster.js"></script>
+<script src="~/js/toastr.min.js"></script>
+
+
+<!-- Your HTML content goes here -->
+
+<!-- Loader -->
+<div id="loader1" style="display:none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+
+<div class="modal fade" id="model_EmployeeAssessmentDetail" tabindex="-1" aria-labelledby="EmployeeAssessmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="margin-top: 50px;">
+        <!-- Adjusted vertical position -->
+        <div class="modal-content shadow-sm border-0">
+            <div class="modal-header bg-light">
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="EmployeeAssessmentForm" method="post" asp-action="StartEmployeeAssessment">
+                    <label class="form-label standardColor " hidden>Id</label>
+                    <input id="empId" asp-for="EmployeeAssessmentId" type="text" class="form-control" hidden />
+
+                    <!-- Row 1 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Assessment Name</label>
+                            <input asp-for="AssessmentName" type="text" class="form-control" name="AssessmentName" disabled>
+                            <input asp-for="AssessmentName" type="hidden" name="AssessmentName" >
+                            <span asp-validation-for="AssessmentName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Employee Code</label>
+                            <input asp-for="EmployeeCode" type="text" class="form-control" disabled>
+                            <input asp-for="EmployeeCode" type="hidden" id="empCode">
+                            <span asp-validation-for="EmployeeCode" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Row 2 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Self Assessment</label>
+                            <input asp-for="SelfAssessment" type="text" class="form-control" readonly disabled>
+                            <span asp-validation-for="SelfAssessment" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Self Assessment Submission</label>
+                            <input asp-for="IsSelfAss1_Submitted" type="text" class="form-control" readonly disabled>
+                            <span asp-validation-for="IsSelfAss1_Submitted" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Row 3 -->
+                    <div class="row mb-3">
+                        @if (Model.IsSelfAss1_Submitted == false || Model.IsReviewer1_Submitted == false || Model.IsReviewer2_Submitted == false)
+                        {
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Reviewer 1</label>
+
+                            @Html.DropDownListFor(
+                                     Model => Model.Reviewer1Id,
+                                     new SelectList(Model.Reviewers, "EmployeeCode", "EmployeeName", null),
+                                     "Select Reviewer 1",
+                                     new { @class = "form-select", id = "Reviewer1", @disabled = "disabled" }
+                                     )
+                                @Html.HiddenFor(model => model.Reviewer1Id)
+                            <span asp-validation-for="Reviewer1Id" class="text-danger" id="Reviewer1Id"></span>
+                        </div>
+                            @if (Model.Reviewer2Id == null)
+                            {
+                                <div class="col-md-6">
+                                    <label class="form-label standardColor ">Reviewer 2</label>
+
+                                    @Html.DropDownListFor(
+                                             Model => Model.Reviewer2Id,
+                                             new SelectList(Model.Reviewers, "EmployeeCode", "EmployeeName", null),
+                                             "Select Reviewer 2",
+                                             new { @class = "form-select", id = "Reviewer2"}
+                                             )
+                                    <span asp-validation-for="Reviewer2Id" class="text-danger" id="Reviewer2Id"></span>
+                                </div>
+                            }else
+                            {
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Reviewer 2</label>
+
+                            @Html.DropDownListFor(
+                                     Model => Model.Reviewer2Id,
+                                     new SelectList(Model.Reviewers, "EmployeeCode", "EmployeeName", null),
+                                     "Select Reviewer 2",
+                                     new { @class = "form-select", id = "Reviewer2", @disabled = "disabled" }
+                                     )
+                            @Html.HiddenFor(model => model.Reviewer2Id)
+                            <span asp-validation-for="Reviewer2Id" class="text-danger" id="Reviewer2Id"></span>
+                        </div>
+                        }
+                        }
+                        else{
+                            <div class="col-md-6">
+                                <label class="form-label standardColor ">Reviewer 1</label>
+
+                                @Html.DropDownListFor(
+                                         Model => Model.Reviewer1Id,
+                                         new SelectList(Model.Reviewers, "EmployeeCode", "EmployeeName", null),
+                                         "Select Reviewer 1",
+                                         new { @class = "form-select", id = "Reviewer1"}
+                                         )
+                                <span asp-validation-for="Reviewer1Id" class="text-danger" id="Reviewer1Id"></span>
+                            </div>
+                          
+                            <div class="col-md-6">
+                                <label class="form-label standardColor ">Reviewer 2</label>
+
+                                @Html.DropDownListFor(
+                                         Model => Model.Reviewer2Id,
+                                         new SelectList(Model.Reviewers, "EmployeeCode", "EmployeeName", null),
+                                         "Select Reviewer 2",
+                                         new { @class = "form-select", id = "Reviewer2" }
+                                         )
+                                <span asp-validation-for="Reviewer2Id" class="text-danger" id="Reviewer2Id"></span>
+                            </div>
+                        }
+                    </div>
+                     
+                    <!-- Row 4 -->
+                    <div class="row mb-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Reviewer 1 Assessment</label>
+                            <input asp-for="Reviewer1Assessment" type="text" class="form-control" readonly disabled>
+                            <span asp-validation-for="Reviewer1Assessment" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Reviewer 2 Assessment</label>
+                            <input asp-for="Reviewer2Assessment" type="text" class="form-control" readonly disabled>
+                            <span asp-validation-for="Reviewer2Assessment" class="text-danger"></span>
+                        </div>
+
+                    </div>
+                    
+                    <!-- Row 5 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Reviewer 1 Submission</label>
+                            <input asp-for="IsReviewer1_Submitted" type="text" class="form-control" readonly disabled>
+                            <span asp-validation-for="IsReviewer1_Submitted" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Reviewer 2 Submission</label>
+                            <input asp-for="IsReviewer2_Submitted" type="text" class="form-control" readonly disabled>
+                            <span asp-validation-for="IsReviewer2_Submitted" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Row 6 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Assessment Start Date</label>
+                            <input asp-for="AssessmentStartDate" type="date" class="form-control" required id="AssessmentStartDate" max="@lastDateOfYear">
+                            <span asp-validation-for="AssessmentStartDate" class="text-danger" ></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label standardColor ">Assessment End Date</label>
+                            <input asp-for="AssessmentEndDate" type="date" class="form-control" required id="AssessmentEndDate" >
+                            <span asp-validation-for="AssessmentEndDate" class="text-danger" ></span>
+                        </div>
+                    </div>
+                    
+
+                    <!-- Full-Width Separator Line -->
+                    <hr class="mt-4 mb-3 border-dark" style="margin-left: -24px; margin-right: -24px;">
+
+                    <!-- Buttons Aligned Right -->
+                    <div class="d-flex justify-content-end">
+                        @if (Model.IsSelfAss1_Submitted == false || Model.IsReviewer1_Submitted == false || Model.IsReviewer2_Submitted == false){
+                            <button type="button" class="btn btnStdColor px-4 me-2 btnStdWid2 " id="submitBtn" onclick="save()">Save</button>
+                        }
+                        else{
+                            <button type="button" class="btn btnStdColor px-4 me-2 btnStdWid2 " id="submitBtn" onclick="start()">Start</button>
+                        }
+                        <button type="button" class="btn btn-secondary px-3 me-2 btnStdWid2" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form> 
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function save() {
+        const empCode = $('#empCode').val();
+        const reviewer1 = $('#Reviewer1').val();
+        const reviewer2 = $('#Reviewer2').val();
+
+        const reviewer1Validation = $('#Reviewer1Id');
+        const reviewer2Validation = $('#Reviewer2Id');
+
+        reviewer1Validation.text('');
+        reviewer2Validation.text('');
+
+        if (reviewer1 === empCode) {
+            reviewer1Validation.text("Employee cannot review themselves.");
+            return;
+        }
+
+        if (reviewer2 === empCode) {
+            reviewer2Validation.text("Employee cannot review themselves.");
+            return;
+        }
+
+        if (reviewer1 === reviewer2 && reviewer1 !== "") {
+            reviewer2Validation.text("Reviewer 1 and Reviewer 2 must be different.");
+            return;
+        }
+
+        saveEmployeeAssessment();
+    }
+
+    function start() {
+        const empCode = $('#empCode').val();
+        const reviewer1 = $('#Reviewer1').val();
+        const reviewer2 = $('#Reviewer2').val();
+
+        const reviewer1Validation = $('#Reviewer1Id');
+
+
+        const reviewer2Validation = $('#Reviewer2Id');
+
+        reviewer1Validation.text('');
+        reviewer2Validation.text('');
+
+        if (reviewer1 === empCode) {
+            reviewer1Validation.text("Employee cannot review themselves.");
+            return;
+        }
+
+        if (reviewer2 === empCode) {
+            reviewer2Validation.text("Employee cannot review themselves.");
+            return;
+        }
+
+        if (reviewer1 === reviewer2 && reviewer1 !== "") {
+            reviewer2Validation.text("Reviewer 1 and Reviewer 2 must be different.");
+            return;
+        }
+
+        startEmployeeAssessment();
+    }
+
+     $(document).ready(function () {
+        $("#AssessmentStartDate, #AssessmentEndDate").on("change", function () {
+            var startDate = $("#AssessmentStartDate").val();
+            var endDate = $("#AssessmentEndDate").val();
+
+            if (startDate) {
+                $("#AssessmentEndDate").attr("min", startDate);
+            }
+
+            if (endDate && startDate && endDate < startDate) {
+                $("#AssessmentEndDate").val('');
+            }
+        });
+    });
+
+
+        function saveEmployeeAssessment() {
+        var form = $("#EmployeeAssessmentForm");
+        if (form.valid()) {
+            var formData = form.serialize();
+            $.ajax({
+                url: '@Url.Action("SaveEmployeeAssessment", "Employee")',
+                async: false,
+                type: "POST",
+                data: formData,
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success(data.message);
+                        $('#model_EmployeeAssessmentDetail').modal('hide');
+                        bindEmployeeGrid();
+                    } else{
+                        toastr.error(data.message);
+                    }
+                },
+                error: function (data) {
+                    toastr.error( "Something wents to wrong.!");
+                }
+            });
+        }
+    }
+
+    function show(){
+        document.getElementById("loader1").style.display = "flex";
+    }
+
+    function hide(){
+        document.getElementById("loader1").style.display = "none";
+    }
+
+    function startEmployeeAssessment(){
+        show()
+        var form = $("#EmployeeAssessmentForm");
+        if (form.valid()) {
+            var formData = form.serialize();
+            $.ajax({
+                url: '@Url.Action("StartEmployeeAssessment", "Employee")',
+                async: true,
+                type: "POST",
+                data: formData,
+                success: function (data) {
+                    hide()
+                    if (data.success) {
+                        toastr.success(data.message);
+                        $('#model_EmployeeAssessmentDetail').modal('hide');
+                        bindEmployeeGrid();
+                    } else{
+                        toastr.error(data.message);
+                    }
+                },
+                error: function (data) {  
+                    hide()
+                    toastr.error( "Something wents to wrong.!");
+                }
+            });
+        }else{
+            hide()
+        }
+    }
+
+</script>

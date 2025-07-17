@@ -1,0 +1,135 @@
+﻿using CodeVrikATS.API.Repositories;
+using CodeVrikATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace CodeVrikATS.API.Services
+{
+    public class ManualLogService
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public ManualLogService(GenericRepository genericRepository)
+        {
+            this._genericRepository = genericRepository;
+        }
+
+        public async Task<ApiResponse<IEnumerable<ManualLogEntity>>> GetManualLogByEmpCode(int? EmpCode, int? Status, int? ManualLogId, int? LoggedEmpCode)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@EmpCode", SqlDbType.Int) { Value = EmpCode },
+                    new SqlParameter("@Status", SqlDbType.Int) { Value = Status },
+                    new SqlParameter("@ManualLogId", SqlDbType.Int) { Value = ManualLogId },
+                    new SqlParameter("@LoggedEmployeeCode", SqlDbType.Int) { Value = LoggedEmpCode },
+
+                };
+
+                var manualLogs = await _genericRepository.GetAllAsync<ManualLogEntity>("GetManualLogByEmpCode", parameters);
+                return new ApiResponse<IEnumerable<ManualLogEntity>>(manualLogs, "ManualLogs retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<ManualLogEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        public async Task<ApiResponse<string>> AddEditManualLog(ManualLogEntity manualLogEntity)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@ManualLogId", SqlDbType.Int) { Value = manualLogEntity.Id },
+                    new SqlParameter("@empCode", SqlDbType.Int) { Value = manualLogEntity.EmpCode },
+                    new SqlParameter("@PunchType", SqlDbType.Int) { Value = manualLogEntity.PunchType},
+                    new SqlParameter("@PunchTime", SqlDbType.DateTime) { Value = manualLogEntity.PunchTime },
+                    new SqlParameter("@Reason", SqlDbType.NVarChar) { Value = manualLogEntity.Reason},
+                    new SqlParameter("@StartDate", SqlDbType.Date) { Value = manualLogEntity.StartDate},
+                    new SqlParameter("@EndDate", SqlDbType.Date) { Value = manualLogEntity.EndDate},
+                };
+
+                var result = await _genericRepository.ExecuteAsync("AddEditManualLog", parameters);
+
+                if (result < 0 && manualLogEntity.Id == null)
+                {
+                    return new ApiResponse<string>("Manual Log Created successfully.");
+                }
+                else if (result < 0 && manualLogEntity.Id != null)
+                {
+                    return new ApiResponse<string>("Manual Log Updated successfully.");
+                }
+                else
+                {
+                    return new ApiResponse<string>("Failed to insert manual log data.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string>($"Error inserting log data: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<string>> DeleteManualLog(int ManualLogId)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@ManualLogId", SqlDbType.Int) { Value = ManualLogId }
+                };
+
+                var result = await _genericRepository.ExecuteAsync("DeleteManuaLog", parameters);
+                if (result < 0)
+                {
+                    return new ApiResponse<string>("Manual Log data deleted successfully.");
+                }
+                else
+                {
+                    return new ApiResponse<string>("Failed to delete log data.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string>($"Error deleting log data: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<string>> ApproveRejectManualLog(int ManualLogId, int status, int empCode)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@ManualLogId", SqlDbType.Int) { Value = ManualLogId },
+                    new SqlParameter("@empCode", SqlDbType.Int) { Value = empCode },
+                    new SqlParameter("@status", SqlDbType.Int) { Value = status }
+                };
+
+                var result = await _genericRepository.GetAsync<dynamic>("ApproveRejectManualLog", parameters);
+                if (result.IsSuccess == 1 && status == 3)
+                {
+                    return new ApiResponse<string> { Success = true, Message = "Manual Log Approved successfully." };
+                }
+                else if (result.IsSuccess == 1 && status == 4)
+                {
+                    return new ApiResponse<string> { Success = true, Message = "Manual Log Rejected successfully." };
+                }
+                else if (result.IsSuccess == 1 && status == 5)
+                {
+                    return new ApiResponse<string>{ Success = true, Message = "Manual Log Cancelled successfully." };
+                }
+                else
+                {
+                    return new ApiResponse<string>{ Success = false, Message = "Failed to Approve/Reject log data." };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string> { Success = false, Message = $"Error Approve/Reject log data. {ex.Message}" };
+            }
+        }
+    }
+}

@@ -1,0 +1,56 @@
+﻿using CodeVrikATS.Entity.Models;
+using CodeVrikATS.UI.Helpers;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CodeVrikATS.UI.Controllers
+{
+    public class PunchController : AuthController
+    {
+        private readonly WebApiHelper _webApiHelper;
+        private readonly ApiHelper _apiHelper = new ApiHelper();
+
+        public PunchController(WebApiHelper webApiHelper)
+        {
+            _webApiHelper = webApiHelper;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            // Prevent caching
+            Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            Response.Headers["Pragma"] = "no-cache";
+            Response.Headers["Expires"] = "0";
+
+            var loggedEmpCode = HttpContext.Session.GetInt32("authCode");
+
+            if (loggedEmpCode == null)
+                return RedirectToAction("Index", "Account");
+
+            var EmployeeHierarchyList = await _webApiHelper.GetAsync<List<EmpDropDownList>>(_apiHelper.BindEmployeeHierarchy + $"{loggedEmpCode}");
+            PunchEntity punchEntity = new PunchEntity
+            {
+                EmployeeHierarchyList = EmployeeHierarchyList.Data,
+                SelectedEmployeeCode = loggedEmpCode,
+            };
+
+            return View(punchEntity);
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetPunchDetails(int empCode, string StartDate, string EndDate)
+        {
+            var url = _apiHelper.GetPunchByEmpCode + $"?EmpCode={empCode}&StartDate={StartDate}&EndDate={EndDate}";
+            var response = await _webApiHelper.GetAsync<List<PunchEntity>>(url);
+            return Json(response?.Data ?? new List<PunchEntity>());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EmployeeWorkingTime(int empCode, string StartDate, string EndDate)
+        {
+            var response = await _webApiHelper.GetAsync<List<PunchEntity>>(_apiHelper.GetEmployeesWorkingTimeApi + $"?EmpCode={empCode}&StartDate={StartDate}&EndDate={EndDate}");
+            return Json(response.Data[0]);
+        }
+
+    }
+}

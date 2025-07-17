@@ -1,0 +1,94 @@
+﻿using CodeVrikATS.API.Repositories;
+using CodeVrikATS.Entity.Models;
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace CodeVrikATS.API.Services
+{
+    public class RoleServices
+    {
+        private readonly GenericRepository _genericRepository;
+
+        public RoleServices(GenericRepository genericRepository)
+        {
+            _genericRepository = genericRepository;
+        }
+        public async Task<ApiResponse<IEnumerable<RoleEntity>>> GetRoleById(int RoleId)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@RoleId", SqlDbType.Int) { Value = RoleId }
+                };
+
+                var roles = await _genericRepository.GetAllAsync<RoleEntity>("GetRoles", parameters);
+                return new ApiResponse<IEnumerable<RoleEntity>>(roles, "Roles retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<RoleEntity>>(null, $"Error: {ex.Message}", false);
+            }
+        }
+
+        public async Task<ApiResponse<string>> AddEditRoles(RoleEntity roleEntity)
+            {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@RoleId", SqlDbType.Int) { Value = roleEntity.RoleId },
+                    new SqlParameter("@RoleName", SqlDbType.Text) { Value = roleEntity.RoleName },
+                    new SqlParameter("@CreatedBy", SqlDbType.Int) { Value = roleEntity.createdBy },
+                };
+
+                var result = await _genericRepository.GetAsync<dynamic>("AddEditRole", parameters);
+                if (result.IsSuccess == -1)
+                {
+                    return new ApiResponse<string> { Success = false, Message = "Role Already Exist!" };
+                }
+                else if (result.IsSuccess == 1 && roleEntity.RoleId == 0)
+                {
+                    return new ApiResponse<string> { Success = true, Message = "Role Created Successfully!" };
+                }
+                else if (result.IsSuccess == 1 && roleEntity.RoleId != 0)
+                {
+                    return new ApiResponse<string> { Success = true, Message = "Role Updated successfully." };
+                }
+                else
+                {
+                    return new ApiResponse<string> { Success = false, Message = "Failed to insert/update Role data." };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string> { Success = false, Message = $"Error inserting/updating Role data: {ex.Message}" };
+            }
+        }
+
+        public async Task<ApiResponse<string>> DeleteRole(int RoleId)
+        {
+            try
+            {
+                var parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@RoleId", SqlDbType.Int) { Value = RoleId }
+                };
+
+                var result = await _genericRepository.ExecuteAsync("DeleteRole", parameters);
+                if (result < 0)
+                {
+                    return new ApiResponse<string> { Success = true, Message = "Role Deleted Successfully!" };
+                }
+                else
+                {
+                    return new ApiResponse<string> { Success = false, Message = "Failed to delete role data." };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string> { Success = false, Message = $"Error deleting role data: {ex.Message}" };
+            }
+        }
+    }
+}

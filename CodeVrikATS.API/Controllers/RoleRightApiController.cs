@@ -1,0 +1,37 @@
+﻿using CodeVrikATS.API.Services;
+using CodeVrikATS.Entity.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CodeVrikATS.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
+    public class RoleRightApiController : ControllerBase
+    {
+        private readonly RoleRightService _roleRightService;
+
+        public RoleRightApiController(RoleRightService roleRightService)
+        {
+            this._roleRightService = roleRightService;
+        }
+
+        /// <summary>
+        /// Get Role Rights
+        /// </summary>
+        [HttpGet("GetRoleRightList/{RoleId}")]
+        public async Task<IActionResult> GetRoleRightList(int RoleId)
+        {
+            var response = await _roleRightService.GetRoleRightList(RoleId);
+            return Ok(response);
+        }
+
+        [HttpPost("UpdateRoleRight")]
+        public async Task<IActionResult> UpdateRoleRight([FromBody] RoleRightEntity roleRightEntity)
+        {
+            var response = await _roleRightService.UpdateRoleRight(roleRightEntity);
+            return Ok(response);
+        }
+    }
+}
