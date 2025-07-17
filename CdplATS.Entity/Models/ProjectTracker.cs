@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CdplATS.Entity.Models
+namespace CodeVrikATS.Entity.Models
 {
 
     public class ProjectTrackerCellViewModel

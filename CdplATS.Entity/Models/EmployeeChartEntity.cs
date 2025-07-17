@@ -1,4 +1,4 @@
-﻿namespace CdplATS.Entity.Models
+﻿namespace CodeVrikATS.Entity.Models
 {
     public class EmployeeChartEntity
     {

@@ -1,12 +1,12 @@
-using CdplATS.API.Services;
-using CdplATS.Entity.Models;
+using CodeVrikATS.API.Services;
+using CodeVrikATS.Entity.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace CdplATS.API.Controllers
+namespace CodeVrikATS.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

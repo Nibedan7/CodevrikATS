@@ -1,5 +1,5 @@
-﻿using CdplATS.API.Repositories;
-using CdplATS.Entity.Models;
+﻿using CodeVrikATS.API.Repositories;
+using CodeVrikATS.Entity.Models;
 using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -8,8 +8,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
-using static CdplATS.Entity.Models.DepartmentEntity;
-namespace CdplATS.API.Services
+using static CodeVrikATS.Entity.Models.DepartmentEntity;
+namespace CodeVrikATS.API.Services
 {
     public class DepartmentService
     {

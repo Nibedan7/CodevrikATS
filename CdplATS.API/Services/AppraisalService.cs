@@ -1,10 +1,10 @@
 ﻿using System.Data;
-using CdplATS.API.Repositories;
-using CdplATS.Entity.Models;
+using CodeVrikATS.API.Repositories;
+using CodeVrikATS.Entity.Models;
 using Microsoft.Data.SqlClient;
-using static CdplATS.API.Services.AppraisalService;
+using static CodeVrikATS.API.Services.AppraisalService;
 
-namespace CdplATS.API.Services
+namespace CodeVrikATS.API.Services
 {
     public class AppraisalService
     {

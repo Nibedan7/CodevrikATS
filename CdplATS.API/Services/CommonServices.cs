@@ -1,15 +1,15 @@
-﻿using CdplATS.API.Repositories;
-using CdplATS.Entity.Models;
+﻿using CodeVrikATS.API.Repositories;
+using CodeVrikATS.Entity.Models;
 using Microsoft.Data.SqlClient;
-using static CdplATS.Entity.Models.LeaveEntity;
+using static CodeVrikATS.Entity.Models.LeaveEntity;
 using System.Data;
-using static CdplATS.Entity.Models.EmployeeEntity;
+using static CodeVrikATS.Entity.Models.EmployeeEntity;
 using System.Reflection.Emit;
 using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Presentation;
 using DocumentFormat.OpenXml.Office2010.Excel;
 
-namespace CdplATS.API.Services
+namespace CodeVrikATS.API.Services
 {
     public class CommonServices
     {

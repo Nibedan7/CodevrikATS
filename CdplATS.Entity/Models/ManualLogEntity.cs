@@ -4,9 +4,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static CdplATS.Entity.Models.Enum;
+using static CodeVrikATS.Entity.Models.Enum;
 
-namespace CdplATS.Entity.Models
+namespace CodeVrikATS.Entity.Models
 {
     public class ManualLogEntity
     {

@@ -1,10 +1,10 @@
-﻿using CdplATS.Entity.Models;
-using CdplATS.UI.Helpers;
+﻿using CodeVrikATS.Entity.Models;
+using CodeVrikATS.UI.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 
-namespace CdplATS.UI.Controllers
+namespace CodeVrikATS.UI.Controllers
 {
     [AllowAnonymous]
     public class ResetPasswordController :Controller

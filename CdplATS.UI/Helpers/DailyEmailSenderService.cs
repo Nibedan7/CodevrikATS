@@ -1,8 +1,8 @@
 ﻿
 
-using CdplATS.Entity.Models;
+using CodeVrikATS.Entity.Models;
 
-namespace CdplATS.UI.Helpers
+namespace CodeVrikATS.UI.Helpers
 {
     public class DailyEmailSenderService : BackgroundService
     {

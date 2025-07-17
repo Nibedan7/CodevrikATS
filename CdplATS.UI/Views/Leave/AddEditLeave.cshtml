@@ -1,9 +1,9 @@
 ﻿@using System.ComponentModel.DataAnnotations
 @using System.Reflection
-@model CdplATS.Entity.Models.LeaveEntity
+@model CodeVrikATS.Entity.Models.LeaveEntity
 
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
-@using static CdplATS.Entity.Models.Enum
+@using static CodeVrikATS.Entity.Models.Enum
 @{
     var LeaveType = System.Enum.GetValues(typeof(LeaveType)).Cast<LeaveType>();
 }

@@ -1,8 +1,8 @@
-﻿using CdplATS.Entity.Models;
-using CdplATS.UI.Helpers;
+﻿using CodeVrikATS.Entity.Models;
+using CodeVrikATS.UI.Helpers;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CdplATS.UI.Controllers
+namespace CodeVrikATS.UI.Controllers
 {
     public class UtilityController : Controller
     {

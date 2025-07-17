@@ -5,11 +5,11 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using CdplATS.Entity.Models;
+using CodeVrikATS.Entity.Models;
 using Microsoft.AspNetCore.Http;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace CdplATS.UI.Helpers
+namespace CodeVrikATS.UI.Helpers
 {
     public class WebApiHelper
     {

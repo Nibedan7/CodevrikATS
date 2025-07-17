@@ -1,5 +1,5 @@
-﻿using CdplATS.API.Repositories;
-using CdplATS.Entity.Models;
+﻿using CodeVrikATS.API.Repositories;
+using CodeVrikATS.Entity.Models;
 using Microsoft.Data.SqlClient;
 using System.Data;
 

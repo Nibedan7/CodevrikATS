@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using static CdplATS.Entity.Models.Enum;
+using static CodeVrikATS.Entity.Models.Enum;
 
-namespace CdplATS.Entity.Models
+namespace CodeVrikATS.Entity.Models
 {
     public class LeaveEntity
     {

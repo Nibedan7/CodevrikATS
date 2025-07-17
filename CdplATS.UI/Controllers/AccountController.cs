@@ -1,12 +1,12 @@
 ﻿using System.Reflection.Emit;
 using System.Text;
-using CdplATS.Entity.Models;
-using CdplATS.UI.Helpers;
+using CodeVrikATS.Entity.Models;
+using CodeVrikATS.UI.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
-namespace CdplATS.UI.Controllers
+namespace CodeVrikATS.UI.Controllers
 {
     public class AccountController : Controller
     {

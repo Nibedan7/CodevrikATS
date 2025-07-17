@@ -1,9 +1,9 @@
-﻿using CdplATS.Entity.Models;
-using CdplATS.UI.Helpers;
+﻿using CodeVrikATS.Entity.Models;
+using CodeVrikATS.UI.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
-namespace CdplATS.UI.Controllers
+namespace CodeVrikATS.UI.Controllers
 {
     public class RoleRightsManagement : AuthController
     {

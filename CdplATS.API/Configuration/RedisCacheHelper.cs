@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace CdplATS.API.Configuration
+namespace CodeVrikATS.API.Configuration
 {
     public class RedisCacheHelper
     {
