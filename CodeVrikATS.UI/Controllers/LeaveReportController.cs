@@ -1,4 +1,4 @@
-﻿using CodeVrikATS.Entity.Models;
+using CodeVrikATS.Entity.Models;
 using CodeVrikATS.UI.Helpers;
 using Microsoft.AspNetCore.Mvc;
 
