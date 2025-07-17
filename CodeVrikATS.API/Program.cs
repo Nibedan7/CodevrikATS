@@ -64,15 +64,15 @@ public class Program
         //      }
         //  );
 
-        //RecurringJob.AddOrUpdate<DailyJobService>(
-        //      "daily-Leave-job",
-        //      job => job.SendLeaveSummaryEmail(),
-        //      Cron.Daily(11, 0),
-        //      new RecurringJobOptions
-        //      {
-        //          TimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time")
-        //      }
-        //  );
+        RecurringJob.AddOrUpdate<DailyJobService>(
+              "daily-Leave-job",
+              job => job.SendLeaveSummaryEmail(),
+              Cron.Daily(17, 10),
+              new RecurringJobOptions
+              {
+                  TimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time")
+              }
+          );
 
 
         // Configure Middleware
